@@ -1,0 +1,13 @@
+ticker,primary_screener,signal_strength,score,current_price,volume,setup_stage,entry_level,stop_level,target_level,risk_reward
+CRM,stockbee_9m_movers,STRONG,9.4,77.19,33872799,Follow-through,79.48,73.72,91.73,2.1
+WMT,momentum_screener,STRONG,8.9,388.01,27965656,Entry,395.32,373.26,479.49,3.8
+GOOGL,qullamaggie_suite,STRONG,7.9,373.15,40058078,Watch,381.21,361.62,446.55,3.3
+DOCU,stockbee_daily_gainers,STRONG,7.8,26.9,18484494,Entry,27.86,25.34,30.6,1.1
+ZM,qullamaggie_suite,STRONG,7.5,319.11,7501347,Follow-through,328.6,300.75,351.21,0.8
+CRM,rti_compression,MODERATE,7.4,146.4,49680192,Entry,149.77,137.58,159.16,0.8
+AAPL,atr1_screener,MODERATE,7.2,49.76,40018701,Follow-through,51.96,48.09,56.72,1.2
+COIN,stockbee_daily_gainers,MODERATE,7.0,397.41,49363729,Watch,404.61,386.57,475.27,3.9
+RBLX,rti_compression,MODERATE,6.7,86.68,11011581,Watch,87.96,80.77,102.97,2.1
+RIVN,stockbee_9m_movers,MODERATE,6.7,368.82,45447310,Watch,384.99,354.58,441.25,1.9
+GOOGL,stockbee_daily_gainers,WEAK,5.0,166.53,14581605,Breakout,173.29,155.32,204.5,1.7
+UNH,stockbee_weekly_movers,WEAK,4.1,293.84,44348990,Watch,300.6,283.53,319.06,1.1

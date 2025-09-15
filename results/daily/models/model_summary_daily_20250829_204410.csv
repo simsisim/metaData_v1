@@ -1,0 +1,2 @@
+analysis_date,timeframe,total_models_run,simple_trend_count,mean_reversion_count,volatility_count,portfolio_correlation_count,portfolio_assets,avg_correlation,diversification_ratio
+2025-08-29,daily,100,33,33,33,1,33,0.4452989785738096,0.5547010214261903

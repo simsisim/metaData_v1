@@ -1,0 +1,22 @@
+parameter,value,description
+pivot_strength,10,Number of bars on each side to confirm a pivot high (1-10)
+timeframe_mode,daily,Timeframe mode (daily/weekly/monthly)
+lookback_period,3m,Period to search for highest high (1w/2w/1m/2m/3m/6m/1y/2y/3y/5y)
+confirmation_period,2w,Time pivot must remain unbroken before confirmation (1w/2w/1m/2m/3m/6m/1y)
+require_confirmation,true,Whether confirmation is required before GLB becomes active
+show_historical_glb,true,Show historical GLB lines on charts
+show_breakout_labels,true,Show breakout labels on charts
+glb_line_color,green,Color for GLB lines (green/red/blue/orange/purple)
+breakout_label_color,red,Color for breakout labels (green/red/blue/orange/purple)
+show_blue_dots,true,Show Blue Dot signals on charts
+blue_dot_stoch_period,10,Stochastic period for Blue Dot calculation
+blue_dot_stoch_threshold,20,Stochastic threshold for Blue Dot signals
+blue_dot_sma_period,50,SMA period for Blue Dot trend confirmation
+blue_dot_color,blue,Color for Blue Dot markers (blue/red/green/orange/purple)
+show_black_dots,true,Show Black Dot signals on charts
+black_dot_stoch_period,10,Stochastic period for Black Dot calculation
+black_dot_stoch_threshold,25.0,Stochastic threshold for Black Dot signals
+black_dot_lookback,3,Stochastic lookback days for Black Dot signals
+black_dot_sma_period,30,SMA period for Black Dot trend confirmation
+black_dot_ema_period,21,EMA period for Black Dot trend confirmation
+black_dot_color,black,Color for Black Dot markers (black/red/green/orange/purple)

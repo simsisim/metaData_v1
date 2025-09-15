@@ -1,0 +1,7 @@
+ticker,monthly_monthly_monthly_1m_rs_vs_QQQ,monthly_monthly_monthly_1m_stock_return,monthly_monthly_monthly_1m_benchmark_return_QQQ,date,monthly_monthly_monthly_1m_rs_vs_SPY,monthly_monthly_monthly_1m_benchmark_return_SPY,monthly_monthly_monthly_3m_rs_vs_QQQ,monthly_monthly_monthly_3m_stock_return,monthly_monthly_monthly_3m_benchmark_return_QQQ,monthly_monthly_monthly_3m_rs_vs_SPY,monthly_monthly_monthly_3m_benchmark_return_SPY,monthly_monthly_monthly_6m_rs_vs_QQQ,monthly_monthly_monthly_6m_stock_return,monthly_monthly_monthly_6m_benchmark_return_QQQ,monthly_monthly_monthly_6m_rs_vs_SPY,monthly_monthly_monthly_6m_benchmark_return_SPY,timeframe
+Finance/Rental/Leasing,1.2739,0.2865,0.0099,2025-09-01,1.2822,0.0034,1.2894,0.2865,-0.0022,1.2790,0.0059,1.2649,0.2865,0.0171,1.2664,0.0159,monthly
+Internet software/Services,1.0402,0.0505,0.0099,2025-09-01,1.0469,0.0034,1.0329,0.0306,-0.0022,1.0245,0.0059,1.0897,0.1084,0.0171,1.0910,0.0159,monthly
+Major banks,1.0044,0.0144,0.0099,2025-09-01,1.0109,0.0034,1.0512,0.0488,-0.0022,1.0427,0.0059,1.0058,0.0230,0.0171,1.0070,0.0159,monthly
+Packaged software,0.9993,0.0092,0.0099,2025-09-01,1.0058,0.0034,0.9873,-0.0149,-0.0022,0.9793,0.0059,0.9881,0.0050,0.0171,0.9893,0.0159,monthly
+Pharmaceuticals: major,0.9566,-0.0339,0.0099,2025-09-01,0.9628,0.0034,0.9685,-0.0336,-0.0022,0.9607,0.0059,0.9525,-0.0313,0.0171,0.9536,0.0159,monthly
+Semiconductors,1.0096,0.0196,0.0099,2025-09-01,1.0162,0.0034,0.9925,-0.0097,-0.0022,0.9845,0.0059,1.0174,0.0348,0.0171,1.0186,0.0159,monthly

@@ -1,0 +1,7 @@
+ticker,date,timeframe,monthly_monthly_monthly_1m_rs_vs_QQQ_per_ticker_choice,monthly_monthly_monthly_1m_rs_vs_SPY_per_ticker_choice,monthly_monthly_monthly_3m_rs_vs_QQQ_per_ticker_choice,monthly_monthly_monthly_3m_rs_vs_SPY_per_ticker_choice,monthly_monthly_monthly_6m_rs_vs_QQQ_per_ticker_choice,monthly_monthly_monthly_6m_rs_vs_SPY_per_ticker_choice,monthly_monthly_monthly_1m_rs_vs_QQQ_per_NASDAQ100,monthly_monthly_monthly_1m_rs_vs_SPY_per_NASDAQ100,monthly_monthly_monthly_3m_rs_vs_QQQ_per_NASDAQ100,monthly_monthly_monthly_3m_rs_vs_SPY_per_NASDAQ100,monthly_monthly_monthly_6m_rs_vs_QQQ_per_NASDAQ100,monthly_monthly_monthly_6m_rs_vs_SPY_per_NASDAQ100,monthly_monthly_monthly_1m_rs_vs_QQQ_per_SP500,monthly_monthly_monthly_1m_rs_vs_SPY_per_SP500,monthly_monthly_monthly_3m_rs_vs_QQQ_per_SP500,monthly_monthly_monthly_3m_rs_vs_SPY_per_SP500,monthly_monthly_monthly_6m_rs_vs_QQQ_per_SP500,monthly_monthly_monthly_6m_rs_vs_SPY_per_SP500
+Finance/Rental/Leasing,2025-09-01,monthly,99,99,99,99,99,99,,,,,,,99,99,99,99,99,99
+Internet software/Services,2025-09-01,monthly,83,83,66,66,83,83,99,99,99,99,99,99,83,83,66,66,83,83
+Major banks,2025-09-01,monthly,50,50,83,83,50,50,,,,,,,50,50,83,83,50,50
+Packaged software,2025-09-01,monthly,34,34,34,34,34,34,50,50,50,50,50,50,34,34,34,34,34,34
+Pharmaceuticals: major,2025-09-01,monthly,17,17,17,17,17,17,26,26,26,26,26,26,17,17,17,17,17,17
+Semiconductors,2025-09-01,monthly,66,66,50,50,66,66,74,74,74,74,74,74,66,66,50,50,66,66

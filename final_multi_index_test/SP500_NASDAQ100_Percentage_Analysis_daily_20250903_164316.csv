@@ -1,0 +1,16 @@
+Metric,Calculation Logic,SP500_Above%,SP500_Below%,NASDAQ100_Above%,NASDAQ100_Below%
+Day Change (%),1-day % change: (Close_t - Close_t-1)/Close_t-1 * 100,54.35,45.65,17.39,82.61
+Month Change (%),1-month: (Close_t - Close_t-20)/Close_t-20 * 100,0.00,0.00,0.00,0.00
+Quarter Change (%),1-quarter: (Close_t - Close_t-60)/Close_t-60 * 100,0.00,0.00,0.00,0.00
+Half Year Change (%),6-month: (Close_t - Close_t-120)/Close_t-120 * 100,0.00,0.00,0.00,0.00
+Price vs SMA 10,Price compared to 10-day Simple Moving Average,56.52,43.48,30.43,69.57
+Price vs EMA 20,Price compared to 20-day Exponential Moving Average,60.87,39.13,43.48,56.52
+Price vs SMA 50,Price compared to 50-day Simple Moving Average,71.74,28.26,69.57,30.43
+SMA 10 vs SMA 20,Short-term MA compared to medium-term MA,65.22,34.78,60.87,39.13
+SMA 20 vs SMA 50,Medium-term MA compared to long-term MA,67.39,32.61,73.91,26.09
+SMA 50 vs SMA 200,Long-term MA compared to very long-term MA,73.91,26.09,73.91,26.09
+Trend Strength,Percentage of up days in last 10 trading days,23.91,17.39,8.70,26.09
+Perfect Bull Alignment,SMA 20 > SMA 50 > SMA 200 alignment,54.35,45.65,56.52,43.48
+20-Day Position,Current price vs 20-day high/low range,23.91,0.00,8.70,0.00
+20-Day Low Position,Current price vs 20-day low,8.70,0.00,13.04,0.00
+RSI Momentum,RSI overbought vs oversold conditions,28.26,8.70,17.39,8.70

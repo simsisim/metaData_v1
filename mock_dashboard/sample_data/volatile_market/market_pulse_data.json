@@ -1,0 +1,65 @@
+{
+  "timestamp": "2025-09-02T09:09:57.056533",
+  "gmi_analysis": {
+    "SPY": {
+      "gmi_score": 4,
+      "gmi_signal": "GREEN",
+      "components": {
+        "short_trend": true,
+        "momentum": false,
+        "long_trend": true,
+        "price_momentum": true
+      }
+    },
+    "QQQ": {
+      "gmi_score": 4,
+      "gmi_signal": "GREEN",
+      "components": {
+        "short_trend": false,
+        "momentum": true,
+        "long_trend": true,
+        "price_momentum": true
+      }
+    },
+    "IWM": {
+      "gmi_score": 3,
+      "gmi_signal": "GREEN",
+      "components": {
+        "short_trend": true,
+        "momentum": true,
+        "long_trend": false,
+        "price_momentum": false
+      }
+    },
+    "^DJI": {
+      "gmi_score": 3,
+      "gmi_signal": "GREEN",
+      "components": {
+        "short_trend": true,
+        "momentum": true,
+        "long_trend": true,
+        "price_momentum": true
+      }
+    }
+  },
+  "distribution_days": {
+    "count": 3,
+    "warning_level": "NONE",
+    "lookback_period": 25
+  },
+  "follow_through_days": {
+    "date": "2025-08-27",
+    "gain_pct": 3.0,
+    "days_from_bottom": 12,
+    "quality": "GOOD"
+  },
+  "market_breadth": {
+    "new_highs": 139,
+    "new_lows": 110,
+    "net_highs": 29,
+    "breadth_signal": "NEUTRAL",
+    "universe_size": 757
+  },
+  "overall_signal": "BEARISH",
+  "confidence": "MEDIUM"
+}

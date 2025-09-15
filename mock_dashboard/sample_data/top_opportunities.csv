@@ -1,0 +1,16 @@
+ticker,primary_screener,signal_strength,score,current_price,volume,setup_stage,entry_level,stop_level,target_level,risk_reward
+NFLX,qullamaggie_suite,STRONG,9.2,183.48,35456619,Entry,189.72,174.37,219.01,1.9
+SNOW,guppy_alignment,STRONG,8.4,165.29,3080547,Breakout,172.41,152.34,195.82,1.2
+ADBE,volume_suite_hv_absolute,STRONG,8.1,35.28,21035425,Breakout,36.47,33.27,41.06,1.4
+CRWD,momentum_screener,STRONG,7.7,323.61,13010510,Follow-through,335.37,316.77,391.19,3.0
+RBLX,rti_compression,MODERATE,6.7,103.1,39453602,Breakout,108.22,98.43,121.09,1.3
+GOOGL,stockbee_9m_movers,MODERATE,6.2,393.09,35428057,Breakout,400.17,363.47,482.23,2.2
+ROKU,breakout_screener,MODERATE,6.1,235.77,7714767,Follow-through,246.04,219.42,260.03,0.5
+TWLO,momentum_screener,MODERATE,5.6,352.08,29506106,Entry,365.44,341.35,433.38,2.8
+KO,volume_breakout,WEAK,5.1,147.31,22950564,Entry,151.35,140.41,159.67,0.8
+PFE,gold_launch_pad,WEAK,4.7,412.52,14736423,Breakout,419.41,387.79,510.35,2.9
+GOOGL,guppy_alignment,WEAK,4.6,234.7,15169541,Entry,241.29,224.71,254.25,0.8
+TWLO,stockbee_daily_gainers,WEAK,4.6,243.66,9516037,Follow-through,249.45,235.97,267.25,1.3
+NFLX,gold_launch_pad,WEAK,4.3,108.45,7614476,Breakout,113.28,105.77,135.35,2.9
+KO,volume_breakout,WEAK,4.0,333.55,36422622,Follow-through,346.16,321.03,363.69,0.7
+ROKU,atr1_screener,WEAK,3.1,18.91,1333176,Follow-through,19.7,18.2,22.17,1.6

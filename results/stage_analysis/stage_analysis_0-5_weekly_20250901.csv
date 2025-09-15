@@ -1,0 +1,177 @@
+ticker,date,timeframe,weekly_price,weekly_sa_code,weekly_sa_name,weekly_sa_color_code,weekly_atr_ratio_sma_50,weekly_ma_alignment,weekly_price_vs_ema_fast,weekly_price_vs_sma_medium,weekly_price_vs_sma_slow
+AAPL,2025-09-01,weekly,239.6900,??,Undefined,gray,4.7198,Mixed,7.2991,13.3130,7.9772
+ABBV,2025-09-01,weekly,212.5600,2B,Breakout Confirmation,lime,4.1570,Bullish,4.7963,9.9065,13.3086
+ACN,2025-09-01,weekly,254.9500,4B,Bearish Confirmation,red,5.2852,Bearish,-4.0875,-10.6990,-20.4329
+AFRM,2025-09-01,weekly,87.3500,2C,Bullish Extended,green_dark,15.8639,Bullish,15.3673,35.1728,47.4396
+AMD,2025-09-01,weekly,151.1400,1C,Pullback,yellow_light,11.8637,Bullish,-3.5666,9.8325,16.4714
+AMGN,2025-09-01,weekly,283.6400,3B,Fade Confirmation,orange_dark,4.7602,Mixed,-2.3239,-1.1996,-1.8465
+AMZN,2025-09-01,weekly,232.3300,2B,Breakout Confirmation,lime,5.4512,Bullish,3.2070,7.8868,10.5614
+ANET,2025-09-01,weekly,142.8500,2C,Bullish Extended,green_dark,10.7500,Bullish,13.5397,32.9579,39.1037
+ARKK,2025-09-01,weekly,75.3700,2C,Bullish Extended,green_dark,8.0014,Bullish,2.9570,13.0383,27.1394
+ASML,2025-09-01,weekly,781.7000,2B,Breakout Confirmation,lime,6.2060,Bullish,4.5533,5.4245,7.8404
+AVGO,2025-09-01,weekly,334.8900,2C,Bullish Extended,green_dark,10.1557,Bullish,13.9612,27.2616,50.7471
+AZN,2025-09-01,weekly,81.7000,2B,Breakout Confirmation,lime,4.7461,Bullish,6.8874,12.5237,15.3228
+BAC,2025-09-01,weekly,49.4947,2B,Breakout Confirmation,lime,4.8618,Bullish,2.4734,6.9865,11.8719
+BLOK,2025-09-01,weekly,58.6800,2C,Bullish Extended,green_dark,7.4162,Bullish,1.8713,9.5573,25.0300
+BRK-A,2025-08-25,weekly,729687.0000,??,Undefined,gray,2.8047,Mixed,0.5099,-1.3221,0.5750
+BRK-B,2025-09-01,weekly,499.7700,2A,Bullish Trend,green_light,3.0791,Mixed,2.3001,1.1296,3.2541
+BSX,2025-09-01,weekly,107.2200,2B,Breakout Confirmation,lime,4.0021,Bullish,2.0506,2.7671,9.0674
+C,2025-09-01,weekly,95.4000,2B,Breakout Confirmation,lime,6.2901,Bullish,3.2547,12.1388,26.1632
+CIBR,2025-09-01,weekly,73.5100,2A,Bullish Trend,green_light,3.8955,Bullish,1.2093,2.2240,9.5803
+COPX,2025-09-01,weekly,51.0600,2B,Breakout Confirmation,lime,6.1537,Bullish,8.8671,16.5914,21.9437
+COST,2025-09-01,weekly,963.4800,3A,Bullish Fade,orange_light,3.4838,Mixed,-0.0503,-1.8369,0.3592
+CSCO,2025-09-01,weekly,66.9000,1C,Pullback,yellow_light,4.5441,Bullish,-0.7737,2.2166,9.7417
+CVX,2025-09-01,weekly,153.6600,1C,Pullback,yellow_light,4.8365,Mixed,-0.1758,4.4526,4.1333
+DIA,2025-09-01,weekly,454.9900,2A,Bullish Trend,green_light,2.4209,Bullish,1.9434,5.0362,6.3510
+FAN,2025-09-01,weekly,18.6800,2A,Bullish Trend,green_light,3.7134,Bullish,0.4711,4.4019,13.4964
+FDN,2025-09-01,weekly,280.6600,2A,Bullish Trend,green_light,3.6295,Bullish,3.8085,7.8507,14.1366
+FE,2025-09-01,weekly,43.4800,2A,Bullish Trend,green_light,2.8922,Bullish,1.7972,4.3563,7.5286
+FFTY,2025-09-01,weekly,35.1800,2B,Breakout Confirmation,lime,6.0957,Bullish,4.4431,11.2306,17.6528
+FIW,2025-09-01,weekly,114.7900,2A,Bullish Trend,green_light,2.8420,Bullish,2.9133,6.1216,8.6506
+FXD,2025-09-01,weekly,70.0200,2A,Bullish Trend,green_light,3.5315,Bullish,5.2505,10.2048,11.0907
+FXE,2025-09-01,weekly,108.0749,2A,Bullish Trend,green_light,1.4930,Bullish,0.5684,1.5865,6.7550
+FXG,2025-09-01,weekly,64.8800,LP,Launch Pad,purple,2.4907,Mixed,0.7380,1.6138,0.7517
+FXL,2025-09-01,weekly,162.5200,2A,Bullish Trend,green_light,3.8079,Bullish,2.7655,6.1709,9.4914
+FXR,2025-09-01,weekly,79.6300,2A,Bullish Trend,green_light,3.5791,Mixed,2.6669,6.8981,6.5342
+FXU,2025-09-01,weekly,43.8900,2A,Bullish Trend,green_light,2.4355,Bullish,0.1017,2.2681,8.5900
+GDX,2025-09-01,weekly,66.3400,2C,Bullish Extended,green_dark,7.4130,Bullish,13.8207,23.7952,46.2700
+GE,2025-09-01,weekly,279.2300,2B,Breakout Confirmation,lime,6.6990,Bullish,4.3707,10.3461,31.2373
+GEV,2025-09-01,weekly,582.0800,1C,Pullback,yellow_light,11.4912,Bullish,-0.7066,10.8137,43.1552
+GLD,2025-09-01,weekly,331.0500,2A,Bullish Trend,green_light,3.0569,Bullish,5.5226,7.2866,18.8782
+GOOG,2025-09-01,weekly,235.1700,2B,Breakout Confirmation,lime,6.4996,Bullish,15.8199,27.6937,31.1804
+GOOGL,2025-09-01,weekly,235.0000,2B,Breakout Confirmation,lime,6.6334,Bullish,16.1452,28.2941,32.1224
+GRID,2025-09-01,weekly,143.2600,2A,Bullish Trend,green_light,3.2147,Bullish,1.5463,5.8883,13.5071
+HD,2025-09-01,weekly,416.5866,??,Undefined,gray,4.2578,Mixed,5.4319,10.4457,8.5624
+HPQ,2025-09-01,weekly,29.3400,1B,Mean Reversion,yellow,5.5238,Mixed,7.4239,11.9732,-0.5612
+IAK,2025-09-01,weekly,132.1900,2A,Bullish Trend,green_light,2.7780,Mixed,0.5579,0.1157,1.5209
+IAT,2025-09-01,weekly,53.7900,2B,Breakout Confirmation,lime,4.5214,Bullish,4.3034,9.4999,9.6205
+IBB,2025-09-01,weekly,143.1200,2A,Bullish Trend,green_light,3.7965,Mixed,5.4430,10.5447,7.3074
+IDGT,2025-09-01,weekly,83.6200,2A,Bullish Trend,green_light,2.9371,Bullish,1.0616,3.1646,5.1243
+IGV,2025-09-01,weekly,108.1400,2A,Bullish Trend,green_light,3.9904,Bullish,0.0901,1.8570,7.1716
+IHI,2025-09-01,weekly,62.4400,2A,Bullish Trend,green_light,2.9904,Bullish,1.2044,1.8578,3.0986
+ISRG,2025-09-01,weekly,466.8600,4B,Bearish Confirmation,red,5.4615,Bearish,-4.3018,-9.0750,-10.7232
+ITA,2025-09-01,weekly,198.1300,2A,Bullish Trend,green_light,3.8855,Bullish,2.4884,7.7075,20.9859
+ITB,2025-09-01,weekly,116.7000,??,Undefined,gray,6.1874,Mixed,10.1479,19.4519,13.0659
+IWC,2025-09-01,weekly,143.4200,2B,Breakout Confirmation,lime,4.6556,Bullish,5.5544,12.4132,14.2069
+IWM,2025-09-01,weekly,237.7700,2A,Bullish Trend,green_light,3.9721,Mixed,5.0117,10.2083,9.7371
+IWN,2025-09-01,weekly,176.0000,??,Undefined,gray,4.0381,Mixed,5.4395,10.7868,9.5990
+IWO,2025-09-01,weekly,310.8300,2B,Breakout Confirmation,lime,4.0313,Bullish,4.5948,9.6467,9.7960
+IXC,2025-09-01,weekly,40.6600,2A,Bullish Trend,green_light,3.7096,Bullish,0.6486,3.2847,3.7307
+IXJ,2025-09-01,weekly,88.3100,2A,Bullish Trend,green_light,3.0226,Mixed,1.9324,2.9178,0.0376
+IXN,2025-09-01,weekly,95.5200,2A,Bullish Trend,green_light,3.5309,Bullish,1.4602,6.6563,12.3772
+IYG,2025-09-01,weekly,88.1300,2A,Bullish Trend,green_light,3.0460,Bullish,1.4324,4.6657,9.9110
+IYM,2025-09-01,weekly,148.6900,2A,Bullish Trend,green_light,3.1330,Bullish,2.4685,6.1685,7.2462
+IYT,2025-09-01,weekly,70.3500,??,Undefined,gray,4.2345,Mixed,0.7918,4.0476,3.4855
+JNJ,2025-09-01,weekly,178.4300,2A,Bullish Trend,green_light,3.6257,Bullish,4.2652,10.5007,14.7354
+JPM,2025-09-01,weekly,294.3800,2B,Breakout Confirmation,lime,4.3727,Bullish,1.4414,6.0149,15.8019
+KBE,2025-09-01,weekly,61.1600,2B,Breakout Confirmation,lime,4.5663,Bullish,4.7809,9.7926,11.0890
+KO,2025-09-01,weekly,67.9600,3A,Bullish Fade,orange_light,3.0379,Mixed,-1.9940,-3.0166,0.8301
+KRE,2025-09-01,weekly,65.4500,2B,Breakout Confirmation,lime,5.0238,Bullish,4.7932,9.7116,10.2498
+LIT,2025-09-01,weekly,50.5600,??,Undefined,gray,6.4373,Mixed,12.9063,24.2321,22.7438
+LLY,2025-09-01,weekly,727.2100,4C,Bearish Extended,maroon,7.0942,Bearish,-0.8787,-3.1316,-8.1059
+LULU,2025-09-01,weekly,167.8000,4C,Bearish Extended,maroon,7.6776,Bearish,-19.3896,-30.5603,-43.6913
+MA,2025-09-01,weekly,584.2200,2B,Breakout Confirmation,lime,4.4436,Bullish,1.2383,2.9012,7.7599
+MAGS,2025-09-01,weekly,61.2100,2A,Bullish Trend,green_light,3.9287,Bullish,4.8435,11.5231,16.9210
+MDY,2025-09-01,weekly,602.8900,2A,Bullish Trend,green_light,3.1116,Bullish,3.4305,6.6809,6.7486
+META,2025-09-01,weekly,752.4500,2B,Breakout Confirmation,lime,6.3151,Bullish,2.2403,8.6743,17.8679
+MSFT,2025-09-01,weekly,495.0000,1C,Pullback,yellow_light,4.1140,Bullish,-1.3542,2.6276,12.6401
+NFLX,2025-09-01,weekly,1243.8199,2B,Breakout Confirmation,lime,6.3021,Bullish,2.4364,2.8440,22.6051
+NLR,2025-09-01,weekly,118.7800,2C,Bullish Extended,green_dark,8.4254,Bullish,4.2238,13.0856,27.5221
+NTRS,2025-09-01,weekly,126.4837,2B,Breakout Confirmation,lime,5.9150,Bullish,0.1855,6.3501,17.2218
+NUKZ,2025-09-01,weekly,58.0300,2B,Breakout Confirmation,lime,6.4260,Bullish,0.9265,7.9638,22.7550
+NVDA,2025-09-01,weekly,167.0200,1C,Pullback,yellow_light,7.2232,Bullish,-0.9863,9.3267,20.2224
+OIH,2025-09-01,weekly,255.1300,1B,Mean Reversion,yellow,6.4080,Mixed,3.8166,8.0210,-0.6455
+ORCL,2025-09-01,weekly,232.8000,2C,Bullish Extended,green_dark,10.4999,Bullish,1.3689,10.6995,27.4440
+PAVE,2025-09-01,weekly,46.6400,2A,Bullish Trend,green_light,3.7513,Bullish,2.4232,7.1037,11.1281
+PBJ,2025-09-01,weekly,47.4100,3A,Bullish Fade,orange_light,2.1722,Bullish,-0.5909,-0.3227,1.2261
+PBW,2025-09-01,weekly,25.5200,2C,Bullish Extended,green_dark,8.3723,Bullish,7.6277,21.6764,28.8292
+PDD,2025-09-01,weekly,124.6800,2C,Bullish Extended,green_dark,7.1707,Mixed,6.6407,12.4915,10.7666
+PEJ,2025-09-01,weekly,59.4900,2A,Bullish Trend,green_light,3.3197,Bullish,2.7453,7.3866,12.2561
+PG,2025-09-01,weekly,160.0200,1B,Mean Reversion,yellow,2.9030,Bearish,1.6630,0.9626,-1.6479
+PHO,2025-09-01,weekly,73.4900,2A,Bullish Trend,green_light,2.7607,Bullish,2.3704,5.3146,7.7212
+PLTR,2025-09-01,weekly,153.1100,1C,Pullback,yellow_light,16.0773,Bullish,-1.2761,7.5260,51.0980
+PM,2025-09-01,weekly,161.5500,3C,Volatile Distribution,orange,5.7916,Mixed,-4.1451,-6.4934,8.6258
+PPA,2025-09-01,weekly,147.4500,2A,Bullish Trend,green_light,3.2946,Bullish,1.9747,6.3847,17.4632
+PSJ,2025-09-01,weekly,51.5600,2A,Bullish Trend,green_light,3.7222,Bullish,3.2649,8.4873,11.8014
+PXJ,2025-09-01,weekly,27.2000,??,Undefined,gray,5.4878,Mixed,5.2355,10.3674,4.3881
+QCOM,2025-09-01,weekly,158.9355,??,Undefined,gray,5.3988,Mixed,1.9600,4.3034,1.9241
+QQQ,2025-09-01,weekly,576.0600,2A,Bullish Trend,green_light,2.9530,Bullish,2.3891,6.8013,11.8799
+QTUM,2025-09-01,weekly,95.2700,2B,Breakout Confirmation,lime,4.4754,Bullish,2.7484,7.2527,19.3941
+REM,2025-09-01,weekly,23.5800,2A,Bullish Trend,green_light,3.4578,Bullish,5.4780,9.5116,9.9971
+REZ,2025-09-01,weekly,85.1100,LP,Launch Pad,purple,2.3648,Mixed,2.0791,2.8213,2.6204
+RING,2025-09-01,weekly,56.9400,2C,Bullish Extended,green_dark,7.7653,Bullish,14.9598,26.1879,50.5210
+ROBO,2025-09-01,weekly,63.9700,2A,Bullish Trend,green_light,3.7740,Bullish,2.7436,8.3485,11.8869
+SIL,2025-09-01,weekly,61.4900,2C,Bullish Extended,green_dark,8.7745,Bullish,14.4619,27.1550,50.2343
+SLVP,2025-09-01,weekly,23.3200,2C,Bullish Extended,green_dark,9.3969,Bullish,16.4119,30.2096,53.0169
+SMH,2025-09-01,weekly,293.2800,2B,Breakout Confirmation,lime,5.4047,Bullish,2.7476,10.1383,17.3769
+SOXX,2025-09-01,weekly,247.0500,2B,Breakout Confirmation,lime,5.6757,Bullish,2.4314,8.9454,13.0931
+SPGI,2025-09-01,weekly,538.0600,1C,Pullback,yellow_light,3.3021,Bullish,-0.4480,2.0323,5.3147
+SPHB,2025-09-01,weekly,105.2600,2B,Breakout Confirmation,lime,4.3473,Bullish,3.5598,10.3343,16.2468
+SPLV,2025-09-01,weekly,73.3700,2A,Bullish Trend,green_light,1.7931,Bullish,0.2741,0.9703,2.2837
+SPY,2025-09-01,weekly,647.2400,2A,Bullish Trend,green_light,2.3148,Bullish,2.2965,6.2101,9.6554
+TAN,2025-09-01,weekly,44.0400,2C,Bullish Extended,green_dark,7.9529,Bullish,11.6066,22.4405,25.3429
+TLT,2025-09-01,weekly,88.2246,2A,Bullish Trend,green_light,2.0369,Mixed,1.6904,2.4378,1.0553
+TMUS,2025-09-01,weekly,252.7600,2B,Breakout Confirmation,lime,4.7743,Bullish,2.7370,5.0894,6.2321
+TSLA,2025-09-01,weekly,350.8400,2C,Bullish Extended,green_dark,10.6129,Bullish,6.3252,9.0485,9.1686
+UNH,2025-09-01,weekly,315.3900,1B,Mean Reversion,yellow,5.0118,Bearish,4.0186,3.5568,-28.0012
+URA,2025-09-01,weekly,40.7300,2C,Bullish Extended,green_dark,9.7803,Bullish,4.6436,14.7647,32.2483
+UUP,2025-09-01,weekly,27.4000,1B,Mean Reversion,yellow,1.2818,Bearish,0.0949,0.0804,-2.4390
+V,2025-09-01,weekly,343.2200,3C,Volatile Distribution,orange,4.4787,Mixed,-1.0539,-1.8690,3.9745
+VAW,2025-09-01,weekly,208.1600,2A,Bullish Trend,green_light,3.2101,Bullish,2.7025,6.0477,6.3231
+VCR,2025-09-01,weekly,392.2000,2A,Bullish Trend,green_light,3.3774,Bullish,4.1514,8.3344,9.7141
+VDC,2025-09-01,weekly,220.3500,2A,Bullish Trend,green_light,2.1461,Bullish,0.1135,0.3698,2.0578
+VEGI,2025-09-01,weekly,39.9800,1C,Pullback,yellow_light,2.4144,Bullish,-0.4201,0.3664,5.7349
+VGT,2025-09-01,weekly,698.7900,2A,Bullish Trend,green_light,3.7015,Bullish,2.5253,8.2218,13.3875
+VHT,2025-09-01,weekly,257.0000,1B,Mean Reversion,yellow,2.9757,Mixed,2.3321,3.7765,-0.0304
+VIS,2025-09-01,weekly,290.1600,2A,Bullish Trend,green_light,2.9006,Bullish,1.2210,4.7238,9.3284
+VNQ,2025-09-01,weekly,92.4700,2A,Bullish Trend,green_light,2.6292,Mixed,1.9531,3.4377,3.2220
+VOX,2025-09-01,weekly,185.8000,2A,Bullish Trend,green_light,3.2585,Bullish,5.8580,11.5866,17.4214
+VPU,2025-09-01,weekly,181.0700,1C,Pullback,yellow_light,2.5389,Bullish,-0.4119,1.7147,5.6271
+VRSN,2025-09-01,weekly,280.0900,??,Undefined,gray,5.7157,Mixed,1.6354,0.4288,17.3289
+VTV,2025-09-01,weekly,182.5500,2A,Bullish Trend,green_light,1.9998,Bullish,1.6701,4.3089,5.7206
+VUG,2025-09-01,weekly,462.6000,2A,Bullish Trend,green_light,3.0462,Bullish,2.6937,7.4884,12.7489
+WMT,2025-09-01,weekly,100.5100,2A,Bullish Trend,green_light,3.8872,Bullish,2.4871,3.1527,8.3012
+WOOD,2025-09-01,weekly,76.0400,1B,Mean Reversion,yellow,3.6466,Mixed,1.4960,3.0499,-0.1290
+XAR,2025-09-01,weekly,216.6400,2B,Breakout Confirmation,lime,4.8829,Bullish,1.7786,6.9196,20.3557
+XBI,2025-09-01,weekly,95.4700,??,Undefined,gray,4.3705,Mixed,7.4303,12.6496,7.5029
+XHB,2025-09-01,weekly,119.3600,??,Undefined,gray,5.9523,Mixed,8.4600,16.4936,12.6850
+XHS,2025-09-01,weekly,99.5200,LP,Launch Pad,purple,3.3442,Bullish,3.4900,3.7296,3.9514
+XLB,2025-09-01,weekly,91.9600,2A,Bullish Trend,green_light,3.2946,Bullish,1.8511,4.3040,4.4637
+XLC,2025-09-01,weekly,114.6900,2A,Bullish Trend,green_light,3.0549,Bullish,4.9794,9.3756,15.2666
+XLE,2025-09-01,weekly,87.3600,2A,Bullish Trend,green_light,3.9904,Mixed,0.4151,2.4157,0.7231
+XLF,2025-09-01,weekly,53.0700,2A,Bullish Trend,green_light,2.8368,Bullish,0.9420,3.0756,6.8972
+XLI,2025-09-01,weekly,150.9300,2A,Bullish Trend,green_light,2.7684,Bullish,0.6439,3.6333,8.8413
+XLK,2025-09-01,weekly,262.8600,2A,Bullish Trend,green_light,3.5043,Bullish,1.7941,7.0184,12.6624
+XLP,2025-09-01,weekly,80.8700,3A,Bullish Fade,orange_light,2.2327,Bullish,-0.5080,-0.3232,1.0426
+XLRE,2025-09-01,weekly,42.1800,2A,Bullish Trend,green_light,2.5944,Bullish,0.8303,1.6204,1.8709
+XLU,2025-09-01,weekly,83.4700,1C,Pullback,yellow_light,2.6425,Bullish,-0.6532,1.3909,5.2072
+XLV,2025-09-01,weekly,137.9000,1B,Mean Reversion,yellow,3.0938,Mixed,1.6998,2.6805,-1.2725
+XLY,2025-09-01,weekly,235.1100,2A,Bullish Trend,green_light,3.4362,Bullish,3.9740,8.0759,9.9977
+XME,2025-09-01,weekly,83.9300,2B,Breakout Confirmation,lime,6.4090,Bullish,8.7271,21.0633,31.2104
+XOM,2025-09-01,weekly,109.2300,1C,Pullback,yellow_light,4.9264,Mixed,-0.8340,0.8395,0.0917
+XOP,2025-09-01,weekly,129.6400,??,Undefined,gray,5.0399,Mixed,1.3498,3.4620,0.7821
+XPH,2025-09-01,weekly,47.8500,2A,Bullish Trend,green_light,3.6389,Mixed,6.5888,12.8818,10.7697
+XRT,2025-09-01,weekly,87.3500,2B,Breakout Confirmation,lime,4.7615,Bullish,6.1573,11.7066,13.9094
+XSD,2025-09-01,weekly,289.6200,2B,Breakout Confirmation,lime,6.3162,Bullish,6.2456,15.8507,20.2185
+XSW,2025-09-01,weekly,190.9200,2B,Breakout Confirmation,lime,4.8249,Bullish,2.2756,4.4058,5.9986
+XTL,2025-09-01,weekly,135.6600,2B,Breakout Confirmation,lime,4.7071,Bullish,8.4666,18.5399,25.0990
+XTN,2025-09-01,weekly,85.5700,??,Undefined,gray,4.9648,Mixed,1.9215,6.6527,4.0123
+^BFX,2025-09-01,weekly,4768.8198,2A,Bullish Trend,green_light,2.2934,Bullish,1.7471,4.6196,8.4883
+^BUK100P,2025-09-01,weekly,923.4200,2A,Bullish Trend,green_light,1.6594,Bullish,1.4834,3.9976,7.5940
+^DJI,2025-09-01,weekly,45400.8594,2A,Bullish Trend,green_light,2.3725,Bullish,1.7182,4.6191,5.4550
+^DJUSL,2025-08-25,weekly,1452.6000,2A,Bullish Trend,green_light,2.3476,Bullish,2.4917,7.1626,9.5301
+^DJUSM,2025-08-25,weekly,2065.9299,2A,Bullish Trend,green_light,2.3295,Bullish,1.9759,5.4039,8.2373
+^DJUSS,2025-08-25,weekly,1745.5200,2A,Bullish Trend,green_light,2.8821,Mixed,2.7272,6.4715,6.3599
+^DJUSST,2025-08-25,weekly,597.1600,2B,Breakout Confirmation,lime,5.9383,Bullish,3.8426,9.3863,10.8639
+^FCHI,2025-09-01,weekly,7674.7798,3A,Bullish Fade,orange_light,2.6958,Bullish,-1.1147,-0.9310,0.0817
+^FTSE,2025-09-01,weekly,9208.2002,2A,Bullish Trend,green_light,1.6237,Bullish,1.2958,3.5210,7.3124
+^GDAXI,2025-09-01,weekly,23596.9805,3A,Bullish Fade,orange_light,3.1613,Bullish,-1.3316,-0.8088,7.5496
+^GSPC,2025-09-01,weekly,6481.5000,2A,Bullish Trend,green_light,2.2796,Bullish,2.1644,5.9299,8.9752
+^HSI,2025-09-01,weekly,25417.9805,2A,Bullish Trend,green_light,3.9840,Bullish,2.2897,5.5060,13.8647
+^IXIC,2025-09-01,weekly,21700.3906,2A,Bullish Trend,green_light,3.0543,Bullish,3.1146,8.3461,12.8739
+^N100,2025-09-01,weekly,1582.4500,1C,Pullback,yellow_light,2.3484,Bullish,-0.3253,0.3567,3.4176
+^NYA,2025-09-01,weekly,21136.0391,2A,Bullish Trend,green_light,2.1377,Bullish,1.8906,4.4040,6.7430
+^RUT,2025-09-01,weekly,2391.0500,2A,Bullish Trend,green_light,3.7656,Mixed,4.8671,9.9044,9.0011
+^STI,2025-09-01,weekly,4307.0801,2A,Bullish Trend,green_light,2.0773,Bullish,2.7596,6.4511,11.0954
+^STOXX50E,2025-09-01,weekly,5318.1499,3A,Bullish Fade,orange_light,2.7189,Bullish,-0.6123,-0.2720,2.7171
+^XAX,2025-09-01,weekly,6664.0801,2B,Breakout Confirmation,lime,4.1746,Bullish,7.2336,15.6256,25.2267

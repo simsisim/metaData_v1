@@ -1,0 +1,185 @@
+// @version=5
+indicator("Stage Analysis - Simple", "STAGE", overlay=true)
+
+// =============================================================================
+// INPUT PARAMETERS
+// =============================================================================
+atr_length = input.int(14, "ATR Period", minval=1, maxval=50)
+atr_threshold_low = input.float(4.0, "ATR Threshold Low", minval=0.1, maxval=20.0, step=0.1)
+atr_threshold_high = input.float(7.0, "ATR Threshold High", minval=0.1, maxval=20.0, step=0.1)
+show_table = input.bool(true, "Show Information Table")
+table_text_color = input.string("Black", "Table Text Color", options=["Black", "White", "Auto"])
+color_bars = input.bool(true, "Color Bars Based on Stage")
+
+// =============================================================================
+// MOVING AVERAGES CALCULATION
+// =============================================================================
+ema10 = ta.ema(close, 10)
+sma20 = ta.sma(close, 20)
+sma50 = ta.sma(close, 50)
+
+// =============================================================================
+// ATR CALCULATION
+// =============================================================================
+atr_value = ta.atr(atr_length)
+atr_ratio = atr_value / sma50 * 100
+
+// =============================================================================
+// STAGE DETECTION FUNCTION
+// =============================================================================
+get_stage() =>
+    var string stage_name = "Unknown"
+    var string stage_code = "0"
+    var color stage_color = color.gray
+    
+    // Stage conditions (fixed ATR boundaries with strict inequalities)
+    stage_1a = close >= ema10 and close <= sma20 and close <= sma50
+    stage_1b = close >= ema10 and close >= sma20 and close <= sma50
+    stage_1c = close < ema10 and close >= sma20 and close >= sma50  // NEW: Pullback
+    
+    stage_2a = close >= ema10 and close >= sma20 and close >= sma50 and atr_ratio < atr_threshold_low
+    stage_2b = close >= ema10 and close >= sma20 and close >= sma50 and ema10 > sma20 and sma20 > sma50 and atr_ratio >= atr_threshold_low and atr_ratio < atr_threshold_high
+    stage_2c = close >= ema10 and close >= sma20 and close >= sma50 and atr_ratio >= atr_threshold_high
+    
+    stage_3a = close <= ema10 and close <= sma20 and close >= sma50 and atr_ratio < atr_threshold_low
+    stage_3b = close <= ema10 and close <= sma20 and close <= sma50
+    stage_3c = close <= ema10 and close <= sma20 and close >= sma50 and atr_ratio >= atr_threshold_low  // NEW: Volatile Distribution
+    
+    stage_4a = close <= ema10 and close <= sma20 and close <= sma50 and atr_ratio < atr_threshold_low
+    stage_4b = close <= ema10 and close <= sma20 and close <= sma50 and ema10 < sma20 and sma20 < sma50 and atr_ratio >= atr_threshold_low and atr_ratio < atr_threshold_high
+    stage_4c = close <= ema10 and close <= sma20 and close <= sma50 and atr_ratio >= atr_threshold_high
+    
+    // Launch Pad: MA Convergence Zone (all MAs within 1% of each other)
+    ma_convergence = math.abs(ema10 - sma20) / sma20 <= 0.01 and math.abs(sma20 - sma50) / sma50 <= 0.01 and math.abs(ema10 - sma50) / sma50 <= 0.01
+    
+    // Priority system (ordered by stage significance)
+    if ma_convergence
+        stage_name := "Launch Pad"
+        stage_code := "LP"
+        stage_color := color.new(color.purple, 30)
+    else if stage_4c
+        stage_name := "Bearish Extended"
+        stage_code := "4C"
+        stage_color := color.new(color.maroon, 0)
+    else if stage_4b
+        stage_name := "Bearish Confirmation"
+        stage_code := "4B"
+        stage_color := color.new(color.red, 0)
+    else if stage_4a
+        stage_name := "Bearish Trend"
+        stage_code := "4A"
+        stage_color := color.new(color.red, 30)
+    else if stage_3c
+        stage_name := "Volatile Distribution"
+        stage_code := "3C"
+        stage_color := color.new(color.orange, 20)
+    else if stage_3b
+        stage_name := "Fade Confirmation"
+        stage_code := "3B"
+        stage_color := color.new(color.orange, 0)
+    else if stage_3a
+        stage_name := "Bullish Fade"
+        stage_code := "3A"
+        stage_color := color.new(color.orange, 30)
+    else if stage_2c
+        stage_name := "Bullish Extended"
+        stage_code := "2C"
+        stage_color := color.new(color.green, 0)
+    else if stage_2b
+        stage_name := "Breakout Confirmation"
+        stage_code := "2B"
+        stage_color := color.new(color.lime, 0)
+    else if stage_2a
+        stage_name := "Bullish Trend"
+        stage_code := "2A"
+        stage_color := color.new(color.green, 30)
+    else if stage_1c
+        stage_name := "Pullback"
+        stage_code := "1C"
+        stage_color := color.new(color.yellow, 50)
+    else if stage_1b
+        stage_name := "Mean Reversion"
+        stage_code := "1B"
+        stage_color := color.new(color.yellow, 30)
+    else if stage_1a
+        stage_name := "Upward Pivot"
+        stage_code := "1A"
+        stage_color := color.new(color.gray, 30)
+    else
+        stage_name := "Undefined"
+        stage_code := "??"
+        stage_color := color.new(color.gray, 50)
+    
+    [stage_name, stage_code, stage_color]
+
+// =============================================================================
+// GET CURRENT STAGE
+// =============================================================================
+[current_stage_name, current_stage_code, current_stage_color] = get_stage()
+
+// =============================================================================
+// PLOT MOVING AVERAGES
+// =============================================================================
+plot(ema10, "EMA 10", color=color.blue, linewidth=1)
+plot(sma20, "SMA 20", color=color.orange, linewidth=1)  
+plot(sma50, "SMA 50", color=color.red, linewidth=2)
+
+// =============================================================================
+// COLOR BARS BASED ON STAGE
+// =============================================================================
+barcolor(color_bars ? current_stage_color : na, title="Stage Color")
+
+// =============================================================================
+// INFORMATION TABLE (USING DEBUG APPROACH)
+// =============================================================================
+if show_table and barstate.islast
+    // Determine text color
+    text_color_main = table_text_color == "Black" ? color.black : 
+                      table_text_color == "White" ? color.white : color.black
+    
+    // Create table using same approach as debug version
+    info_table = table.new(position.top_right, 3, 7, bgcolor=color.white, border_width=1)
+    
+    // Headers
+    table.cell(info_table, 0, 0, "Metric", bgcolor=color.gray, text_color=color.white)
+    table.cell(info_table, 1, 0, "Value", bgcolor=color.gray, text_color=color.white)
+    table.cell(info_table, 2, 0, "Status", bgcolor=color.gray, text_color=color.white)
+    
+    // Row 1 - Current Stage
+    table.cell(info_table, 0, 1, "Stage", text_color=text_color_main)
+    table.cell(info_table, 1, 1, current_stage_code, text_color=text_color_main)
+    table.cell(info_table, 2, 1, current_stage_name, bgcolor=current_stage_color, text_color=color.black)
+    
+    // Row 2 - ATR Ratio
+    table.cell(info_table, 0, 2, "ATR/SMA50", text_color=text_color_main)
+    table.cell(info_table, 1, 2, str.tostring(atr_ratio, "#.##") + "%", text_color=text_color_main)
+    atr_status = atr_ratio < atr_threshold_low ? "Low" : atr_ratio < atr_threshold_high ? "Moderate" : "High"
+    table.cell(info_table, 2, 2, atr_status, text_color=text_color_main)
+    
+    // Row 3 - EMA10
+    ema10_diff = (close - ema10) / ema10 * 100
+    table.cell(info_table, 0, 3, "vs EMA10", text_color=text_color_main)
+    table.cell(info_table, 1, 3, str.tostring(ema10_diff, "#.##") + "%", text_color=text_color_main)
+    ema10_status = ema10_diff >= 0 ? "Above" : "Below"
+    table.cell(info_table, 2, 3, ema10_status, text_color=text_color_main)
+    
+    // Row 4 - SMA20
+    sma20_diff = (close - sma20) / sma20 * 100
+    table.cell(info_table, 0, 4, "vs SMA20", text_color=text_color_main)
+    table.cell(info_table, 1, 4, str.tostring(sma20_diff, "#.##") + "%", text_color=text_color_main)
+    sma20_status = sma20_diff >= 0 ? "Above" : "Below"
+    table.cell(info_table, 2, 4, sma20_status, text_color=text_color_main)
+    
+    // Row 5 - SMA50
+    sma50_diff = (close - sma50) / sma50 * 100
+    table.cell(info_table, 0, 5, "vs SMA50", text_color=text_color_main)
+    table.cell(info_table, 1, 5, str.tostring(sma50_diff, "#.##") + "%", text_color=text_color_main)
+    sma50_status = sma50_diff >= 0 ? "Above" : "Below"
+    table.cell(info_table, 2, 5, sma50_status, text_color=text_color_main)
+    
+    // Row 6 - MA Alignment
+    ma_alignment = ema10 > sma20 and sma20 > sma50 ? "Bullish" : ema10 < sma20 and sma20 < sma50 ? "Bearish" : "Mixed"
+    table.cell(info_table, 0, 6, "MA Stack", text_color=text_color_main)
+    table.cell(info_table, 1, 6, ma_alignment, text_color=text_color_main)
+    ma_detail = ma_alignment == "Bullish" ? "EMA>SMA20>SMA50" : ma_alignment == "Bearish" ? "EMA<SMA20<SMA50" : "Mixed Order"
+    table.cell(info_table, 2, 6, ma_detail, text_color=text_color_main)

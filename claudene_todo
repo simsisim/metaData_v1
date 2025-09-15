@@ -1,0 +1,69 @@
+Create a file in src that deals with calculating weekly/daily pct change of stocks in my tradingview_universe.csv
+Weekly and daily pct change triggers are user input variables, to be given in user_data.csv
+
+Data Management (I think this part was already taken into account in main.py)- pls confirm
+
+    Universe File Import
+
+        Load the main file containing all tickers and their metadata (e.g., ticker, index, market cap, earnings data).
+
+    Historical Data Loading
+
+        For each ticker, read its daily and weekly CSV files (ensure efficient batch loading for 5000 tickers with parallelization or optimized I/O).
+
+Data Processing
+
+    Price Movement Calculation
+
+        For each ticker:
+
+            Calculate weekly percentage change from the weekly CSV.
+
+            Calculate daily percentage change from the daily CSV.
+
+    Filtering Movers
+
+        Identify:
+
+            All tickers with weekly movement above 20% (up or down).
+
+            All tickers with daily movement above 4% (up or down).
+
+        Store results separately for weekly and daily signals.
+
+Results Aggregation
+
+    Merge with Metadata
+
+        For each high-move ticker, attach relevant metadata from the universe file (e.g., index, market cap, earnings info).
+
+    Sorting and Ranking
+
+        Optionally, sort movers by magnitude, market cap, sector, or other metadata fields based on user needs.
+
+Output and Reporting
+
+    Report Generation
+
+        Structure outputs:
+
+            Tabular lists (Tickers, Price Change %, Index, etc.).
+
+            Optionally, visualize or export results to a summary CSV or dashboard.
+
+    User Interface Layer
+
+        Design a selectable or parameterized interface for users to modify thresholds, filter by index, market cap, etc..
+
+Performance and Maintenance
+
+    Parallel or Batch Operations
+
+        Implement code modules for parallel processing across tickers for speed.
+
+    Error Handling and Logging
+
+        Include robust error handling (e.g., missing data, malformed CSVs).
+
+        Log processing steps and issues for later troubleshooting.
+

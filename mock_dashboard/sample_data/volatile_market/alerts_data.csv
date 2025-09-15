@@ -1,0 +1,6 @@
+priority,type,message,timestamp,action_required
+HIGH,WARNING,NVDA: Breaking above key resistance at $425,2025-09-02T09:09:57.059568,True
+HIGH,WARNING,Distribution Day WARNING: 4 days detected in SPY,2025-09-02T09:09:57.059574,True
+MEDIUM,OPPORTUNITY,Volume dry-up pattern in semiconductor sector,2025-09-02T09:09:57.059578,False
+MEDIUM,OPPORTUNITY,RTI compression detected in 7 stocks,2025-09-02T09:09:57.059580,False
+MEDIUM,OPPORTUNITY,RTI compression detected in 7 stocks,2025-09-02T09:09:57.059583,False

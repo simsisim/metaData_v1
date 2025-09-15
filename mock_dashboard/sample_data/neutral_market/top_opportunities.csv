@@ -1,0 +1,14 @@
+ticker,primary_screener,signal_strength,score,current_price,volume,setup_stage,entry_level,stop_level,target_level,risk_reward
+ZM,volume_breakout,STRONG,9.3,279.13,22132418,Follow-through,283.32,260.67,328.92,2.0
+TSLA,gold_launch_pad,STRONG,8.3,38.37,34614670,Entry,39.17,36.57,47.35,3.1
+GOOGL,stockbee_9m_movers,STRONG,7.7,328.78,46270553,Watch,335.97,312.87,379.86,1.9
+NVDA,atr1_screener,MODERATE,7.4,337.98,16559334,Watch,342.96,313.59,381.3,1.3
+GOOGL,adl_divergence,MODERATE,7.1,61.66,14699196,Watch,63.3,57.66,67.37,0.7
+HD,gold_launch_pad,MODERATE,7.0,356.93,34841434,Breakout,372.46,346.23,443.33,2.7
+CRWD,gold_launch_pad,MODERATE,6.7,284.62,49930238,Entry,293.2,278.6,349.66,3.9
+NVDA,stockbee_9m_movers,MODERATE,6.6,312.08,26376834,Watch,318.99,292.38,348.85,1.1
+AMZN,qullamaggie_suite,MODERATE,6.2,147.75,7000424,Follow-through,149.36,141.99,180.11,4.2
+HD,stockbee_weekly_movers,WEAK,6.0,137.66,28576039,Entry,142.94,134.11,163.65,2.3
+WMT,gold_launch_pad,MODERATE,5.9,348.85,45282469,Entry,356.99,338.25,378.31,1.1
+PFE,volume_breakout,WEAK,3.8,272.18,34106982,Breakout,284.47,262.12,331.77,2.1
+RIVN,breakout_screener,WEAK,3.5,351.66,48149686,Entry,367.79,335.25,395.58,0.9

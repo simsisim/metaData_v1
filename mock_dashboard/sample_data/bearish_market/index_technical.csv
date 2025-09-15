@@ -1,0 +1,5 @@
+index,current_price,atr_pct,ma_status,cycle_type,cycle_days,distance_from_ma_pct,rsi_14,macd,chillax_color
+SPY,456.46,1.19,Above 20MA,BEARISH,31,-3.68,62.2,1.84,DARK_GREEN
+QQQ,133.12,1.17,Above 20MA,BULLISH,40,9.81,49.6,0.137,DARK_GREEN
+IWM,120.63,2.38,Near 20MA,BULLISH,10,8.24,65.5,0.084,DARK_GREEN
+^DJI,334.61,2.16,Above 20MA,BULLISH,42,4.67,39.9,1.482,LIGHT_GREEN

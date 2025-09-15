@@ -1,0 +1,189 @@
+To calculate sector/industry Relative Strength (RS) in batch mode for a large universe (e.g., 5000+ stocks), the most robust and scalable approach is to aggregate price data for each group, compute a composite index (sector/industry), and then apply your RS calculations efficiently for all groups and all timeframes at once. The approach in your attached scripts is a strong foundation, but can be optimized for batch processing, modularity, and maintainability.
+Recommended Batch Processing Structure
+1. Preprocessing: Organize Your Universe
+
+    Load your stock info (with ticker, sector, industry, and, if possible, market cap).
+
+    Create mapping dictionaries:
+
+        sector_map = {sector: [tickers]}
+
+        industry_map = {industry: [tickers]}
+
+2. Aggregate Price Data Efficiently
+
+    Batch Loading:
+
+        For speed and memory, load all closing price data into a big DataFrame: columns = tickers, index = dates.
+
+        Use pandas groupby or dictionary comprehension to select by group.
+
+    Composite Index Calculation:
+
+        For each sector/industry:
+
+            Equal-weighted: Take the mean (or median) of normalized prices or returns for all stocks in that group.
+
+            Weighted: If you have market cap, calculate the weighted average accordingly.
+
+3. Batch RS Calculation
+
+    For each date and group index, calculate group return over desired windows (e.g., 1 week, 1 month, 3 months, YTD, 1 year).
+
+    Calculate your chosen benchmark index (e.g., "SPY", overall universe mean, or another index series).
+
+    Vectorized RS Calculation:
+    RS=1+Group Return1+Benchmark Return
+    RS=1+Benchmark Return1+Group Return
+
+        Use pandas operations to apply this formula on rolling windows or across your fractals (as in the classes in rs.py).
+
+    (Optional) Percentile Ranking:
+
+        For extra insight/ranking, convert group RS to percentiles across all groups for each time window, using rank(pct=True) in pandas.
+
+4. Batch Output and Reporting
+
+    Output all sectors/industries and their RS values (and RS ratings/percentiles) for every desired interval and all dates.
+
+    Save as flat CSVs or plot heatmaps/batch bar charts for easy visualization.
+
+Implementation — Pseudocode Outline
+
+python
+# Pre-assume: 'all_prices' = DataFrame (dates x tickers), 'info' = DataFrame (ticker, sector, industry, ...)
+
+def calc_group_index(price_df, tickers, weights=None):
+    group_df = price_df[tickers]
+    if weights is not None:
+        group_df = group_df.mul(weights, axis=1)
+        return group_df.sum(axis=1) / weights.sum()
+    else:
+        return group_df.mean(axis=1)
+
+for group_type, group_map in [('sector', sector_map), ('industry', industry_map)]:
+    rs_results = []
+    for group_name, group_tickers in group_map.items():
+        group_idx = calc_group_index(all_prices, group_tickers)
+        for fractal in fractals:  # e.g., 5, 20, 63, 252 days
+            group_ret = group_idx / group_idx.shift(fractal) - 1
+            bench_ret = benchmark_idx / benchmark_idx.shift(fractal) - 1
+            group_rs = (1 + group_ret) / (1 + bench_ret)
+            rs_results.append({'group': group_name, 'fractal': fractal, 'rs': group_rs.iloc[-1]})
+    # assemble rs_results into DataFrame
+
+# Optionally, apply percentile scoring across all groups and all fractals at the end
+
+Calculating a composite index for each sector or industry is essential when determining the Relative Strength (RS) of a sector/industry as a whole, rather than just individual stocks. Here’s why and how it fits in the batch RS framework:
+Why a Composite Index Is Needed
+1. Group-Level View
+
+    Relative Strength at Group Level:
+    RS is meant to show how a sector or industry performs relative to a benchmark (index or universe) across timeframes.
+    If only individual stocks are considered, the RS is only at the stock level—not at the group, which is critical for seeing economic or trend shifts at the industry/sector level.
+
+    Composite = "Group Price":
+    The composite index acts as the representative price series for the group (sector/industry) by summarizing the price action of all constituent stocks.
+
+2. Smooths Outliers
+
+    Using a mean, weighted mean, or median to build the composite dampens outliers or erratic moves of single stocks that could skew the interpretation if only the best (or worst) stock was used.
+
+3. Consistency With Market Index Analysis
+
+    Benchmarks like S&P 500 or MSCI World are themselves composite indices—to compare sector RS to the S&P, you need an analogous aggregated series for sectors/industries.
+
+What Is a Composite Index?
+
+    For a sector or industry, a composite index is usually calculated as:
+
+        Equal-weighted average: Mean closing prices (or returns) across all stocks in the group.
+
+        Market cap-weighted average: Each stock’s price (or return) weighted by its market capitalization.
+
+        Sometimes, more advanced weighting (e.g., float-adjusted, custom rules) is used in professional indexes.
+
+How It Is Used in RS Calculation
+
+    After aggregating the composite price index for the group:
+
+        Compute returns for the group (just as for a stock: (Composite Pricet)/(Composite Pricet−n)−1(Composite Pricet)/(Composite Pricet−n)−1).
+
+    Compare this group return to the benchmark return using the RS formula:
+    RS=1+Group Return1+Benchmark Return
+    RS=1+Benchmark Return1+Group Return
+
+This gives you a clean, interpretable metric of whether, on average, the sector/industry is outperforming or underperforming the benchmark, regardless of individual stock noise.
+Analogy
+
+    Imagine an "index fund" for a sector: tracking its aggregate movement gives a better picture than looking at a single stock, or a random handful.
+
+    Professional analysts always aggregate first, then compare aggregates, not individual stock lines.
+
+Summary:
+A composite index for each sector/industry is necessary to accurately and fairly aggregate performance, which is then compared to a benchmark. This is standard in all serious RS, momentum, and ETF analytics workflows—and is what gives your sector/industry-level RS statistics real-world meaning
+
+Steps to Calculate Market Cap-Weighted Composite Index
+1. Prepare Data
+
+    For each stock: Closing prices per date, and corresponding market capitalization (ideally, also per date; otherwise, static/latest is a proxy).
+
+    A mapping of tickers to their sector/industry.
+
+2. Build the Market Cap Weights
+
+Let:
+
+    Pi,tPi,t: price of stock ii on date tt
+
+    MCi,tMCi,t: market cap of stock ii on date tt
+
+For each date tt:
+Total Market Capt=∑i∈groupMCi,t
+Total Market Capt=i∈group∑MCi,t
+wi,t=MCi,tTotal Market Capt
+wi,t=Total Market CaptMCi,t
+
+Where wi,twi,t is the weight for stock ii in the composite on date tt.
+3. Compute Composite Index Time Series
+
+For each date tt:
+Compositet=∑i∈groupwi,t×Pi,t
+Compositet=i∈group∑wi,t×Pi,t
+
+This is the cap-weighted average price of the sector or industry for each day.
+Practical Implementation with Pandas
+
+Suppose you have:
+
+    prices: DataFrame with columns=tickers, rows=dates, values=prices
+
+    market_caps: DataFrame with columns=tickers, rows=dates (or most recent), values=market caps
+
+    tickers: list of tickers for the sector/industry
+
+python
+# Select columns
+group_prices = prices[tickers]
+group_caps = market_caps[tickers]  # use same index as prices
+
+# Calculate weights for each date
+weights = group_caps.div(group_caps.sum(axis=1), axis=0)
+
+# Calculate the weighted sum for each date (dot product)
+cap_weighted_index = (group_prices * weights).sum(axis=1)
+
+    If market cap is static per stock, you can repeat it for all dates.
+
+Important Notes
+
+    Returns: If you want to replicate a market cap-weighted return index, calculate daily returns for each stock, compute the weighted return per day, and chain-multiply to get the time series.
+
+    Missing Data: Weights should be recomputed for each date, ignoring NaN or zero caps/prices.
+
+    Benchmark: Now you can use this composite series as your "group price" to compare to your benchmark and calculate group RS as before.
+
+Summary:
+A market cap-weighted composite index for a sector or industry is built by multiplying each stock’s daily price by its share of total group market cap for that day; the sum of these is the group’s index value for each date, suitable for further RS calculations. 
+eXCLUDE tickers that have no industry and sectors. 
+

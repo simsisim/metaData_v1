@@ -1,0 +1,8 @@
+priority,type,message,timestamp,action_required
+HIGH,WARNING,TSLA: Volume spike +340% - investigate breakout,2025-09-02T09:09:57.055046,True
+HIGH,WARNING,NVDA: Breaking above key resistance at $425,2025-09-02T09:09:57.055050,True
+HIGH,WARNING,Distribution Day WARNING: 4 days detected in SPY,2025-09-02T09:09:57.055051,True
+MEDIUM,OPPORTUNITY,Volume dry-up pattern in semiconductor sector,2025-09-02T09:09:57.055053,False
+MEDIUM,OPPORTUNITY,Gold Launch Pad setup forming in META,2025-09-02T09:09:57.055054,False
+MEDIUM,OPPORTUNITY,Gold Launch Pad setup forming in META,2025-09-02T09:09:57.055055,False
+MEDIUM,OPPORTUNITY,AAPL: Approaching 20MA support at $185,2025-09-02T09:09:57.055057,False

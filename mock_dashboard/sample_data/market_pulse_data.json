@@ -1,0 +1,60 @@
+{
+  "timestamp": "2025-09-02T09:09:57.038954",
+  "gmi_analysis": {
+    "SPY": {
+      "gmi_score": 2,
+      "gmi_signal": "NEUTRAL",
+      "components": {
+        "short_trend": false,
+        "momentum": true,
+        "long_trend": true,
+        "price_momentum": true
+      }
+    },
+    "QQQ": {
+      "gmi_score": 2,
+      "gmi_signal": "NEUTRAL",
+      "components": {
+        "short_trend": false,
+        "momentum": true,
+        "long_trend": false,
+        "price_momentum": false
+      }
+    },
+    "IWM": {
+      "gmi_score": 2,
+      "gmi_signal": "NEUTRAL",
+      "components": {
+        "short_trend": true,
+        "momentum": false,
+        "long_trend": true,
+        "price_momentum": false
+      }
+    },
+    "^DJI": {
+      "gmi_score": 2,
+      "gmi_signal": "NEUTRAL",
+      "components": {
+        "short_trend": true,
+        "momentum": false,
+        "long_trend": true,
+        "price_momentum": false
+      }
+    }
+  },
+  "distribution_days": {
+    "count": 3,
+    "warning_level": "NONE",
+    "lookback_period": 25
+  },
+  "follow_through_days": null,
+  "market_breadth": {
+    "new_highs": 192,
+    "new_lows": 47,
+    "net_highs": 145,
+    "breadth_signal": "HEALTHY",
+    "universe_size": 757
+  },
+  "overall_signal": "NEUTRAL",
+  "confidence": "LOW"
+}

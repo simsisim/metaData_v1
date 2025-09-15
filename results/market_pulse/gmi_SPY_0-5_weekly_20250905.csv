@@ -1,0 +1,2 @@
+index,date,timeframe,weekly_gmi_signal,weekly_gmi_score,weekly_gmi_max_score,weekly_gmi_threshold,weekly_gmi_confirmation_days,weekly_gmi_r1,weekly_gmi_r2,weekly_gmi_r3,weekly_gmi_r4,weekly_gmi_r5,weekly_gmi_r6
+1,2025-09-05,weekly,GREEN,4.0,6,3,2,0.0,0.0,1.0,1.0,1.0,1

@@ -1,0 +1,6 @@
+ universe,index_symbol
+ SP500,SPY
+ NASDAQ100,QQQ
+ RUSSELL1000,IWM
+ ALL,SPY
+

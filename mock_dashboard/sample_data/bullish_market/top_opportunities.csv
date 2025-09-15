@@ -1,0 +1,14 @@
+ticker,primary_screener,signal_strength,score,current_price,volume,setup_stage,entry_level,stop_level,target_level,risk_reward
+TWLO,momentum_screener,STRONG,8.6,318.69,39166642,Watch,329.93,294.59,385.15,1.6
+TWLO,stockbee_9m_movers,MODERATE,7.2,301.1,29654120,Breakout,309.5,293.81,365.25,3.6
+PLTR,stockbee_daily_gainers,MODERATE,7.2,150.8,19405604,Entry,157.23,146.36,175.62,1.7
+CRWD,volume_suite_hv_absolute,MODERATE,7.2,385.15,46343219,Follow-through,394.72,364.23,445.86,1.7
+JNJ,gold_launch_pad,MODERATE,7.0,133.33,37756033,Breakout,138.3,127.0,164.49,2.3
+CRWD,stockbee_weekly_movers,MODERATE,7.0,60.73,7597215,Follow-through,63.06,58.9,67.38,1.0
+AAPL,atr1_screener,WEAK,5.5,87.11,7481403,Breakout,88.63,82.9,102.1,2.4
+NVDA,adl_divergence,WEAK,5.0,42.46,22891391,Breakout,43.03,41.0,49.17,3.0
+PFE,adl_divergence,WEAK,4.7,307.12,22235704,Follow-through,313.62,292.34,359.36,2.1
+DOCU,volume_breakout,WEAK,3.8,379.6,39722436,Breakout,395.69,351.4,451.84,1.3
+JPM,qullamaggie_suite,WEAK,3.6,283.35,39984936,Breakout,288.24,264.13,311.24,1.0
+HD,momentum_screener,WEAK,3.5,408.76,20376598,Entry,426.52,388.7,505.35,2.1
+HD,guppy_alignment,WEAK,3.1,430.43,15355824,Entry,448.18,409.84,530.71,2.2

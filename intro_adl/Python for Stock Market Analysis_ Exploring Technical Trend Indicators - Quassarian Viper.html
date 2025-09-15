@@ -1,0 +1,1145 @@
+<!doctype html>
+
+<!--
+  Minimal Mistakes Jekyll Theme 4.20.2 by Michael Rose
+  Copyright 2013-2020 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+
+<html lang="en" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>Python for Stock Market Analysis: Exploring Technical Trend Indicators - Quassarian Viper</title>
+<meta name="description" content="Introduction Hello and welcome back everyone to our second part of the new blog series Python for Stock Market Analysis. In the last part, we explored different types of moving averages like Simple Moving Average (SMA), Exponential Moving Average (EMA), Weighted Moving Average (WMA) and explored other moving metrics like Moving Median and Moving Variance. Until now we were looking only into the trend over the time and trend over the period of time. These simple metrics are used under the hood to make some assumptions in the stock markets. In this blog, we will explore some of popular metrics that are used in the stock markets which are based on Moving Averages. Please refer to the interactive version of this blog if you want to see the interactive plots.">
+
+
+  <meta name="author" content="Quassarian Viper">
+  
+  <meta property="article:author" content="Quassarian Viper">
+  
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="en_US">
+<meta property="og:site_name" content="Quassarian Viper">
+<meta property="og:title" content="Python for Stock Market Analysis: Exploring Technical Trend Indicators">
+<meta property="og:url" content="https://q-viper.github.io/2022/03/20/python-for-stock-market-analysis-technical-indicators/">
+
+
+  <meta property="og:description" content="Introduction Hello and welcome back everyone to our second part of the new blog series Python for Stock Market Analysis. In the last part, we explored different types of moving averages like Simple Moving Average (SMA), Exponential Moving Average (EMA), Weighted Moving Average (WMA) and explored other moving metrics like Moving Median and Moving Variance. Until now we were looking only into the trend over the time and trend over the period of time. These simple metrics are used under the hood to make some assumptions in the stock markets. In this blog, we will explore some of popular metrics that are used in the stock markets which are based on Moving Averages. Please refer to the interactive version of this blog if you want to see the interactive plots.">
+
+
+
+  <meta property="og:image" content="https://q-viper.github.io/assets/stock_analysis/ppo.png">
+
+
+
+
+
+  <meta property="article:published_time" content="2022-03-20T03:44:17+00:00">
+
+
+
+
+
+
+<link rel="canonical" href="https://q-viper.github.io/2022/03/20/python-for-stock-market-analysis-technical-indicators/">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": null,
+      "url": "https://q-viper.github.io/"
+    
+  }
+</script>
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+<script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+ 
+<link href="/feed.xml" type="application/atom+xml" rel="alternate" title="Quassarian Viper Feed">
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+
+    <!-- start custom head snippets -->
+
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7009255619987324"
+     crossorigin="anonymous"></script>
+<!-- 100% privacy friendly analytics -->
+<script async defer src="https://scripts.simpleanalyticscdn.com/latest.js"></script>
+<noscript><img src="https://queue.simpleanalyticscdn.com/noscript.gif" alt="" referrerpolicy="no-referrer-when-downgrade" /></noscript>
+
+     <!-- end custom head snippets -->
+
+<link rel="apple-touch-icon" sizes="180x180" href="https://q-viper.github.io/assets/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="https://q-viper.github.io/assets/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="https://q-viper.github.io/assets/favicon-16x16.png">
+<link rel="manifest" href="https://q-viper.github.io/assets/site.webmanifest">
+<meta name="msapplication-TileColor" content="#da532c">
+<meta name="theme-color" content="#ffffff">
+
+
+  </head>
+
+  <body class="layout--single wide">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+          <a class="site-logo" href="/"><img src="/assets/images/pp.jpg" alt=""></a>
+        
+        <a class="site-title" href="/">
+          Quassarian Viper
+          
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/posts/">Posts</a>
+            </li><li class="masthead__menu-item">
+              <a href="/projects/">Projects</a>
+            </li><li class="masthead__menu-item">
+              <a href="/categories/">Categories</a>
+            </li><li class="masthead__menu-item">
+              <a href="/tags/">Tags</a>
+            </li><li class="masthead__menu-item">
+              <a href="/contact/">Contact</a>
+            </li><li class="masthead__menu-item">
+              <a href="/terms/">Terms</a>
+            </li></ul>
+        
+        <button class="search__toggle" type="button">
+          <span class="visually-hidden">Toggle search</span>
+          <svg class="icon" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15.99 16">
+            <path d="M15.5,13.12L13.19,10.8a1.69,1.69,0,0,0-1.28-.55l-0.06-.06A6.5,6.5,0,0,0,5.77,0,6.5,6.5,0,0,0,2.46,11.59a6.47,6.47,0,0,0,7.74.26l0.05,0.05a1.65,1.65,0,0,0,.5,1.24l2.38,2.38A1.68,1.68,0,0,0,15.5,13.12ZM6.4,2A4.41,4.41,0,1,1,2,6.4,4.43,4.43,0,0,1,6.4,2Z" transform="translate(-.01)"></path>
+          </svg>
+        </button>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">Toggle menu</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+    <div class="author__avatar">
+      
+        <img src="/assets/images/pp.jpg" alt="Quassarian Viper" itemprop="image">
+      
+    </div>
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Quassarian Viper</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>Pile of Quarks as Homo Sapiens.</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">Follow</button>
+    <ul class="author__urls social-icons">
+      
+
+      
+        
+          
+            <li><a href="https://twitter.com/QuassarianViper" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-twitter-square" aria-hidden="true"></i><span class="label">Twitter</span></a></li>
+          
+        
+          
+            <li><a href="https://github.com/q-viper" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i><span class="label">GitHub</span></a></li>
+          
+        
+          
+            <li><a href="https://www.linkedin.com/in/qramkrishna/" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span class="label">LinkedIn</span></a></li>
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="Python for Stock Market Analysis: Exploring Technical Trend Indicators">
+    <meta itemprop="description" content="IntroductionHello and welcome back everyone to our second part of the new blog series Python for Stock Market Analysis. In the last part, we explored different types of moving averages like Simple Moving Average (SMA), Exponential Moving Average (EMA), Weighted Moving Average (WMA) and explored other moving metrics like Moving Median and Moving Variance. Until now we were looking only into the trend over the time and trend over the period of time. These simple metrics are used under the hood to make some assumptions in the stock markets. In this blog, we will explore some of popular metrics that are used in the stock markets which are based on Moving Averages. Please refer to the interactive version of this blog if you want to see the interactive plots.">
+    <meta itemprop="datePublished" content="2022-03-20T03:44:17+00:00">
+    
+
+    <div class="page__inner-wrap">
+      
+        <header>
+          <h1 id="page-title" class="page__title" itemprop="headline">Python for Stock Market Analysis: Exploring Technical Trend Indicators
+</h1>
+          
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          10 minute read
+        
+      </span>
+    
+  </p>
+
+
+        </header>
+      
+
+      <section class="page__content" itemprop="text">
+        
+        <h2 id="introduction">Introduction</h2>
+<p>Hello and welcome back everyone to our second part of the new blog series <a href="">Python for Stock Market Analysis</a>. In the last part, we explored different <a href="">types of moving averages</a> like Simple Moving Average (SMA), Exponential Moving Average (EMA), Weighted Moving Average (WMA) and explored other moving metrics like Moving Median and Moving Variance. Until now we were looking only into the trend over the time and trend over the period of time. These simple metrics are used under the hood to make some assumptions in the stock markets. In this blog, we will explore some of popular metrics that are used in the stock markets which are based on Moving Averages. Please refer to the <a href="https://q-viper.github.io/html_posts/python-for-stock-market-analysis-exploring-different-types-of-trend-Indicators">interactive version of this blog</a> if you want to see the interactive plots.</p>
+
+<p><strong>Disclaimer:</strong> This blog is for educational purpose only and we do not recommend taking the knowledge gained from this blog to implement in real financial exercises.</p>
+
+<p>Technical indicators in stock markets are categorized in many ways and some of the most common are:</p>
+<ul>
+  <li>Trend Indicators</li>
+  <li>Momentum Indicator</li>
+  <li>Volatility Indicator</li>
+  <li>Volume Indicator</li>
+</ul>
+
+<p>All above 4 are used to either predict or alert us about the future of the stock. The indicators are often viewed in the terms of leading and lagging. Leading indicators give some kind of predictions about the price rise or trend by using short term moving averages (like EMA of period 12 in MACD (Moving Average Convergence Divergence)). Lagging indicators give the information that has happened and might continue to do so. Like EMA of different periods.</p>
+
+<p>Before diving into the coding part, lets read our data.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="n">pd</span>
+<span class="kn">import</span> <span class="nn">plotly.express</span> <span class="k">as</span> <span class="n">px</span>
+<span class="kn">import</span> <span class="nn">cufflinks</span>
+<span class="kn">import</span> <span class="nn">plotly.io</span> <span class="k">as</span> <span class="n">pio</span> 
+<span class="kn">import</span> <span class="nn">yfinance</span> <span class="k">as</span> <span class="n">yf</span>
+<span class="kn">import</span> <span class="nn">warnings</span> 
+<span class="n">warnings</span><span class="p">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s">"ignore"</span><span class="p">)</span>
+<span class="n">cufflinks</span><span class="p">.</span><span class="n">go_offline</span><span class="p">()</span>
+<span class="n">cufflinks</span><span class="p">.</span><span class="n">set_config_file</span><span class="p">(</span><span class="n">world_readable</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">theme</span><span class="o">=</span><span class="s">'pearl'</span><span class="p">)</span>
+<span class="n">pio</span><span class="p">.</span><span class="n">renderers</span><span class="p">.</span><span class="n">default</span> <span class="o">=</span> <span class="s">"notebook"</span> <span class="c1"># should change by looking into pio.renderers
+</span>
+<span class="n">pd</span><span class="p">.</span><span class="n">options</span><span class="p">.</span><span class="n">display</span><span class="p">.</span><span class="n">max_columns</span> <span class="o">=</span> <span class="bp">None</span>
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">symbols</span> <span class="o">=</span> <span class="p">[</span><span class="s">"AAPL"</span><span class="p">]</span>
+
+<span class="n">df</span> <span class="o">=</span> <span class="n">yf</span><span class="p">.</span><span class="n">download</span><span class="p">(</span><span class="n">tickers</span><span class="o">=</span><span class="n">symbols</span><span class="p">)</span>
+<span class="n">df</span><span class="p">.</span><span class="n">head</span><span class="p">()</span>
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># convert column names into lowercase
+</span><span class="n">df</span><span class="p">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span><span class="p">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">df</span><span class="p">.</span><span class="n">columns</span><span class="p">]</span>
+<span class="n">df</span><span class="p">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="s">"adj close"</span><span class="p">:</span><span class="s">"adj_close"</span><span class="p">},</span><span class="n">inplace</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+</code></pre></div></div>
+
+<h2 id="trend-indicators">Trend Indicators</h2>
+<p>Trend indicators are used as a basic way to visualize the flow of the stock’s performance over the course of the time (daily, monthly, weekly, in last 3 weeks etc). We can apply these indicators in stocks’s performances like volume, price and transactions. Trend indicators are different in kinds and we have explored some of them in the previous blog where have explored trend of Open, High, Low and Volume of the Apple’s Floorsheet data. The trend itself doesnot predict anything about the price rise or fall on the future but we can make some kind of analogy based on the recent performance of the stock.</p>
+
+<p>Despite the price being high/low throughout the day, most traders find the closing price to be most important to describe the performance of the stock on that day. So, we will calculate most single variate indicators based on Closing Price of that day.</p>
+
+<p>Some of popular trend indicators are:</p>
+<ul>
+  <li>Moving Average</li>
+  <li>Guppy Multiple Moving Average</li>
+  <li>Moving Average Convergence Divergence</li>
+</ul>
+
+<p>We will calculate these in our data next.</p>
+
+<h3 id="moving-averages">Moving Averages</h3>
+<p>Moving Averages are common trend indicators that are a building blocks of popular indicators like GMMA (Guppy Multiple Moving Average), MACD (Moving Average Convergence Divergence)and PPO (Percentage Price Oscillator). 
+But first lets write a simple function that could give us moving average of given window.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">moving_average</span><span class="p">(</span><span class="n">series</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="s">"sma"</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">kind</span><span class="o">==</span><span class="s">"sma"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">series</span><span class="p">.</span><span class="n">rolling</span><span class="p">(</span><span class="n">window</span><span class="o">=</span><span class="n">window</span><span class="p">,</span> <span class="n">min_periods</span><span class="o">=</span><span class="n">window</span><span class="p">).</span><span class="n">mean</span><span class="p">()</span>
+    <span class="k">elif</span> <span class="n">kind</span><span class="o">==</span><span class="s">"ema"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">series</span><span class="p">.</span><span class="n">rolling</span><span class="p">(</span><span class="n">window</span><span class="o">=</span><span class="n">window</span><span class="p">,</span> <span class="n">min_periods</span><span class="o">=</span><span class="n">window</span><span class="p">).</span><span class="n">mean</span><span class="p">()</span>
+    <span class="k">elif</span> <span class="n">kind</span><span class="o">==</span><span class="s">"wma"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">series</span><span class="p">.</span><span class="n">rolling</span><span class="p">(</span><span class="n">window</span><span class="o">=</span><span class="n">window</span><span class="p">,</span> <span class="n">min_periods</span><span class="o">=</span><span class="n">window</span><span class="p">).</span><span class="nb">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">average</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="n">np</span><span class="p">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">window</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)))</span>
+        
+        
+        
+
+<span class="n">tdf</span> <span class="o">=</span> <span class="n">df</span><span class="p">.</span><span class="n">copy</span><span class="p">()</span>
+
+<span class="n">window</span><span class="o">=</span><span class="mi">30</span>
+<span class="n">tdf</span><span class="p">[</span><span class="sa">f</span><span class="s">"close_sma_</span><span class="si">{</span><span class="n">window</span><span class="si">}</span><span class="s">"</span><span class="p">]</span> <span class="o">=</span> <span class="n">moving_average</span><span class="p">(</span><span class="n">tdf</span><span class="p">.</span><span class="n">close</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="n">window</span><span class="p">)</span>
+<span class="n">tdf</span><span class="p">[</span><span class="sa">f</span><span class="s">"close_ema_</span><span class="si">{</span><span class="n">window</span><span class="si">}</span><span class="s">"</span><span class="p">]</span> <span class="o">=</span> <span class="n">moving_average</span><span class="p">(</span><span class="n">tdf</span><span class="p">.</span><span class="n">close</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="n">window</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="s">"ema"</span><span class="p">)</span>
+<span class="n">tdf</span><span class="p">[</span><span class="sa">f</span><span class="s">"close_wma_</span><span class="si">{</span><span class="n">window</span><span class="si">}</span><span class="s">"</span><span class="p">]</span> <span class="o">=</span> <span class="n">moving_average</span><span class="p">(</span><span class="n">tdf</span><span class="p">.</span><span class="n">close</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="n">window</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="s">"wma"</span><span class="p">)</span>
+<span class="n">tdf</span>
+</code></pre></div></div>
+
+<h4 id="trend-of-closing-price-over-a-30d-periods">Trend of Closing Price Over a 30d Periods</h4>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">cols</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">tdf</span><span class="p">.</span><span class="n">columns</span> <span class="k">if</span> <span class="s">"close"</span> <span class="ow">in</span> <span class="n">c</span> <span class="ow">and</span> <span class="s">"adj"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">c</span><span class="p">]</span>
+<span class="n">tdf</span><span class="p">[</span><span class="n">cols</span><span class="p">].</span><span class="n">iplot</span><span class="p">(</span><span class="n">kind</span><span class="o">=</span><span class="s">"line"</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p><img src="https://q-viper.github.io/assets/stock_analysis/smawma30.png" alt="" /></p>
+
+<p>Above plot seems little bit spiked but if we zoomed it little bit, we could see the changes in the closing price and the performance of the moving averages. We can say that EMA are more closer toward the close’s actual trend because it gives more importance to the latest values based on the decay term.</p>
+
+<h3 id="guppy-multiple-moving-average-gmma">Guppy Multiple Moving Average (GMMA)</h3>
+<p>GMMA is a technical indicator where we use two groups of EMAs (total 12) and compare their flow over the time to make assumptions. Guppy in GMMA comes from the Australian trader named as Daryl Guppy.</p>
+
+<ul>
+  <li>Two groups of EMAs are Long term EMA and Short term EMA. Where periods in long term EMAs (6 terms) are typically set 30, 35, 40, 45, 50 and 60. And short term EMA periods as 3, 5, 8,10, 12 and 15.</li>
+  <li>When SEMA (Short term EMA) moves above the LEMA (Long term EMA), then it indicates a <strong>price rise</strong> in the stocks could be happening.</li>
+  <li>Reversely, when SEMA moves below the LEMA, it indicates a <strong>price fall</strong> in the stocks could be happening.</li>
+  <li>Trade is recommended when one group crosses over another. Which means, sell in price rise and buy in price fall case.</li>
+  <li>The separation between two EMA groups gives a strength of the trend, thus the higher the difference between two groups of EMAs, higher the strength of rise/fall probability.</li>
+  <li>Reversals are when SEMA crosses over LEMA and vice versa.</li>
+  <li>Bullish crossover happens when SEMA crosses over the LEMA. And it indicates a bullish reversal occurrence.</li>
+  <li>Bearish crossover happens when SEMA crosses below the LEMA. And it indicates a bearish reversal occurrence.</li>
+  <li>When two groups are trending horizontally or parallel, then this the when <strong>no trend</strong> was found.</li>
+</ul>
+
+<h4 id="calculation-of-gmma">Calculation of GMMA</h4>
+<ul>
+  <li>Calculate EMAs for both short term and long term trends.</li>
+  <li>Plot them and check whether a trend forms or not.</li>
+</ul>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">guppy_multiple_ma</span><span class="p">(</span><span class="n">tdf</span><span class="p">,</span><span class="n">col</span><span class="o">=</span><span class="s">"close"</span><span class="p">,</span> <span class="n">sma</span><span class="o">=</span><span class="p">[],</span> <span class="n">lma</span><span class="o">=</span><span class="p">[]):</span>
+    <span class="s">"""
+        sma: [3, 5, 8, 10, 12, 15]
+        lma: [30, 35, 40, 45, 50, 60]
+    """</span>
+    
+    <span class="k">if</span> <span class="n">sma</span> <span class="o">==</span> <span class="p">[]:</span>
+        <span class="n">sma</span> <span class="o">=</span>  <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">15</span><span class="p">]</span><span class="c1"># 
+</span>    <span class="k">if</span> <span class="n">lma</span> <span class="o">==</span> <span class="p">[]:</span>
+        <span class="n">lma</span> <span class="o">=</span> <span class="p">[</span><span class="mi">30</span><span class="p">,</span> <span class="mi">35</span><span class="p">,</span> <span class="mi">40</span><span class="p">,</span> <span class="mi">45</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="mi">60</span><span class="p">]</span> <span class="c1">#
+</span>    
+    
+    <span class="k">for</span> <span class="n">sm</span>  <span class="ow">in</span> <span class="n">sma</span><span class="p">:</span>
+        <span class="n">tdf</span><span class="p">[</span><span class="sa">f</span><span class="s">"sema_</span><span class="si">{</span><span class="n">col</span><span class="si">}</span><span class="s">_</span><span class="si">{</span><span class="n">sm</span><span class="si">}</span><span class="s">"</span><span class="p">]</span> <span class="o">=</span> <span class="n">tdf</span><span class="p">[</span><span class="n">col</span><span class="p">].</span><span class="n">ewm</span><span class="p">(</span><span class="n">span</span><span class="o">=</span><span class="n">sm</span><span class="p">,</span> <span class="n">min_periods</span><span class="o">=</span><span class="n">sm</span><span class="p">,</span> <span class="n">adjust</span><span class="o">=</span><span class="bp">False</span><span class="p">).</span><span class="n">mean</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">lm</span> <span class="ow">in</span> <span class="n">lma</span><span class="p">:</span>
+        <span class="n">tdf</span><span class="p">[</span><span class="sa">f</span><span class="s">"lema_</span><span class="si">{</span><span class="n">col</span><span class="si">}</span><span class="s">_</span><span class="si">{</span><span class="n">lm</span><span class="si">}</span><span class="s">"</span><span class="p">]</span> <span class="o">=</span> <span class="n">tdf</span><span class="p">[</span><span class="n">col</span><span class="p">].</span><span class="n">ewm</span><span class="p">(</span><span class="n">span</span><span class="o">=</span><span class="n">lm</span><span class="p">,</span> <span class="n">min_periods</span><span class="o">=</span><span class="n">lm</span><span class="p">,</span> <span class="n">adjust</span><span class="o">=</span><span class="bp">False</span><span class="p">).</span><span class="n">mean</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">tdf</span>
+<span class="n">tdf</span> <span class="o">=</span> <span class="n">guppy_multiple_ma</span><span class="p">(</span><span class="n">tdf</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="s">"close"</span><span class="p">)</span> 
+<span class="n">tdf</span>
+</code></pre></div></div>
+
+<h4 id="viewing-gmma-with-candlestick">Viewing GMMA with Candlestick</h4>
+<p>Lets try to use candlestick to visualize OHLC and the trend at the same time. Any stick will be shown green if closing price is higher than opening and red if smaller than opening price. The top stick part is high, bottom stick part is low and top rectangle line reflects open if close is smaller else it reflects closing price. An example of candlestick is:</p>
+
+<p><img src="https://q-viper.github.io/assets/stock_analysis/candle1.png" alt="" /></p>
+
+<p>In above image, green represents where closing is greater than the opening price.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">plotly.graph_objects</span> <span class="k">as</span> <span class="n">go</span>
+
+
+<span class="n">layout</span> <span class="o">=</span> <span class="n">go</span><span class="p">.</span><span class="n">Layout</span><span class="p">(</span>
+    <span class="n">autosize</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+    <span class="n">width</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
+    <span class="n">height</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
+
+    <span class="n">xaxis</span><span class="o">=</span> <span class="n">go</span><span class="p">.</span><span class="n">layout</span><span class="p">.</span><span class="n">XAxis</span><span class="p">(</span><span class="n">linecolor</span> <span class="o">=</span> <span class="s">'black'</span><span class="p">,</span>
+                          <span class="n">linewidth</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+                          <span class="n">mirror</span> <span class="o">=</span> <span class="bp">True</span><span class="p">),</span>
+
+    <span class="n">yaxis</span><span class="o">=</span> <span class="n">go</span><span class="p">.</span><span class="n">layout</span><span class="p">.</span><span class="n">YAxis</span><span class="p">(</span><span class="n">linecolor</span> <span class="o">=</span> <span class="s">'black'</span><span class="p">,</span>
+                          <span class="n">linewidth</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+                          <span class="n">mirror</span> <span class="o">=</span> <span class="bp">True</span><span class="p">),</span>
+
+<span class="p">)</span>
+<span class="n">fig</span><span class="o">=</span><span class="n">go</span><span class="p">.</span><span class="n">Figure</span><span class="p">(</span><span class="n">layout</span><span class="o">=</span><span class="n">layout</span><span class="p">)</span>
+
+<span class="n">lastn</span> <span class="o">=</span> <span class="mi">1000</span>
+<span class="n">ldf</span> <span class="o">=</span> <span class="n">tdf</span><span class="p">[</span><span class="o">-</span><span class="n">lastn</span><span class="p">:]</span>
+<span class="n">fig</span><span class="p">.</span><span class="n">add_trace</span><span class="p">(</span><span class="n">go</span><span class="p">.</span><span class="n">Candlestick</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">ldf</span><span class="p">.</span><span class="n">index</span><span class="p">,</span>
+                <span class="nb">open</span><span class="o">=</span><span class="n">ldf</span><span class="p">[</span><span class="s">'open'</span><span class="p">],</span>
+                <span class="n">high</span><span class="o">=</span><span class="n">ldf</span><span class="p">[</span><span class="s">'high'</span><span class="p">],</span>
+                <span class="n">low</span><span class="o">=</span><span class="n">ldf</span><span class="p">[</span><span class="s">'low'</span><span class="p">],</span>
+                <span class="n">close</span><span class="o">=</span><span class="n">ldf</span><span class="p">[</span><span class="s">'close'</span><span class="p">],</span> 
+                 <span class="n">name</span> <span class="o">=</span> <span class="s">'OHLC Market Data'</span><span class="p">))</span>
+
+<span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">tdf</span><span class="p">.</span><span class="n">columns</span><span class="p">:</span>
+    <span class="k">if</span> <span class="s">"sema"</span> <span class="ow">in</span> <span class="n">s</span><span class="p">:</span>
+        <span class="n">fig</span><span class="p">.</span><span class="n">add_trace</span><span class="p">(</span><span class="n">go</span><span class="p">.</span><span class="n">Line</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">ldf</span><span class="p">.</span><span class="n">index</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">ldf</span><span class="p">[</span><span class="n">s</span><span class="p">],</span> <span class="n">line</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+                        <span class="n">color</span><span class="o">=</span><span class="s">'rgb(104, 204, 204)'</span><span class="p">,</span>
+                        
+                    <span class="p">),</span> 
+                      <span class="n">name</span><span class="o">=</span><span class="n">s</span><span class="p">.</span><span class="n">upper</span><span class="p">()))</span>
+    <span class="k">if</span> <span class="s">"lema"</span> <span class="ow">in</span> <span class="n">s</span><span class="p">:</span>
+        <span class="n">fig</span><span class="p">.</span><span class="n">add_trace</span><span class="p">(</span><span class="n">go</span><span class="p">.</span><span class="n">Line</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">ldf</span><span class="p">.</span><span class="n">index</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">ldf</span><span class="p">[</span><span class="n">s</span><span class="p">],</span> <span class="n">line</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+                        <span class="n">color</span><span class="o">=</span><span class="s">'rgb(255, 24, 24)'</span><span class="p">,</span>
+                        
+                    <span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="n">s</span><span class="p">.</span><span class="n">upper</span><span class="p">()))</span>
+
+<span class="n">fig</span><span class="p">.</span><span class="n">update_layout</span><span class="p">(</span>
+    <span class="n">title</span><span class="o">=</span> <span class="s">"AAPL Stock Data"</span><span class="p">,</span>
+    <span class="n">yaxis_title</span><span class="o">=</span><span class="s">"Stock's Price in USD"</span><span class="p">,</span>
+    <span class="n">xaxis_title</span><span class="o">=</span><span class="s">"Date"</span><span class="p">)</span>               
+
+
+<span class="n">fig</span><span class="p">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre></div></div>
+
+<p><img src="https://q-viper.github.io/assets/stock_analysis/guppy.png" alt="" /></p>
+
+<p>Looking over the last 1000 days of the trends, there can be seen crossover in around November 2 where SEMA were crossing over the LEMA, that is the sign of the price fall. Similarly, after February 15, SEMA again crossed over the LEMA and that is the sign of the price rise.</p>
+
+<p><img src="https://q-viper.github.io/assets/stock_analysis/zoomed_guppy.png" alt="" /></p>
+
+<p>Above plot is interactive in our interactive blog, <a href="https://q-viper.github.io/html_posts/python-for-stock-market-analysis-exploring-different-types-of-trend-Indicators">please refer there for the interactive version of this blog</a>.</p>
+
+<h4 id="references">References</h4>
+<ul>
+  <li><a href="https://www.investopedia.com/terms/g/guppy-multiple-moving-average.asp">Multiple Moving Average-Investopedia</a></li>
+  <li><a href="https://www.babypips.com/learn/forex/guppy-multiple-moving-average">Guppy Multiple Moving Average-Investopedia</a></li>
+</ul>
+
+<h3 id="percentage-price-oscillator">Percentage Price Oscillator</h3>
+<ul>
+  <li>This is a momentum indicator (determines the strength or weakness of a value). But we can view the volatility too.</li>
+  <li>Two EMAs, 26 period and 12 periods are used to calculate PPO.</li>
+  <li>It contains 2 lines, PPO line and signal line. Signal line is an EMA of the 9 Period PPO, so it moves slower than PPO.</li>
+  <li>When PPO line crosses the signal line, it is the time for rise/fall of the price or stock.</li>
+  <li>When PPO line crosses over the signal line from below, then it is a buy signal. Reversely, it is a sell signal when PPO line crosses belo the signal line from above.</li>
+  <li>When PPO line is below the 0, the short term average is below the longer-term average average, which helps indicate a fall of price.</li>
+  <li>Conversely, when PPO line is above 0, the short term average is above the long term average, which helps indicate rise of price.</li>
+</ul>
+
+<h4 id="calculation">Calculation</h4>
+<ul>
+  <li>Calculate the 12 and 26 period EMA of Closing Price.</li>
+  <li>Apply EMAs in below formula to get current PPO value:</li>
+</ul>
+
+\[PPO = \frac{\text{12 Period EMA - 26 Period EMA}}{\text{26 Period EMA}} * 100 \\\
+\text{signal_line} = \text{9 period EMA of PPO} \\\
+\text{PPO_histogram} = \text{PPO - Signal Line}\]
+
+<ul>
+  <li>Calculate signal line as the 9 Period EMA of PPO generated from above step.</li>
+  <li>We can compare different assets in terms of performance and volatility when the assets vary significantly in price.</li>
+  <li>MACD (Moving Average Convergence Divergence) is identical to PPO in the sense that these two compares two EMAs. The main difference between these is that PPO measures percentage difference between two EMAs, while the MACD measures absolute difference.</li>
+  <li>RSI (Relative Strength Index) is identical to PPO in the sense that these two compares two EMAs. The main difference is that it measure the magnitude of recent price changes.</li>
+</ul>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">ppo</span><span class="p">(</span><span class="n">tdf</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="s">"close"</span><span class="p">,</span> <span class="n">sm</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">lm</span><span class="o">=</span><span class="mi">26</span><span class="p">):</span>
+    
+    
+    <span class="n">tdf</span><span class="p">[</span><span class="sa">f</span><span class="s">"sema_</span><span class="si">{</span><span class="n">col</span><span class="si">}</span><span class="s">_</span><span class="si">{</span><span class="n">sm</span><span class="si">}</span><span class="s">"</span><span class="p">]</span> <span class="o">=</span> <span class="n">tdf</span><span class="p">[</span><span class="n">col</span><span class="p">].</span><span class="n">ewm</span><span class="p">(</span><span class="n">span</span><span class="o">=</span><span class="n">sm</span><span class="p">,</span> <span class="n">min_periods</span><span class="o">=</span><span class="n">sm</span><span class="p">,</span> <span class="n">adjust</span><span class="o">=</span><span class="bp">False</span><span class="p">).</span><span class="n">mean</span><span class="p">()</span>
+    <span class="n">tdf</span><span class="p">[</span><span class="sa">f</span><span class="s">"lema_</span><span class="si">{</span><span class="n">col</span><span class="si">}</span><span class="s">_</span><span class="si">{</span><span class="n">lm</span><span class="si">}</span><span class="s">"</span><span class="p">]</span> <span class="o">=</span> <span class="n">tdf</span><span class="p">[</span><span class="n">col</span><span class="p">].</span><span class="n">ewm</span><span class="p">(</span><span class="n">span</span><span class="o">=</span><span class="n">lm</span><span class="p">,</span> <span class="n">min_periods</span><span class="o">=</span><span class="n">lm</span><span class="p">,</span> <span class="n">adjust</span><span class="o">=</span><span class="bp">False</span><span class="p">).</span><span class="n">mean</span><span class="p">()</span>
+    
+    <span class="n">tdf</span><span class="p">[</span><span class="s">"ppo"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">tdf</span><span class="p">[</span><span class="sa">f</span><span class="s">"sema_</span><span class="si">{</span><span class="n">col</span><span class="si">}</span><span class="s">_</span><span class="si">{</span><span class="n">sm</span><span class="si">}</span><span class="s">"</span><span class="p">]</span><span class="o">-</span><span class="n">tdf</span><span class="p">[</span><span class="sa">f</span><span class="s">"lema_</span><span class="si">{</span><span class="n">col</span><span class="si">}</span><span class="s">_</span><span class="si">{</span><span class="n">lm</span><span class="si">}</span><span class="s">"</span><span class="p">])</span> <span class="o">/</span> <span class="n">tdf</span><span class="p">[</span><span class="sa">f</span><span class="s">"lema_</span><span class="si">{</span><span class="n">col</span><span class="si">}</span><span class="s">_</span><span class="si">{</span><span class="n">lm</span><span class="si">}</span><span class="s">"</span><span class="p">]</span> <span class="o">*</span> <span class="mi">100</span>
+    <span class="n">tdf</span><span class="p">[</span><span class="s">"signal_line"</span><span class="p">]</span> <span class="o">=</span> <span class="n">tdf</span><span class="p">.</span><span class="n">ppo</span><span class="p">.</span><span class="n">ewm</span><span class="p">(</span><span class="n">span</span><span class="o">=</span><span class="mi">9</span><span class="p">,</span> <span class="n">min_periods</span><span class="o">=</span><span class="mi">9</span><span class="p">,</span> <span class="n">adjust</span><span class="o">=</span><span class="bp">False</span><span class="p">).</span><span class="n">mean</span><span class="p">()</span>
+    <span class="n">tdf</span><span class="p">[</span><span class="s">"ppo_hist"</span><span class="p">]</span> <span class="o">=</span> <span class="n">tdf</span><span class="p">[</span><span class="s">"ppo"</span><span class="p">]</span><span class="o">-</span><span class="n">tdf</span><span class="p">[</span><span class="s">"signal_line"</span><span class="p">]</span>
+    
+    <span class="k">return</span> <span class="n">tdf</span>
+<span class="n">tdf</span> <span class="o">=</span> <span class="n">df</span><span class="p">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="n">tdf</span><span class="o">=</span><span class="n">ppo</span><span class="p">(</span><span class="n">tdf</span><span class="p">)</span>
+<span class="n">tdf</span>
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="nn">plotly.subplots</span> <span class="kn">import</span> <span class="n">make_subplots</span>
+
+
+<span class="n">fig</span><span class="o">=</span><span class="n">make_subplots</span><span class="p">(</span><span class="n">specs</span><span class="o">=</span><span class="p">[[{</span><span class="s">"secondary_y"</span><span class="p">:</span> <span class="bp">True</span><span class="p">}]])</span>
+
+<span class="n">lastn</span> <span class="o">=</span> <span class="mi">1000</span>
+<span class="n">ldf</span> <span class="o">=</span> <span class="n">tdf</span><span class="p">[</span><span class="o">-</span><span class="n">lastn</span><span class="p">:]</span>
+<span class="n">fig</span><span class="p">.</span><span class="n">add_trace</span><span class="p">(</span><span class="n">go</span><span class="p">.</span><span class="n">Candlestick</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">ldf</span><span class="p">.</span><span class="n">index</span><span class="p">,</span>
+                <span class="nb">open</span><span class="o">=</span><span class="n">ldf</span><span class="p">[</span><span class="s">'open'</span><span class="p">],</span>
+                <span class="n">high</span><span class="o">=</span><span class="n">ldf</span><span class="p">[</span><span class="s">'high'</span><span class="p">],</span>
+                <span class="n">low</span><span class="o">=</span><span class="n">ldf</span><span class="p">[</span><span class="s">'low'</span><span class="p">],</span>
+                <span class="n">close</span><span class="o">=</span><span class="n">ldf</span><span class="p">[</span><span class="s">'close'</span><span class="p">],</span> 
+                 <span class="n">name</span> <span class="o">=</span> <span class="s">'OHLC Market Data'</span><span class="p">))</span>
+
+<span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">tdf</span><span class="p">.</span><span class="n">columns</span><span class="p">:</span>
+    <span class="k">if</span> <span class="s">"sema"</span> <span class="ow">in</span> <span class="n">s</span><span class="p">:</span>
+        <span class="n">fig</span><span class="p">.</span><span class="n">add_trace</span><span class="p">(</span><span class="n">go</span><span class="p">.</span><span class="n">Line</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">ldf</span><span class="p">.</span><span class="n">index</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">ldf</span><span class="p">[</span><span class="n">s</span><span class="p">],</span> <span class="n">line</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+                        <span class="n">color</span><span class="o">=</span><span class="s">'rgb(104, 204, 204)'</span><span class="p">,</span>
+                        
+                    <span class="p">),</span> 
+                      <span class="n">name</span><span class="o">=</span><span class="n">s</span><span class="p">.</span><span class="n">upper</span><span class="p">()))</span>
+    <span class="k">if</span> <span class="s">"lema"</span> <span class="ow">in</span> <span class="n">s</span><span class="p">:</span>
+        <span class="n">fig</span><span class="p">.</span><span class="n">add_trace</span><span class="p">(</span><span class="n">go</span><span class="p">.</span><span class="n">Line</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">ldf</span><span class="p">.</span><span class="n">index</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">ldf</span><span class="p">[</span><span class="n">s</span><span class="p">],</span> <span class="n">line</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+                        <span class="n">color</span><span class="o">=</span><span class="s">'rgb(255, 24, 24)'</span><span class="p">,</span>
+                        
+                    <span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="n">s</span><span class="p">.</span><span class="n">upper</span><span class="p">()))</span>
+
+<span class="n">clrred</span> <span class="o">=</span> <span class="s">'rgb(222,0,0)'</span>
+<span class="n">clrgrn</span> <span class="o">=</span> <span class="s">'rgb(0,222,0)'</span>
+<span class="n">clrs</span>  <span class="o">=</span> <span class="p">[</span><span class="n">clrred</span> <span class="k">if</span> <span class="n">p</span><span class="o">&lt;</span><span class="mi">0</span> <span class="k">else</span> <span class="n">clrgrn</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">ldf</span><span class="p">.</span><span class="n">ppo_hist</span><span class="p">]</span>
+
+<span class="n">fig</span><span class="p">.</span><span class="n">add_trace</span><span class="p">(</span><span class="n">go</span><span class="p">.</span><span class="n">Line</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">ldf</span><span class="p">.</span><span class="n">index</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">ldf</span><span class="p">.</span><span class="n">ppo</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">"PPO"</span><span class="p">),</span><span class="n">secondary_y</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="n">fig</span><span class="p">.</span><span class="n">add_trace</span><span class="p">(</span><span class="n">go</span><span class="p">.</span><span class="n">Bar</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">ldf</span><span class="p">.</span><span class="n">index</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">ldf</span><span class="p">.</span><span class="n">ppo_hist</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">"PPO_Hist"</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">color</span><span class="o">=</span><span class="n">clrs</span><span class="p">)),</span><span class="n">secondary_y</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="n">fig</span><span class="p">.</span><span class="n">add_trace</span><span class="p">(</span><span class="n">go</span><span class="p">.</span><span class="n">Line</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">ldf</span><span class="p">.</span><span class="n">index</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">ldf</span><span class="p">.</span><span class="n">signal_line</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">"Signal_Line"</span><span class="p">),</span><span class="n">secondary_y</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+
+             
+<span class="n">fig</span><span class="p">.</span><span class="n">update_layout</span><span class="p">(</span>
+    <span class="n">title</span><span class="o">=</span> <span class="s">"AAPL Stock Data (PPO Plot)"</span><span class="p">,</span>
+    <span class="n">yaxis_title</span><span class="o">=</span><span class="s">"Stock's Price in USD"</span><span class="p">,</span>
+    <span class="n">xaxis_title</span><span class="o">=</span><span class="s">"Date"</span><span class="p">)</span>  
+
+
+<span class="n">fig</span><span class="p">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre></div></div>
+
+<p><img src="https://q-viper.github.io/assets/stock_analysis/ppo_orig.png" alt="" /></p>
+
+<p>In above plot, we have changed the color of the histogram once the crossover happens. This allowed us to make assumptions based on the color. Also, we can see the performance of daily and the period of time at the same time by plotting candlestick.</p>
+
+<p><img src="https://q-viper.github.io/assets/stock_analysis/zoomed_ppo.png" alt="" /></p>
+
+<h4 id="reference">Reference</h4>
+<ul>
+  <li><a href="https://www.investopedia.com/terms/p/ppo.asp">Percentage Price Oscillator-Investopedia</a></li>
+</ul>
+
+<h3 id="moving-average-convergence-divergence-macd">Moving Average Convergence Divergence (MACD)</h3>
+<p>MACD is often considered as a Oscillator Indicator but this does give trend and some sort of volatility over a period of time by subtracting the 26 period EMA from 12 period EMA. Period in this case can be day, week, month and so on thus the periods can be changed according to our need. This is exactly similar to the PPO except we do not take Percentage.</p>
+
+<h4 id="calculation-1">Calculation</h4>
+<ul>
+  <li>When MACD crosses above 0, then bullish is considered happening and conversely, when MACd crosses below 0, then bearish is considered happening.</li>
+  <li>Divergence happens when MACD forms highs When the MACD forms highs or lows that diverge from the corresponding highs and lows on the price, it is called a divergence.</li>
+  <li>A bullish divergence appears when the MACD forms two rising lows that correspond with two falling lows on the price. This is a valid bullish signal when the long-term trend is still positive.</li>
+  <li>Signal Line is plotted on the top of MACD line. Signal line is EMA of MACD of 9 period.</li>
+  <li>When MACD crosses below the signal line, it is sign of sell and if MACD crosses above the signal line, it is a signal of sell.</li>
+</ul>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">macd</span><span class="p">(</span><span class="n">tdf</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="s">"close"</span><span class="p">,</span> <span class="n">sm</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">lm</span><span class="o">=</span><span class="mi">26</span><span class="p">):</span>
+    
+    
+    <span class="n">tdf</span><span class="p">[</span><span class="sa">f</span><span class="s">"sema_</span><span class="si">{</span><span class="n">col</span><span class="si">}</span><span class="s">_</span><span class="si">{</span><span class="n">sm</span><span class="si">}</span><span class="s">"</span><span class="p">]</span> <span class="o">=</span> <span class="n">tdf</span><span class="p">[</span><span class="n">col</span><span class="p">].</span><span class="n">ewm</span><span class="p">(</span><span class="n">span</span><span class="o">=</span><span class="n">sm</span><span class="p">,</span> <span class="n">min_periods</span><span class="o">=</span><span class="n">sm</span><span class="p">,</span> <span class="n">adjust</span><span class="o">=</span><span class="bp">False</span><span class="p">).</span><span class="n">mean</span><span class="p">()</span>
+    <span class="n">tdf</span><span class="p">[</span><span class="sa">f</span><span class="s">"lema_</span><span class="si">{</span><span class="n">col</span><span class="si">}</span><span class="s">_</span><span class="si">{</span><span class="n">lm</span><span class="si">}</span><span class="s">"</span><span class="p">]</span> <span class="o">=</span> <span class="n">tdf</span><span class="p">[</span><span class="n">col</span><span class="p">].</span><span class="n">ewm</span><span class="p">(</span><span class="n">span</span><span class="o">=</span><span class="n">lm</span><span class="p">,</span> <span class="n">min_periods</span><span class="o">=</span><span class="n">lm</span><span class="p">,</span> <span class="n">adjust</span><span class="o">=</span><span class="bp">False</span><span class="p">).</span><span class="n">mean</span><span class="p">()</span>
+    
+    <span class="n">tdf</span><span class="p">[</span><span class="s">"macd"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">tdf</span><span class="p">[</span><span class="sa">f</span><span class="s">"sema_</span><span class="si">{</span><span class="n">col</span><span class="si">}</span><span class="s">_</span><span class="si">{</span><span class="n">sm</span><span class="si">}</span><span class="s">"</span><span class="p">]</span><span class="o">-</span><span class="n">tdf</span><span class="p">[</span><span class="sa">f</span><span class="s">"lema_</span><span class="si">{</span><span class="n">col</span><span class="si">}</span><span class="s">_</span><span class="si">{</span><span class="n">lm</span><span class="si">}</span><span class="s">"</span><span class="p">])</span>
+    <span class="n">tdf</span><span class="p">[</span><span class="s">"signal_line"</span><span class="p">]</span> <span class="o">=</span> <span class="n">tdf</span><span class="p">.</span><span class="n">macd</span><span class="p">.</span><span class="n">ewm</span><span class="p">(</span><span class="n">span</span><span class="o">=</span><span class="mi">9</span><span class="p">,</span> <span class="n">min_periods</span><span class="o">=</span><span class="mi">9</span><span class="p">,</span> <span class="n">adjust</span><span class="o">=</span><span class="bp">False</span><span class="p">).</span><span class="n">mean</span><span class="p">()</span>
+    <span class="n">tdf</span><span class="p">[</span><span class="s">"macd_hist"</span><span class="p">]</span> <span class="o">=</span> <span class="n">tdf</span><span class="p">[</span><span class="s">"macd"</span><span class="p">]</span><span class="o">-</span><span class="n">tdf</span><span class="p">[</span><span class="s">"signal_line"</span><span class="p">]</span>
+    
+    <span class="k">return</span> <span class="n">tdf</span>
+<span class="n">tdf</span> <span class="o">=</span> <span class="n">df</span><span class="p">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="n">tdf</span><span class="o">=</span><span class="n">macd</span><span class="p">(</span><span class="n">tdf</span><span class="p">)</span>
+<span class="n">tdf</span>
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="nn">plotly.subplots</span> <span class="kn">import</span> <span class="n">make_subplots</span>
+
+
+<span class="n">fig</span><span class="o">=</span><span class="n">make_subplots</span><span class="p">(</span><span class="n">specs</span><span class="o">=</span><span class="p">[[{</span><span class="s">"secondary_y"</span><span class="p">:</span> <span class="bp">True</span><span class="p">}]])</span>
+
+<span class="n">lastn</span> <span class="o">=</span> <span class="mi">1000</span>
+<span class="n">ldf</span> <span class="o">=</span> <span class="n">tdf</span><span class="p">[</span><span class="o">-</span><span class="n">lastn</span><span class="p">:]</span>
+<span class="n">fig</span><span class="p">.</span><span class="n">add_trace</span><span class="p">(</span><span class="n">go</span><span class="p">.</span><span class="n">Candlestick</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">ldf</span><span class="p">.</span><span class="n">index</span><span class="p">,</span>
+                <span class="nb">open</span><span class="o">=</span><span class="n">ldf</span><span class="p">[</span><span class="s">'open'</span><span class="p">],</span>
+                <span class="n">high</span><span class="o">=</span><span class="n">ldf</span><span class="p">[</span><span class="s">'high'</span><span class="p">],</span>
+                <span class="n">low</span><span class="o">=</span><span class="n">ldf</span><span class="p">[</span><span class="s">'low'</span><span class="p">],</span>
+                <span class="n">close</span><span class="o">=</span><span class="n">ldf</span><span class="p">[</span><span class="s">'close'</span><span class="p">],</span> 
+                 <span class="n">name</span> <span class="o">=</span> <span class="s">'OHLC Market Data'</span><span class="p">))</span>
+
+<span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">tdf</span><span class="p">.</span><span class="n">columns</span><span class="p">:</span>
+    <span class="k">if</span> <span class="s">"sema"</span> <span class="ow">in</span> <span class="n">s</span><span class="p">:</span>
+        <span class="n">fig</span><span class="p">.</span><span class="n">add_trace</span><span class="p">(</span><span class="n">go</span><span class="p">.</span><span class="n">Line</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">ldf</span><span class="p">.</span><span class="n">index</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">ldf</span><span class="p">[</span><span class="n">s</span><span class="p">],</span> <span class="n">line</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+                        <span class="n">color</span><span class="o">=</span><span class="s">'rgb(104, 204, 204)'</span><span class="p">,</span>
+                        
+                    <span class="p">),</span> 
+                      <span class="n">name</span><span class="o">=</span><span class="n">s</span><span class="p">.</span><span class="n">upper</span><span class="p">()))</span>
+    <span class="k">if</span> <span class="s">"lema"</span> <span class="ow">in</span> <span class="n">s</span><span class="p">:</span>
+        <span class="n">fig</span><span class="p">.</span><span class="n">add_trace</span><span class="p">(</span><span class="n">go</span><span class="p">.</span><span class="n">Line</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">ldf</span><span class="p">.</span><span class="n">index</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">ldf</span><span class="p">[</span><span class="n">s</span><span class="p">],</span> <span class="n">line</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+                        <span class="n">color</span><span class="o">=</span><span class="s">'rgb(255, 24, 24)'</span><span class="p">,</span>
+                        
+                    <span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="n">s</span><span class="p">.</span><span class="n">upper</span><span class="p">()))</span>
+
+<span class="n">clrred</span> <span class="o">=</span> <span class="s">'rgb(222,0,0)'</span>
+<span class="n">clrgrn</span> <span class="o">=</span> <span class="s">'rgb(0,222,0)'</span>
+<span class="n">clrs</span>  <span class="o">=</span> <span class="p">[</span><span class="n">clrred</span> <span class="k">if</span> <span class="n">p</span><span class="o">&lt;</span><span class="mi">0</span> <span class="k">else</span> <span class="n">clrgrn</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">ldf</span><span class="p">.</span><span class="n">macd_hist</span><span class="p">]</span>
+
+<span class="n">fig</span><span class="p">.</span><span class="n">add_trace</span><span class="p">(</span><span class="n">go</span><span class="p">.</span><span class="n">Line</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">ldf</span><span class="p">.</span><span class="n">index</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">ldf</span><span class="p">.</span><span class="n">macd</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">"MACD"</span><span class="p">),</span><span class="n">secondary_y</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="n">fig</span><span class="p">.</span><span class="n">add_trace</span><span class="p">(</span><span class="n">go</span><span class="p">.</span><span class="n">Bar</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">ldf</span><span class="p">.</span><span class="n">index</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">ldf</span><span class="p">.</span><span class="n">macd_hist</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">"MACD_Hist"</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">color</span><span class="o">=</span><span class="n">clrs</span><span class="p">)),</span><span class="n">secondary_y</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="n">fig</span><span class="p">.</span><span class="n">add_trace</span><span class="p">(</span><span class="n">go</span><span class="p">.</span><span class="n">Line</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">ldf</span><span class="p">.</span><span class="n">index</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">ldf</span><span class="p">.</span><span class="n">signal_line</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">"Signal_Line"</span><span class="p">),</span><span class="n">secondary_y</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+
+             
+<span class="n">fig</span><span class="p">.</span><span class="n">update_layout</span><span class="p">(</span>
+    <span class="n">title</span><span class="o">=</span> <span class="s">"AAPL Stock Data (MACD Plot)"</span><span class="p">,</span>
+    <span class="n">yaxis_title</span><span class="o">=</span><span class="s">"Stock's Price in USD"</span><span class="p">,</span>
+    <span class="n">xaxis_title</span><span class="o">=</span><span class="s">"Date"</span><span class="p">)</span>  
+
+
+<span class="n">fig</span><span class="p">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre></div></div>
+
+<p><img src="https://q-viper.github.io/assets/stock_analysis/macd_orig.png" alt="" /></p>
+
+<p>Above plot looks similar to the PPO plot and it is because they both use same EMAs and only difference is the percentage. Looking over a zoomed version.</p>
+
+<p><img src="https://q-viper.github.io/assets/stock_analysis/zoomed_macd.png" alt="" /></p>
+
+<h4 id="references-1">References</h4>
+<ul>
+  <li><a href="https://www.fidelity.com/learning-center/trading-investing/technical-analysis/technical-indicator-guide/macd">MACD-Fidelity.com</a></li>
+</ul>
+
+<h2 id="conclusion">Conclusion</h2>
+<p>In this blog, we we explored some of popular trend indicators like GMMA, PPO and MACD. In the next blog, we will explore other indicators and so on. This blogging series will not end soon :P.</p>
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-tags" aria-hidden="true"></i> Tags: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/tags/#data-analysis" class="page__taxonomy-item" rel="tag">data analysis</a><span class="sep">, </span>
+    
+      
+      
+      <a href="/tags/#plotly" class="page__taxonomy-item" rel="tag">plotly</a><span class="sep">, </span>
+    
+      
+      
+      <a href="/tags/#stock-market-analysis" class="page__taxonomy-item" rel="tag">stock market analysis</a>
+    
+    </span>
+  </p>
+
+
+
+
+  
+
+
+  
+
+
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-folder-open" aria-hidden="true"></i> Categories: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/categories/#data-analysis" class="page__taxonomy-item" rel="tag">Data Analysis</a><span class="sep">, </span>
+    
+      
+      
+      <a href="/categories/#stock-market-analysis" class="page__taxonomy-item" rel="tag">Stock Market Analysis</a><span class="sep">, </span>
+    
+      
+      
+      <a href="/categories/#technical-analysis" class="page__taxonomy-item" rel="tag">Technical Analysis</a>
+    
+    </span>
+  </p>
+
+
+        
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> Updated:</strong> <time datetime="2022-03-20T03:44:17+00:00">March 20, 2022</time></p>
+
+
+      </footer>
+
+      <section class="page__share">
+  
+
+  <a href="https://twitter.com/intent/tweet?text=Python+for+Stock+Market+Analysis%3A+Exploring+Technical+Trend+Indicators%20https%3A%2F%2Fq-viper.github.io%2F2022%2F03%2F20%2Fpython-for-stock-market-analysis-technical-indicators%2F" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+
+  <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fq-viper.github.io%2F2022%2F03%2F20%2Fpython-for-stock-market-analysis-technical-indicators%2F" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=https%3A%2F%2Fq-viper.github.io%2F2022%2F03%2F20%2Fpython-for-stock-market-analysis-technical-indicators%2F" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+</section>
+
+
+      
+  <nav class="pagination">
+    
+      <a href="/2022/03/13/airflow-in-wsl-but-using-mysql-from-windows-as-default-from/" class="pagination--pager" title="Running Airflow in WSL but Using MySQL Server from Windows as Default
+">Previous</a>
+    
+    
+      <a href="/2022/03/27/central-tendency-vs-dispersion/" class="pagination--pager" title="Central Tendency vs Dispersion
+">Next</a>
+    
+  </nav>
+
+    </div>
+
+    
+  
+    <!--  -->
+    <div class="page__comments">
+  
+  
+      <h4 class="page__comments-title">Comments</h4>
+      <section id="utterances-comments"></section>
+    
+</div>
+
+    <!--  -->
+  </article>
+
+  
+  
+
+  
+  
+    <div class="page__related">
+      <h4 class="page__related-title">You May Also Enjoy</h4>
+      <div class="grid__wrapper">
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/data_annotation/android-chrome-512x512.png" alt="">
+      </div>
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/2025/03/20/imagebaker-making-image-labelling-fun/" rel="permalink">ImageBaker - Making Image Labelling Fun
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          4 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">ImageBaker - Making Image Labelling Fun
+
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/advent_of_code/stars.png" alt="">
+      </div>
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/2022/12/12/advent-of-code-2022-python/" rel="permalink">Advent of Code 2022 with Python
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          4 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">The advent of Code is a yearly festival for programmers like me where we try to solve different stories to gain stars. I love these challenge because its fun...</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/twitter_bot/output_21_0.png" alt="">
+      </div>
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/2022/12/06/text-analysis-with-word-cloud-in-python/" rel="permalink">Text Analysis with WordCloud in Python
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          5 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">WordCloud in Python can be done in different ways but one of the most popular and easier ones is using the package wordcloud. We can install it using the fol...</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/twitter_bot/output_24_0.png" alt="">
+      </div>
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/2022/11/22/world-cup-tweet-sentiment-analysis/" rel="permalink">WorldCup Tweet Sentiment Analysis in Python
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          12 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">WorldCup tweet sentiment analysis will be done based on tweets related to the world cup.
+
+</p>
+  </article>
+</div>
+
+        
+      </div>
+    </div>
+  
+  
+</div>
+
+    </div>
+
+    
+      <div class="search-content">
+        <div class="search-content__inner-wrap"><form class="search-content__form" onkeydown="return event.key != 'Enter';">
+    <label class="sr-only" for="search">
+      Enter your search term...
+    </label>
+    <input type="search" id="search" class="search-input" tabindex="-1" placeholder="Enter your search term..." />
+  </form>
+  <div id="results" class="results"></div></div>
+
+      </div>
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7009255619987324"
+     crossorigin="anonymous"></script>
+
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-7009255619987324"
+     data-ad-slot="4547985649"
+     data-ad-format="auto"
+     data-full-width-responsive="true"></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+        
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+
+    
+      
+        
+          <li><a href="https://q-viper.github.io/portfolio_new/" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-link" aria-hidden="true"></i> Website</a></li>
+        
+      
+        
+          <li><a href="https://github.com/q-viper" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i> GitHub</a></li>
+        
+      
+        
+          <li><a href="https://www.linkedin.com/in/qramkrishna" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i> LinkedIn</a></li>
+        
+      
+    
+
+    <!-- <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li> -->
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2025 Quassarian Viper. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+<script async defer src="https://scripts.simpleanalyticscdn.com/latest.js"></script>
+<noscript><img src="https://queue.simpleanalyticscdn.com/noscript.gif" alt="" referrerpolicy="no-referrer-when-downgrade" /></noscript>
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+
+
+
+
+<script src="/assets/js/lunr/lunr.min.js"></script>
+<script src="/assets/js/lunr/lunr-store.js"></script>
+<script src="/assets/js/lunr/lunr-en.js"></script>
+
+
+
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-159044949-2"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-159044949-2', { 'anonymize_ip': true});
+</script>
+
+
+
+
+
+
+    <script>
+  'use strict';
+
+  (function() {
+    var commentContainer = document.querySelector('#utterances-comments');
+
+    if (!commentContainer) {
+      return;
+    }
+
+    var script = document.createElement('script');
+    script.setAttribute('src', 'https://utteranc.es/client.js');
+    script.setAttribute('repo', 'q-viper/q-viper.github.io');
+    script.setAttribute('issue-term', 'pathname');
+    script.setAttribute('theme', 'github-dark');
+    script.setAttribute('crossorigin', 'anonymous');
+
+    commentContainer.appendChild(script);
+  })();
+</script>
+
+  
+
+
+
+
+
+  </body>
+</html>

@@ -1,0 +1,10 @@
+etf,sector_name,daily_change_pct,weekly_change_pct,monthly_change_pct,current_price,volume,trend_status,ma_position
+XLK,Technology,0.38,-0.79,6.33,102.43,12939513,LIGHT_GREEN,Near 20MA
+XLF,Financials,-1.03,-3.44,-11.02,185.39,28320217,LIGHT_GREEN,Above 20MA
+XLE,Energy,2.16,1.44,-0.26,67.35,26133926,RED,Near 20MA
+XLV,Healthcare,0.45,-4.69,9.59,41.0,10220814,YELLOW,Below 20MA
+XLI,Industrials,-2.75,4.21,-3.54,100.87,16189500,DARK_GREEN,Near 20MA
+XLP,Consumer Staples,2.81,5.82,-0.53,66.77,13938909,RED,Below 20MA
+XLY,Consumer Discretionary,0.55,3.13,8.76,49.98,8272131,YELLOW,Above 20MA
+XLU,Utilities,1.42,-4.19,-0.05,167.41,10450128,YELLOW,Below 20MA
+XLRE,Real Estate,2.72,-3.47,10.47,78.31,31390104,LIGHT_GREEN,Near 20MA

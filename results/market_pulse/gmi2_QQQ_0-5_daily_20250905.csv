@@ -1,0 +1,2 @@
+index,date,timeframe,daily_gmi2_signal,daily_gmi2_score,daily_gmi2_max_score,daily_gmi2_threshold,daily_gmi2_confirmation_days,daily_gmi2_r1,daily_gmi2_r2,daily_gmi2_r3,daily_gmi2_r4,daily_gmi2_r5,daily_gmi2_r6,daily_gmi2_r7,daily_gmi2_r8,daily_gmi2_r9
+1,2025-09-05,daily,NEUTRAL,4.0,9,5,2,0.0,1.0,1.0,1.0,1.0,0.0,0.0,0.0,0.0

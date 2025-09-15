@@ -1,0 +1,65 @@
+To generate a market breadth table for the S&P 500 similar to your example, you need to calculate specific metrics for each stock, classify each as “Above” or “Below” a threshold, and then aggregate those results into percentages for the index. Here’s an organized guide for each metric:
+S&P 500 Table Metrics: Calculations
+Metric	Calculation Logic	Above%	Below%
+Day Change (%)	1-day % change: (textCloset−textCloset−1)/textCloset−1times100(textCloset−textCloset−1)/textCloset−1times100	% stocks with positive day change	% stocks with negative day change
+Month Change (%)	1-month: (textCloset−textCloset−20)/textCloset−20times100(textCloset−textCloset−20)/textCloset−20times100	% stocks with positive month change	% stocks with negative month change
+Quarter Change (%)	1-quarter: (textCloset−textCloset−60)/textCloset−60times100(textCloset−textCloset−60)/textCloset−60times100	% stocks up in the last quarter	% stocks down in the last quarter
+Half Year Change (%)	6-month: (textCloset−textCloset−120)/textCloset−120times100(textCloset−textCloset−120)/textCloset−120times100	% stocks up over half a year	% stocks down over half a year
+Year Change (%)	1-year: (textCloset−textCloset−252)/textCloset−252times100(textCloset−textCloset−252)/textCloset−252times100	% stocks up over 1 year	% stocks down over 1 year
+Price to SMA10 (%)	Current price vs 10-day SMA: textCloset>textSMA10ttextCloset>textSMA10t	% stocks above SMA10	% stocks below SMA10
+Price to EMA20 (%)	Current price vs 20-day EMA: textCloset>textEMA20ttextCloset>textEMA20t	% stocks above EMA20	% stocks below EMA20
+Price to SMA50 (%)	Current price vs 50-day SMA: textCloset>textSMA50ttextCloset>textSMA50t	% stocks above SMA50	% stocks below SMA50
+Trend Days (%)	% of last N days up (e.g., last 10): (\\text{# days Close}_t > \\text{Close}_{t-1}) / N \\times 100	% stocks mostly trending up	% stocks mostly trending down
+SMA10 > SMA20 (%)	textSMA10t>textSMA20ttextSMA10t>textSMA20t	% stocks where SMA10 > SMA20	% stocks where SMA10 < SMA20
+SMA20 > SMA50 (%)	textSMA20t>textSMA50ttextSMA20t>textSMA50t	% stocks where SMA20 > SMA50	% stocks where SMA20 < SMA50
+SMA50 > SMA200 (%)	textSMA50t>textSMA200ttextSMA50t>textSMA200t	% stocks where SMA50 > SMA200	% stocks where SMA50 < SMA200
+SMA20 > SMA50 > SMA200 (%)	Composite trend alignment: textSMA20t>textSMA50t>textSMA200ttextSMA20t>textSMA50t>textSMA200t	% stocks with perfect bullish alignment	% stocks without alignment
+5 Day Low vs 30 Day High (%)	Compare last 5-day low to 30-day high; classify stocks above/below each	% stocks above 5-day low / 30-day high	% stocks below 5-day low / 30-day high
+20-Day High (%)	Is current price at or above highest close in 20 days?	% stocks at 20-day high	% stocks not at 20-day high
+20-Day Low (%)	Is current price at or below lowest close in 20 days?	% stocks at 20-day low	% stocks not at 20-day low
+What to Calculate for Each Stock
+
+    Price Change Calculations: Day, Month, Quarter, Half-Year, Year changes.
+
+    Moving Averages: Compute SMA10, SMA20, SMA50, SMA200, EMA20.
+
+    Trend Days: Count of days with up close during a window (trending up).
+
+    Moving Average Crossovers: Boolean for SMA10 > SMA20, etc.
+
+    Highs/Lows: Compare current price to recent 5-day/20-day/30-day highs/lows.
+
+    Composite Indicators: Create trend alignment scores (e.g., SMA20 > SMA50 > SMA200).
+
+For each metric, classify as “Above” or “Below” depending on the condition, then calculate the proportion across all SP500 stocks.
+Example for Python Implementation
+
+python
+for each stock in S&P 500:
+    price_history = get_daily_prices(stock)
+    # Calculate moving averages
+    sma10 = price_history['close'].rolling(10).mean()
+    sma20 = price_history['close'].rolling(20).mean()
+    sma50 = price_history['close'].rolling(50).mean()
+    sma200 = price_history['close'].rolling(200).mean()
+    # Calculate daily/monthly/quarterly/yearly changes
+    day_chg = price_history['close'].pct_change(1)
+    month_chg = price_history['close'].pct_change(20)
+    # ... etc
+    # Composite alignments
+    align_20_50_200 = (sma20 > sma50) & (sma50 > sma200)
+    # Track these for aggregation later
+
+Summary
+
+Calculate these metrics for each S&P 500 stock, then aggregate “Above” and “Below” percentages for each metric to build your summary table.
+
+    Moving averages and their relationships (crossovers, price above/below)
+
+    Price changes over different periods
+
+    Recent highs/lows
+
+    Trend days
+
+This approach gives a real-time, quantitative snapshot of market breadth and trend structure for the SP500 universe.

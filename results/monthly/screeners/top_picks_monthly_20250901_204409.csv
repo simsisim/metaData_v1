@@ -1,0 +1,2 @@
+ticker,screen_type,signal_type,signal_date,current_price,signal_price,sma,volume,volume_highest,days_since_signal,price_change_pct,volume_change_pct,volume_surge,score,signal_day_change_abs,signal_day_change_pct,performance_since_signal
+MAGS,pvb,Buy,2025-09-01,61.209999084472656,61.209999084472656,60.03999996185303,14266294.0,11766600.0,0,1.9486994060009977,21.24397871942618,21.24397871942618,24.012888111498775,2.549999237060547,4.347083606705882,0.0

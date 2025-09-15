@@ -1,0 +1,75 @@
+Perfect! Here's the main.py execution tree - only files that are actually used:
+
+  ## MAIN.PY EXECUTION TREE ##
+
+  📁 /home/imagda/_invest2024/python/metaData_v1/
+  ├── 🎯 main.py                          # Main orchestrator
+  ├── 📊 user_data.csv                    # User configuration
+  ├── 📋 indexes_tickers_manual.csv       # Ticker selection
+  ├── 📦 requirements.txt                 # Dependencies
+  │
+  ├── 📂 src/                            # Core modules
+  │   ├── config.py                      # Configuration management
+  │   ├── user_defined_data.py           # User settings reader
+  │   ├── combined_tickers.py            # Ticker combination logic
+  │   ├── data_reader.py                 # Market data loader
+  │   ├── preprocessing_workflow.py      # Data preprocessing
+  │   ├── basic_calculations.py          # Technical indicators
+  │   ├── index_overview_file.py         # Index analysis
+  │   ├── run_screeners.py              # Screener orchestrator
+  │   ├── models.py                     # Prediction models
+  │   ├── percentage_movers.py          # Performance analysis
+  │   ├── universe_processor.py         # Universe filtering
+  │   ├── market_pulse.py               # Market timing analysis
+  │   ├── gmi_calculator.py             # GMI calculations
+  │   └── stage_analysis.py             # Weinstein stage analysis
+  │
+  ├── 📂 src/screeners/                  # Screener suites (17 files)
+  │   ├── stockbee_suite.py             # 9M Movers, Weekly Movers, etc.
+  │   ├── qullamaggie_suite.py          # RS≥97, ATR RS≥50
+  │   ├── volume_suite.py               # Volume analysis
+  │   ├── adl_screener.py               # Accumulation/Distribution
+  │   ├── guppy_screener.py             # GMMA trend analysis
+  │   ├── gold_launch_pad.py            # MA alignment
+  │   ├── rti_screener.py               # Range tightening
+  │   ├── atr1_screener.py              # Volatility analysis
+  │   ├── momentum_screener.py          # Momentum plays
+  │   ├── breakout_screener.py          # Breakout detection
+  │   ├── value_momentum_screener.py    # Value-momentum combo
+  │   ├── pvb_screener.py               # Price-volume breakouts
+  │   ├── giusti_screener.py            # Giusti methodology
+  │   ├── minervini_screener.py         # Minervini templates
+  │   ├── drwish_screener.py            # Dr. Wish indicators
+  │   ├── atr_screener.py               # ATR-based analysis
+  │   └── atr1_trailing_stops.py        # Stop loss management
+  │
+  ├── 📂 src/dashboard/                  # Dashboard system
+  │   ├── enhanced_dashboard_builder.py  # Excel dashboard generator
+  │   ├── real_data_connector.py        # Live data integration
+  │   └── dashboard_builder.py          # Base dashboard builder
+  │
+  ├── 📂 data/                          # INPUT DATA
+  │   ├── tickers/                      # Ticker lists (6 files)
+  │   │   ├── combined_tickers_0.csv    # Final ticker selection
+  │   │   ├── combined_info_tickers_0.csv
+  │   │   └── [other ticker files]
+  │   └── market_data/                  # Price data (400+ files)
+  │       ├── daily/    # AAPL.csv, NVDA.csv, SPY.csv, etc.
+  │       ├── weekly/   # Same tickers, weekly timeframe
+  │       └── monthly/  # Same tickers, monthly timeframe
+  │
+  └── 📂 results/                       # OUTPUT DATA
+      ├── daily/                        # Daily analysis results
+      │   ├── calculations/             # Technical indicators
+      │   ├── screeners/               # Screener outputs
+      │   ├── models/                  # Model predictions
+      │   └── overview/                # Summary files
+      ├── weekly/                      # Weekly analysis (same structure)
+      ├── indicators/                  # Technical indicator files
+      └── charts/                      # Generated charts
+
+  Main Execution Flow:
+  1. main.py → Config setup → User data → Ticker selection
+  2. → Market data loading → Basic calculations → Screener analysis
+  3. → Model execution → Results compilation → Dashboard generation
+

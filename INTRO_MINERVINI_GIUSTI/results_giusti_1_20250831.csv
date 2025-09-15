@@ -1,0 +1,11 @@
+ticker,price,volume,score,perf_12m,perf_6m,perf_3m,rank_12m,rank_6m,rank_3m,top_12m,top_6m,top_3m,analysis_date,signal_day,screener
+ARKK,73.78,35333600,180.0,64.61,32.6,30.89,4,6,2,True,True,True,2025-08-31,2025-08-31,Giusti Momentum
+SIL,53.02,2676800,180.0,66.06,52.92,23.08,3,1,3,True,True,True,2025-08-31,2025-08-31,Giusti Momentum
+BLOK,57.67,465800,180.0,72.54,38.6,19.2,1,4,5,True,True,True,2025-08-31,2025-08-31,Giusti Momentum
+GDX,58.32,30736900,180.0,52.78,46.83,15.14,5,3,7,True,True,True,2025-08-31,2025-08-31,Giusti Momentum
+NUKZ,56.7,479300,180.0,72.5,31.43,11.92,2,7,10,True,True,True,2025-08-31,2025-08-31,Giusti Momentum
+URA,36.45,9499500,174.55,44.55,46.98,13.87,7,2,8,True,True,True,2025-08-31,2025-08-31,Giusti Momentum
+PBW,24.23,493600,157.26,27.26,38.27,36.02,13,5,1,True,True,True,2025-08-31,2025-08-31,Giusti Momentum
+VGT,683.89,1196700,149.76,19.76,14.54,12.91,17,12,9,True,True,True,2025-08-31,2025-08-31,Giusti Momentum
+SPHB,101.91,568100,149.62,19.62,17.74,16.15,18,9,6,True,True,True,2025-08-31,2025-08-31,Giusti Momentum
+SMH,288.96,18277200,149.21,19.21,24.14,20.53,21,8,4,True,True,True,2025-08-31,2025-08-31,Giusti Momentum

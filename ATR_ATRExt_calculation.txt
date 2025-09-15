@@ -1,0 +1,79 @@
+Structure for Calculating ATR and ATRext in PythonHere's a simple, step-by-step structure you can give to your programmer to implement ATR (Average True Range) and ATRext (ATR Extension) based on Steve Jacobs' approach. This assumes you have historical stock data (e.g., OHLC: Open, High, Low, Close) in a format like a Pandas DataFrame. I'll include the key formulas and logic—your programmer can handle the code details using libraries like Pandas and NumPy for efficiency.1. Data Requirements
+    • Input: A DataFrame with columns: 'High', 'Low', 'Close' (and optionally 'Open' if needed elsewhere).
+    • Period: Use daily data; ATR is calculated over 14 periods (days).
+    • Length for SMA: 50 periods for SMA50.
+    • Ensure the DataFrame is sorted by date ascending.
+2. Calculate ATR (Wilder 14-Period Method)
+    • Purpose: Measures average volatility, including gaps. Jacobs uses the standard Wilder ATR with 14 periods.
+    • Steps:
+        1. Compute the True Range (TR) for each period:
+            ▪ TR = max(High - Low, abs(High - Previous Close), abs(Low - Previous Close))
+            ▪ For the first row, TR = High - Low (no previous close).
+        2. Compute ATR as an exponentially smoothed moving average of TR over 14 periods.
+            ▪ Initial ATR (at period 14): Simple average of first 14 TR values.
+            ▪ Subsequent ATR: (Previous ATR * 13 + Current TR) / 14
+    • Formula:
+        1. TR_t = max(High_t - Low_t, |High_t - Close_{t-1}|, |Low_t - Close_{t-1}|)
+        2. ATR_t = (ATR_{t-1} * (n-1) + TR_t) / n where n=14
+    • Output: Add a column 'ATR' to the DataFrame (in dollar terms). Optionally, compute ATR % = (ATR / Close) * 100.
+    • Python Tip: Use Pandas' shift() for previous close, and ewm() for exponential moving average (set alpha=2/(n+1) for Wilder equivalent, but manual loop might be clearer for exact Wilder).
+3. Calculate SMA50 (50-Day Simple Moving Average)
+    • Purpose: Baseline for extension measurement.
+    • Formula: SMA50_t = (Sum of last 50 Closes) / 50
+    • Steps: Use a rolling window on 'Close'.
+    • Output: Add a column 'SMA50' to the DataFrame.
+    • Python Tip: df['SMA50'] = df['Close'].rolling(window=50).mean()
+4. Calculate ATRext (ATR Extension)
+    • Purpose: Measures how extended the price is from SMA50 in ATR multiples. Jacobs prefers dollar-based ($), but mentions %-based as an alternative.
+    • Primary (Dollar-Based ATRext $): Used for bands and conservatism.
+        ◦ Formula: ATRext_$ = (Close - SMA50) / ATR
+        ◦ Positive values indicate extension above SMA50; negative below.
+    • Alternative (%-Based ATRext %): For current extension only (not iterative bands).
+        ◦ Formula: ATRext_% = ((Close / SMA50) - 1) / (ATR / Close)
+        ◦ Or simplified: ( (Close - SMA50) / SMA50 ) / (ATR % / 100)
+    • Steps:
+        ◦ Ensure ATR and SMA50 are calculated.
+        ◦ Compute for the latest row or historically.
+    • Output: Add columns 'ATRext_$' and optionally 'ATRext_%'.
+    • Extensions/Bands (Optional): For forward price bands, use linear addition: Target at n-x = SMA50 + (n * ATR)
+        ◦ e.g., For n=7: SMA50 + (7 * ATR)
+        ◦ Avoid compounding % for multi-levels to prevent exponential targets.
+5. Overall Implementation Flow
+    • Load data into DataFrame.
+    • Compute TR (new column).
+    • Compute ATR (loop or vectorized).
+    • Compute SMA50.
+    • Compute ATRext.
+    • Handle edge cases: NaN for first 50 rows (SMA), first 14 for ATR.
+    • Example Pseudocode:
+    • import pandas as pd
+import numpy as np
+
+def calculate_atr_and_atrext(df, atr_period=14, sma_period=50):
+    # Step 1: True Range
+    df['Prev_Close'] = df['Close'].shift(1)
+    df['TR'] = np.maximum(df['High'] - df['Low'],
+                          np.maximum(abs(df['High'] - df['Prev_Close']),
+                                     abs(df['Low'] - df['Prev_Close'])))
+
+    # Step 2: ATR (manual Wilder loop)
+    atr = [np.nan] * atr_period
+    atr[atr_period-1] = df['TR'][:atr_period].mean()
+    for i in range(atr_period, len(df)):
+        atr.append((atr[i-1] * (atr_period - 1) + df['TR'].iloc[i]) / atr_period)
+    df['ATR'] = atr
+
+    # Step 3: SMA50
+    df['SMA50'] = df['Close'].rolling(window=sma_period).mean()
+
+    # Step 4: ATRext $
+    df['ATRext_$'] = (df['Close'] - df['SMA50']) / df['ATR']
+
+    # Optional: ATR % and ATRext %
+    df['ATR_%'] = (df['ATR'] / df['Close']) * 100
+    df['ATRext_%'] = ((df['Close'] / df['SMA50']) - 1) / (df['ATR'] / df['Close'])
+
+    return df
+      
+
+

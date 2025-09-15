@@ -1,0 +1,9 @@
+Output files:
+
+/home/imagda/_invest2024/python/metaData_v1/results/RS
+
+use ending such as:
+
+_RSStyle_currentdate (from combined_info_tickers_clean_0.csv located in /data/tickers). This data are not going to be saved in basic_calculation file.
+
+

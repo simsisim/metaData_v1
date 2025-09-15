@@ -1,0 +1,30 @@
+The rrg_ma_noTail.py script is designed to generate a Relative Rotation Graph (RRG) for a set of stocks, plotting their percentage change relative to moving averages without historical tails. It pulls closing price data, computes percent deviation from short/long moving averages, and visualizes results in a four-quadrant plot.
+Purpose and Workflow
+
+    Data Preparation: Loads historical closing price data for each stock using a download_ticker_data function.
+
+Indicator Computation:
+
+    Uses pct_to_ma() to compute percentage change of the latest price compared to specified MA periods (short and long MAs).
+
+    create_rrg() applies this calculation to all stocks and returns a DataFrame.
+
+Visualization:
+
+    Plots each stock’s latest value relative to short and long MAs on an XY scatterplot with quadrant labels ("Leading", "Improving", "Lagging", "Weakening").
+
+Batch Output: Saves RRG data to CSV and plot as PNG to the specified output directory.
+Key Functions
+
+    pct_to_ma(stock, ma_period): Calculates (price−MA)/MA×100(price−MA)/MA×100 percent change for a moving average window.
+
+create_rrg(data, stocks, params): Populates RRG data for all stocks using specified MA periods from params, outputting a DataFrame.
+
+plot_rrg(rrg_data, stocks, plot_title, output_folder, params): Draws the main RRG plot for visualization and saves it as PNG.
+
+save_to_csv(rrg_data, output_folder): Writes the calculated RRG values to a CSV file.
+
+run_rrg_analysis_noTail(data, params): Main entry point orchestrating the data collection, calculation, saving, and plotting steps
+
+look at /home/imagda/_invest2024/python/v0/marketOverview_v0/rrg_ma_wTail.py
+/home/imagda/_invest2024/python/v0/marketOverview_v0/rrg_ma_noTail.py

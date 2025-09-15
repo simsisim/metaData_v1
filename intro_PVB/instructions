@@ -1,0 +1,76 @@
+Model Description
+
+    Source: Price and Volume Breakout Buy Strategy (TradeDots)
+
+    Purpose: The model identifies buy and sell signals based on simultaneous price and volume breakouts over user-defined time windows, ensuring trades follow the prevailing trend by verifying the position relative to a moving average.
+
+    Optimal Markets: Most effective for highly volatile assets (e.g. Bitcoin, Ethereum) due to pronounced price and volume swings; less effective for broad markets with muted breakouts.
+
+List of Model Variables (Inputs)
+
+Give these as required parameters/input data for the strategy:
+Variable Name	Description	Example Value/Type
+price_breakout_period	Number of bars for highest price comparison (window size)	int (e.g. 20)
+volume_breakout_period	Number of bars for highest volume comparison (window size)	int (e.g. 20)
+trendline_length	Number of bars for moving average calculation (trend indicator)	int (e.g. 50)
+order_direction	Trade direction: "Long", "Short", "Long and Short"	str
+PVB_filename	Output results file name, should follow a standardized format	str
+data	Candlestick financial data per symbol, must include required columns	DataFrame
+DataFrame columns required:
+
+    'Close': closing price
+
+    'High': high price
+
+    'Low': low price
+
+    'Volume': trading volume
+
+Implementation Summary (for Programmer)
+
+    Input: Accept batch financial data per symbol, and model parameters (price_breakout_period, volume_breakout_period, trendline_length, order_direction, PVB_filename).
+
+Indicators: Calculate rolling highest price, lowest price, highest volume, and moving average over corresponding periods.
+
+
+for implementation detail look at price_volume_breakout.py: this implementation was testing against tradingview
+Example Parameter Input (for testing)
+
+python
+params = {
+    'price_breakout_period': 20,
+    'volume_breakout_period': 20,
+    'trendline_length': 50,
+    'order_direction': "Long and Short",
+    'PVB_filename': "recipe_projectname_2025-08-30_PVB.csv"
+}
+
+Notes for Implementation
+
+    Use clear variable naming and function docstrings.
+
+    Ensure robust error handling (skip symbols missing columns, print errors).
+
+    File saving must use the dynamic, standardized filename format.
+
+    Output all signals/results in one CSV per run.
+
+This summary gives your programmer exactly what variables to expect and how to organize their code around the source model.
+
+
+Structure Interpretation
+
+    root/
+
+        src/
+
+            run_screeners.py (main orchestrator)
+
+            screeners/
+
+                screener_name1.py
+
+                screener_name2.py
+
+                screener_name3.py
+

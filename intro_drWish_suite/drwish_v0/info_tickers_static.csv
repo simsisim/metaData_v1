@@ -1,0 +1,135 @@
+ticker,sector,industry,next_earnings,marketCap,shortName,longName
+ADBE,Technology,Software - Infrastructure,2025-03-12,201439428608,Adobe Inc.,Adobe Inc.
+AMD,Technology,Semiconductors,2025-04-28,181040021504,"Advanced Micro Devices, Inc.","Advanced Micro Devices, Inc."
+ABNB,Consumer Cyclical,Travel Services,2025-02-13,87792959488,"Airbnb, Inc.","Airbnb, Inc."
+GOOGL,Communication Services,Internet Content & Information,2025-04-23,2248212742144,Alphabet Inc.,Alphabet Inc.
+GOOG,Communication Services,Internet Content & Information,2025-04-23,2248208809984,Alphabet Inc.,Alphabet Inc.
+AMZN,Consumer Cyclical,Internet Retail,2025-04-28,2426131185664,"Amazon.com, Inc.","Amazon.com, Inc."
+AEP,Utilities,Utilities - Regulated Electric,2025-02-13,54508027904,American Electric Power Company,"American Electric Power Company, Inc."
+AMGN,Healthcare,Drug Manufacturers - General,2025-04-30,158604476416,Amgen Inc.,Amgen Inc.
+ADI,Technology,Semiconductors,2025-02-19,101774426112,"Analog Devices, Inc.","Analog Devices, Inc."
+ANSS,Technology,Software - Application,2025-02-19,29218793472,"ANSYS, Inc.","ANSYS, Inc."
+AAPL,Technology,Consumer Electronics,2025-04-30,3558284984320,Apple Inc.,Apple Inc.
+AMAT,Technology,Semiconductor Equipment & Materials,2025-02-13,147009486848,"Applied Materials, Inc.","Applied Materials, Inc."
+APP,Technology,Software - Application,2025-05-06,127632351232,Applovin Corporation,AppLovin Corporation
+ARM,Technology,Semiconductors,2025-02-05,163802136576,Arm Holdings plc,Arm Holdings plc
+ASML,Technology,Semiconductor Equipment & Materials,2025-04-16,297326051328,ASML Holding N.V. - New York Re,ASML Holding N.V.
+AZN,Healthcare,Drug Manufacturers - General,2025-04-29,230819332096,Astrazeneca PLC,AstraZeneca PLC
+TEAM,Technology,Software - Application,2025-01-30,83433906176,Atlassian Corporation,Atlassian Corporation
+ADSK,Technology,Software - Application,2025-02-27,64066510848,"Autodesk, Inc.","Autodesk, Inc."
+ADP,Technology,Software - Application,2025-04-29,124766994432,"Automatic Data Processing, Inc.","Automatic Data Processing, Inc."
+AXON,Industrials,Aerospace & Defense,2025-02-25,50715545600,"Axon Enterprise, Inc.","Axon Enterprise, Inc."
+BKR,Energy,Oil & Gas Equipment & Services,2025-04-21,45951098880,Baker Hughes Company,Baker Hughes Company
+BIIB,Healthcare,Drug Manufacturers - General,2025-04-22,19443286016,Biogen Inc.,Biogen Inc.
+BKNG,Consumer Cyclical,Travel Services,2025-02-20,166082871296,Booking Holdings Inc. Common St,Booking Holdings Inc.
+AVGO,Technology,Semiconductors,2025-03-06,1107857506304,Broadcom Inc.,Broadcom Inc.
+CDNS,Technology,Software - Application,2025-02-19,80645668864,"Cadence Design Systems, Inc.","Cadence Design Systems, Inc."
+CDW,Technology,Information Technology Services,2025-04-29,25178900480,CDW Corporation,CDW Corporation
+CHTR,Communication Services,Telecom Services,2025-04-24,50329083904,"Charter Communications, Inc.","Charter Communications, Inc."
+CTAS,Industrials,Specialty Business Services,2025-03-25,82569134080,Cintas Corporation,Cintas Corporation
+CSCO,Technology,Communication Equipment,2025-02-12,249041977344,"Cisco Systems, Inc.","Cisco Systems, Inc."
+CCEP,Consumer Defensive,Beverages - Non-Alcoholic,2025-02-14,37516881920,Coca-Cola Europacific Partners ,Coca-Cola Europacific Partners PLC
+CTSH,Technology,Information Technology Services,2025-04-29,43599601664,Cognizant Technology Solutions ,Cognizant Technology Solutions Corporation
+CMCSA,Communication Services,Telecom Services,2025-04-23,131957604352,Comcast Corporation,Comcast Corporation
+CPRT,Industrials,Specialty Business Services,2025-02-20,56867422208,"Copart, Inc.","Copart, Inc."
+CSGP,Real Estate,Real Estate Services,2025-02-18,30037768192,"CoStar Group, Inc.","CoStar Group, Inc."
+COST,Consumer Defensive,Discount Stores,2025-03-06,472805703680,Costco Wholesale Corporation,Costco Wholesale Corporation
+CRWD,Technology,Software - Infrastructure,2025-03-04,107054153728,"CrowdStrike Holdings, Inc.","CrowdStrike Holdings, Inc."
+CSX,Industrials,Railroads,2025-04-15,63483580416,CSX Corporation,CSX Corporation
+DDOG,Technology,Software - Application,2025-02-13,50309578752,"Datadog, Inc.","Datadog, Inc."
+DXCM,Healthcare,Medical Devices,2025-02-13,32759203840,"DexCom, Inc.","DexCom, Inc."
+FANG,Energy,Oil & Gas E&P,2025-02-24,45392609280,"Diamondback Energy, Inc.","Diamondback Energy, Inc."
+DASH,Communication Services,Internet Content & Information,2025-04-29,83448905728,"DoorDash, Inc.","DoorDash, Inc."
+EA,Communication Services,Electronic Gaming & Multimedia,2025-05-06,34185263104,Electronic Arts Inc.,Electronic Arts Inc.
+EXC,Utilities,Utilities - Regulated Electric,2025-04-30,43113885696,Exelon Corporation,Exelon Corporation
+FAST,Industrials,Industrial Distribution,2025-04-11,42249588736,Fastenal Company,Fastenal Company
+FTNT,Technology,Software - Infrastructure,2025-04-30,82546982912,"Fortinet, Inc.","Fortinet, Inc."
+GEHC,Healthcare,Health Information Services,2025-02-13,39245389824,GE HealthCare Technologies Inc.,GE HealthCare Technologies Inc.
+GILD,Healthcare,Drug Manufacturers - General,2025-04-23,128752148480,"Gilead Sciences, Inc.","Gilead Sciences, Inc."
+GFS,Technology,Semiconductors,2025-02-11,24068124672,GlobalFoundries Inc.,GlobalFoundries Inc.
+HON,Industrials,Conglomerates,2025-04-23,133307129856,Honeywell International Inc.,Honeywell International Inc.
+IDXX,Healthcare,Diagnostics & Research,2025-04-29,37449969664,"IDEXX Laboratories, Inc.","IDEXX Laboratories, Inc."
+INTC,Technology,Semiconductors,2025-04-23,97338392576,Intel Corporation,Intel Corporation
+INTU,Technology,Software - Application,2025-02-25,161383333888,Intuit Inc.,Intuit Inc.
+ISRG,Healthcare,Medical Instruments & Supplies,2025-04-16,210288525312,"Intuitive Surgical, Inc.","Intuitive Surgical, Inc."
+KDP,Consumer Defensive,Beverages - Non-Alcoholic,2025-02-25,42958774272,Keurig Dr Pepper Inc.,Keurig Dr Pepper Inc.
+KLAC,Technology,Semiconductor Equipment & Materials,2025-04-23,99738337280,KLA Corporation,KLA Corporation
+KHC,Consumer Defensive,Packaged Foods,2025-04-29,34606448640,The Kraft Heinz Company,The Kraft Heinz Company
+LRCX,Technology,Semiconductor Equipment & Materials,2025-04-22,104708145152,Lam Research Corporation,Lam Research Corporation
+LIN,Basic Materials,Specialty Chemicals,2025-04-30,218347012096,Linde plc,Linde plc
+LULU,Consumer Cyclical,Apparel Retail,2025-03-19,48124166144,lululemon athletica inc.,Lululemon Athletica Inc.
+MAR,Consumer Cyclical,Lodging,2025-04-29,80075620352,Marriott International,"Marriott International, Inc."
+MRVL,Technology,Semiconductors,2025-03-06,91219918848,"Marvell Technology, Inc.","Marvell Technology, Inc."
+MELI,Consumer Cyclical,Internet Retail,2025-02-20,102242967552,"MercadoLibre, Inc.","MercadoLibre, Inc."
+META,Communication Services,Internet Content & Information,2025-04-22,1837866287104,"Meta Platforms, Inc.","Meta Platforms, Inc."
+MCHP,Technology,Semiconductors,2025-05-05,28961552384,Microchip Technology Incorporat,Microchip Technology Incorporated
+MU,Technology,Semiconductors,2025-03-18,102147104768,"Micron Technology, Inc.","Micron Technology, Inc."
+MSFT,Technology,Software - Infrastructure,2025-04-23,3040795164672,Microsoft Corporation,Microsoft Corporation
+MSTR,Technology,Software - Application,2025-04-28,84378386432,MicroStrategy Incorporated,MicroStrategy Incorporated
+MDLZ,Consumer Defensive,Confectioners,2025-04-28,78387912704,"Mondelez International, Inc.","Mondelez International, Inc."
+MDB,Technology,Software - Infrastructure,2025-03-05,23435872256,"MongoDB, Inc.","MongoDB, Inc."
+MNST,Consumer Defensive,Beverages - Non-Alcoholic,2025-02-26,46846287872,Monster Beverage Corporation,Monster Beverage Corporation
+NFLX,Communication Services,Entertainment,2025-04-16,439439065088,"Netflix, Inc.","Netflix, Inc."
+NVDA,Technology,Semiconductors,2025-02-26,3211618680832,NVIDIA Corporation,NVIDIA Corporation
+NXPI,Technology,Semiconductors,2025-04-28,55860944896,NXP Semiconductors N.V.,NXP Semiconductors N.V.
+ORLY,Consumer Cyclical,Specialty Retail,2025-04-22,75991252992,"O'Reilly Automotive, Inc.","O'Reilly Automotive, Inc."
+ODFL,Industrials,Trucking,2025-04-22,43344363520,"Old Dominion Freight Line, Inc.","Old Dominion Freight Line, Inc."
+ON,Technology,Semiconductors,2025-04-28,21096335360,ON Semiconductor Corporation,ON Semiconductor Corporation
+PCAR,Industrials,Farm & Heavy Construction Machinery,2025-04-28,54070882304,PACCAR Inc.,PACCAR Inc
+PLTR,Technology,Software - Infrastructure,2025-05-05,267416780800,Palantir Technologies Inc.,Palantir Technologies Inc.
+PANW,Technology,Software - Infrastructure,2025-02-13,129094221824,"Palo Alto Networks, Inc.","Palo Alto Networks, Inc."
+PAYX,Technology,Software - Application,2025-03-31,52911259648,"Paychex, Inc.","Paychex, Inc."
+PYPL,Financial Services,Credit Services,2025-04-28,75449483264,"PayPal Holdings, Inc.","PayPal Holdings, Inc."
+PDD,Consumer Cyclical,Internet Retail,2025-03-18,165027545088,PDD Holdings Inc.,PDD Holdings Inc.
+PEP,Consumer Defensive,Beverages - Non-Alcoholic,2025-04-21,197482299392,"Pepsico, Inc.","PepsiCo, Inc."
+QCOM,Technology,Semiconductors,2025-04-29,188340731904,QUALCOMM Incorporated,QUALCOMM Incorporated
+REGN,Healthcare,Biotechnology,2025-04-30,72576491520,"Regeneron Pharmaceuticals, Inc.","Regeneron Pharmaceuticals, Inc."
+ROP,Technology,Software - Application,2025-04-24,60773109760,"Roper Technologies, Inc.","Roper Technologies, Inc."
+ROST,Consumer Cyclical,Apparel Retail,2025-03-03,46041591808,"Ross Stores, Inc.","Ross Stores, Inc."
+SBUX,Consumer Cyclical,Restaurants,2025-04-28,128405528576,Starbucks Corporation,Starbucks Corporation
+SNPS,Technology,Software - Infrastructure,2025-02-26,78789951488,"Synopsys, Inc.","Synopsys, Inc."
+TTWO,Communication Services,Electronic Gaming & Multimedia,2025-02-06,36919431168,"Take-Two Interactive Software, ","Take-Two Interactive Software, Inc."
+TMUS,Communication Services,Telecom Services,2025-04-23,291463397376,"T-Mobile US, Inc.","T-Mobile US, Inc."
+TSLA,Consumer Cyclical,Auto Manufacturers,2025-04-23,1082391134208,"Tesla, Inc.","Tesla, Inc."
+TXN,Technology,Semiconductors,2025-04-21,164189945856,Texas Instruments Incorporated,Texas Instruments Incorporated
+TTD,Technology,Software - Application,2025-02-13,60329553920,"The Trade Desk, Inc.","The Trade Desk, Inc."
+VRSK,Industrials,Consulting Services,2025-02-26,41383297024,"Verisk Analytics, Inc.","Verisk Analytics, Inc."
+VRTX,Healthcare,Biotechnology,2025-05-05,116427079680,Vertex Pharmaceuticals Incorpor,Vertex Pharmaceuticals Incorporated
+WBD,Communication Services,Entertainment,2025-02-27,24090128384,"Warner Bros. Discovery, Inc. - ","Warner Bros. Discovery, Inc."
+WDAY,Technology,Software - Application,2025-02-26,68606722048,"Workday, Inc.","Workday, Inc."
+XEL,Utilities,Utilities - Regulated Electric,2025-04-23,38703910912,Xcel Energy Inc.,Xcel Energy Inc.
+ZS,Technology,Software - Infrastructure,2025-03-05,32397111296,"Zscaler, Inc.","Zscaler, Inc."
+^GSPC,N/A,N/A,N/A,N/A,S&P 500,S&P 500
+^DJI,N/A,N/A,N/A,N/A,Dow Jones Industrial Average,Dow Jones Industrial Average
+^IXIC,N/A,N/A,N/A,N/A,NASDAQ Composite,NASDAQ Composite
+^NYA,N/A,N/A,N/A,N/A,NYSE COMPOSITE (DJ),NYSE COMPOSITE (DJ)
+^XAX,N/A,N/A,N/A,N/A,NYSE AMEX COMPOSITE INDEX,NYSE AMEX COMPOSITE INDEX
+^BUK100P,N/A,N/A,N/A,N/A,Cboe UK 100,Cboe UK 100
+^RUT,N/A,N/A,N/A,N/A,Russell 2000,Russell 2000
+^VIX,N/A,N/A,N/A,N/A,CBOE Volatility Index,CBOE Volatility Index
+^FTSE,N/A,N/A,N/A,N/A,FTSE 100,FTSE 100
+^GDAXI,N/A,N/A,N/A,N/A,DAX                           P,DAX                           P
+^FCHI,N/A,N/A,N/A,N/A,CAC 40,CAC 40
+^STOXX50E,N/A,N/A,N/A,N/A,EURO STOXX 50                 I,EURO STOXX 50                 I
+^N100,N/A,N/A,N/A,N/A,Euronext 100 Index,Euronext 100 Index
+^BFX,N/A,N/A,N/A,N/A,BEL 20,BEL 20
+^HSI,N/A,N/A,N/A,N/A,HANG SENG INDEX,HANG SENG INDEX
+^STI,N/A,N/A,N/A,N/A,STI Index,STI Index
+QQQ,N/A,N/A,N/A,N/A,"Invesco QQQ Trust, Series 1",Invesco QQQ Trust
+SPY,N/A,N/A,N/A,N/A,SPDR S&P 500,SPDR S&P 500 ETF Trust
+IWM,N/A,N/A,N/A,N/A,iShares Russell 2000 ETF,iShares Russell 2000 ETF
+MAGS,N/A,N/A,N/A,N/A,Roundhill Magnificent Seven ETF,Roundhill Magnificent Seven ETF
+XLC,N/A,N/A,N/A,N/A,The Communication Services Sele,The Communication Services Select Sector SPDR ETF Fund
+XLY,N/A,N/A,N/A,N/A,SPDR Select Sector Fund - Consu,The Consumer Discretionary Select Sector SPDR Fund
+XLP,N/A,N/A,N/A,N/A,SPDR Select Sector Fund - Consu,The Consumer Staples Select Sector SPDR Fund
+XLE,N/A,N/A,N/A,N/A,SPDR Select Sector Fund - Energ,The Energy Select Sector SPDR Fund
+XLF,N/A,N/A,N/A,N/A,SPDR Select Sector Fund - Finan,The Financial Select Sector SPDR Fund
+XLV,N/A,N/A,N/A,N/A,SPDR Select Sector Fund - Healt,The Health Care Select Sector SPDR Fund
+XLI,N/A,N/A,N/A,N/A,SPDR Select Sector Fund - Indus,The Industrial Select Sector SPDR Fund
+XLB,N/A,N/A,N/A,N/A,Materials Select Sector SPDR,The Materials Select Sector SPDR Fund
+XLRE,N/A,N/A,N/A,N/A,Real Estate Select Sector SPDR ,The Real Estate Select Sector SPDR Fund
+XLU,N/A,N/A,N/A,N/A,SPDR Select Sector Fund - Utili,The Utilities Select Sector SPDR Fund
+SMH,N/A,N/A,N/A,N/A,VanEck Semiconductor ETF,VanEck Semiconductor ETF
+JPM,Financial Services,Banks - Diversified,2025-04-11,770598961152,JP Morgan Chase & Co.,JPMorgan Chase & Co.
+VRT,Industrials,Electrical Equipment & Parts,2025-04-22,42349510656,"Vertiv Holdings, LLC",Vertiv Holdings Co
+NET,Technology,Software - Infrastructure,2025-04-30,59601293312,"Cloudflare, Inc.","Cloudflare, Inc."

@@ -1,0 +1,126 @@
+he PVB screener now produces output that exactly matches your original TradingView-tested format and saves to the specified
+  directory structure.
+
+> PVB screener works with daily and weekly timeframe? If both, does the output file has  different name i.e. 
+  PVB_0_20250830_daily.csv, *_weekly.csv? I am getting only 1 file, expected 2. Output located at 
+  /home/imagda/_invest2024/python/metaData_v1/results/screeners/pvb
+
+● You're right! The current implementation doesn't distinguish between timeframes in the output filename. Let me check how the
+  screener is called and fix this issue.
+
+  Update Todos
+  ⎿  ☐ Investigate PVB timeframe handling in filename generation     
+     ☐ Update PVB filename to include timeframe (daily/weekly)
+     ☐ Test both daily and weekly PVB outputs generate separate files
+
+● Let me check how the screener is called from the main processing to see if timeframe information is available:
+
+● Search(pattern: "run_screeners.*timeframe", output_mode: "content")
+  ⎿  Found 3 lines (ctrl+r to expand)
+  ⎿  Claude usage limit reached. Your limit will reset at 2pm (Europe/Berlin).
+ Implement volume suite screener: 
+ 
+ Add indicators.py
+ 
+         ├── screeners
+         │   ├── atr1_screener.py
+         │   
+         |
+         |   ....
+         |
+         |__ indicators.py
+               -indicators_calculation.py  
+                	- kurutoga.py
+                	- TSI
+                	- MACD
+                	- MFI
+                	- COG
+                	- MOM, MFI, RSI
+                	- MA CROSSES 
+                	- easy_trade
+                -indicators_charts.py
+                
+                
+Based on your comprehensive screening and market analysis system, I'd recommend implementing a Portfolio Management & Position
+   Sizing Module. Here's why this would be highly valuable:
+
+  🎯 Portfolio Management System
+
+  You currently have excellent signal generation but no systematic way to act on the signals. A portfolio management module
+  would bridge this gap:
+
+  Core Components:
+
+  1. Position Sizing Algorithm
+    - ATR-based position sizing (1-2% portfolio risk per trade)
+    - Market Pulse integration (larger positions when GMI is GREEN)
+    - Volatility-adjusted sizing using your RTI screener data
+  2. Portfolio Heat Management
+    - Track total portfolio risk exposure
+    - Sector/industry concentration limits
+    - Correlation-based position adjustments
+  3. Entry/Exit Rules Engine
+    - Systematic entry based on screener combinations
+    - Stop-loss management (ATR-based or technical levels)
+    - Profit-taking rules (multiple exits, trailing stops)
+
+  Why This Makes Sense:
+
+  - Actionable Results: Transform your excellent screening into actual trading decisions
+  - Risk Management: Protect capital with systematic position sizing
+  - Performance Tracking: See which screener combinations work best
+  - Market Pulse Integration: Adjust position sizes based on market conditions (GMI, FTD/DD signals)
+
+  Alternative High-Value Options:
+
+  1. Backtesting Framework - Test historical performance of your screeners
+  2. Real-Time Alert System - Email/SMS notifications when screeners trigger
+  3. Sector Rotation Analysis - Enhanced industry/sector momentum tracking
+
+  Which direction interests you most? Portfolio management would make your system immediately actionable, while backtesting
+  would validate which signals actually work historically.
+  before that; regarding the market_pulse, maybe you can do some charting for the indicators you have created. Or a xlsx file, 
+  then once open really give me an overview and i dont need to look into individual files. In the links I have gave you with 
+  indicators they are also nice graphs. I give you free hand to design and create a "market pulse" monitoring dashboard. 
+  document the subject (save your documentation file) and give me your plan. 
+  
+  https://stockcharts.com/freecharts/marketsummary.html
+  https://www.koyfin.com/features/market-dashboards/
+  https://www.youtube.com/watch?v=R6B9l2-dulU
+https://www.cheddarflow.com/de/blog/finviz-review-a-comprehensive-look-at-the-elite-and-free-plans/
+
+https://www.inetsoft.com/solutions/financial_markets_trading_dashboards/
+https://www.fxmacro.info/p/market-dashboard
+https://howtoexcel.net/2021/09/creating-a-stock-market-dashboard-in-excel.html
+
+https://smartnmagic.com/blogs/solutions/create-your-own-tradingview-workspace-with-dakboard
+
+radingView's Custom Dashboard Capabilities
+
+    TradingView supports creating multi-chart layouts, enabling the display of several charts side by side (2, 4, or more, depending on the subscription level).
+
+Symbol syncing lets users update all charts simultaneously, offering some workflow efficiency akin to “group linking”.
+
+With watchlists, custom indicators, and script widgets, users can approximate a dashboard experience, though overlays like Net New Highs or breadth are done through built-in or custom indicators on charts instead of separate data panels.
+Comparisons & Limitations
+
+    Unlike Deepvue, TradingView does not yet offer multiple pop-out watchlists that can freely float across screens or directly link to specific chart groups, a feature frequently requested by its community.
+
+Custom dashboards in TradingView require arranging separate charts, watchlists, and widgets manually, lacking a true drag-and-drop dashboard creator for integrated sector/ETF lists, breadth panels, or summary tables.
+
+Some traders use third-party solutions or browser extensions to simulate more advanced dashboard layouts, but these lack the seamless modularity of Deepvue’s pre-built market monitor views.
+Practical Solution for Premium Users
+
+    With TradingView Premium, it’s possible to create multi-panel screens (charts + watchlists), use custom Pine Script indicators for breadth, and organize assets by sector or theme in separate windows.
+
+    However, true dashboard functionalities such as direct linking between charts and bespoke column watchlists, as shown in the Deepvue tutorial, require workarounds or are not yet natively supported.
+
+
+
+        
+                       
+                       
+                      
+
+
+

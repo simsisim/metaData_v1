@@ -1,0 +1,29 @@
+In user_data.csv add:
+
+RS_Stocks:
+RS_IBD = BOOL
+RS_MAs = BOLL
+RS_interval  daily: 1, 3, 5, 10, 15
+RS_interval weekly: 1, 2, 4, 6
+RS_interval monthly: 1, 3, 6
+RS_benchmark:
+SPY = bool
+QQQ = bool
+DJI = bool
+userChoice = T200_ (any input)
+
+RS_Sectors/Industry:
+RS_IBD = BOOL
+RS_MAs = BOOL
+RS_interval  daily: 1, 3, 5, 10, 15
+RS_interval weekly: 1, 2, 4, 6
+RS_interval monthly: 1, 3, 6
+RS_benchmark:
+SPY = bool
+QQQ = bool
+DJI = bool
+Composite index:
+equal-weighted average = bool
+market cap weighted average = bool
+userChoice = T200_ (any input)
+

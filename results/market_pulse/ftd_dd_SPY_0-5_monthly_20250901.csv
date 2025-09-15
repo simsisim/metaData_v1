@@ -1,0 +1,2 @@
+date,timeframe,ticker_choice,index,latest_price,market_state,confidence,recent_ftd_count,recent_dd_count,ftd_dd_ratio,total_ftd_count,total_dd_count,latest_signal,signal_strength,last_ftd_date,last_dd_date,analysis_period,recent_activity_period,ftd_price_threshold,ftd_volume_threshold,dd_price_threshold,dd_volume_threshold
+20250901,monthly,0-5,SPY,647.239990234375,Neutral,Low,0,0,0.0,4,8,DD (2025-07-28),Neutral,,,50,25,1.5,1.25,-0.2,1.2
