@@ -132,7 +132,7 @@ class IBDRelativeStrengthCalculator(RSCalculatorBase):
         # Use the same logic as stock RS calculation
         return self.calculate_stock_rs(composite_df, benchmark_data, periods, benchmark_name)
     
-    def process_universe(self, ticker_list, timeframe='daily', benchmark_ticker='SPY', batch_size=1000):
+    def process_universe(self, ticker_list, timeframe='daily', benchmark_ticker='SPY', batch_size=100):
         """
         Process entire stock universe for RS calculations using hybrid batched approach.
         

@@ -123,7 +123,7 @@ class RSProcessor:
         print(f"\n📊 Processing {timeframe.upper()} timeframe...")
 
         # Show batch information like streaming implementations
-        batch_size = getattr(self.user_config, 'rs_batch_size', 1000)  # RS can process larger batches
+        batch_size = getattr(self.user_config, 'batch_size', 100)  # Use standard batch_size from user config
         total_tickers = len(ticker_list)
         import math
         total_batches = math.ceil(total_tickers / batch_size) if batch_size < total_tickers else 1
