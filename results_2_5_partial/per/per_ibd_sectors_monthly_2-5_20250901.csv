@@ -1,0 +1,5 @@
+ticker,date,timeframe,monthly_monthly_monthly_1m_rs_vs_QQQ_per_all,monthly_monthly_monthly_3m_rs_vs_QQQ_per_all,monthly_monthly_monthly_6m_rs_vs_QQQ_per_all,monthly_monthly_monthly_1m_rs_vs_QQQ_per_SP500,monthly_monthly_monthly_3m_rs_vs_QQQ_per_SP500,monthly_monthly_monthly_6m_rs_vs_QQQ_per_SP500
+Electronic technology,2025-09-01,monthly,99,99,99,99,99,99
+Health technology,2025-09-01,monthly,26,26,26,26,26,26
+Retail trade,2025-09-01,monthly,50,74,50,50,74,50
+Technology services,2025-09-01,monthly,74,50,74,74,50,74

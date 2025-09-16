@@ -1,0 +1,11 @@
+ticker,monthly_monthly_monthly_1m_rs_vs_QQQ,monthly_monthly_monthly_1m_stock_return,monthly_monthly_monthly_1m_benchmark_return_QQQ,date,monthly_monthly_monthly_3m_rs_vs_QQQ,monthly_monthly_monthly_3m_stock_return,monthly_monthly_monthly_3m_benchmark_return_QQQ,monthly_monthly_monthly_6m_rs_vs_QQQ,monthly_monthly_monthly_6m_stock_return,monthly_monthly_monthly_6m_benchmark_return_QQQ,timeframe
+Beverages: non-alcoholic,0.9886,-0.0016,0.0099,2025-09-01,0.9524,-0.0497,-0.0022,0.9258,-0.0584,0.0171,monthly
+Cable/Satellite TV,0.9799,-0.0104,0.0099,2025-09-01,0.9898,-0.0124,-0.0022,0.8702,-0.1149,0.0171,monthly
+Electric utilities,0.9712,-0.0191,0.0099,2025-09-01,0.9508,-0.0513,-0.0022,0.9259,-0.0583,0.0171,monthly
+Information technology services,0.9946,0.0045,0.0099,2025-09-01,1.0223,0.0200,-0.0022,0.8897,-0.0950,0.0171,monthly
+Internet software/Services,1.0387,0.0490,0.0099,2025-09-01,1.0308,0.0285,-0.0022,1.0839,0.1025,0.0171,monthly
+Medical specialties,0.9811,-0.0091,0.0099,2025-09-01,0.9804,-0.0218,-0.0022,0.9728,-0.0106,0.0171,monthly
+Packaged software,0.9724,-0.0180,0.0099,2025-09-01,0.9618,-0.0403,-0.0022,0.9501,-0.0337,0.0171,monthly
+Pharmaceuticals: major,0.9969,0.0068,0.0099,2025-09-01,1.0086,0.0063,-0.0022,0.9442,-0.0397,0.0171,monthly
+Semiconductors,1.0080,0.0180,0.0099,2025-09-01,0.9965,-0.0057,-0.0022,1.0140,0.0313,0.0171,monthly
+Specialty stores,1.0110,0.0210,0.0099,2025-09-01,0.9945,-0.0077,-0.0022,1.0149,0.0323,0.0171,monthly

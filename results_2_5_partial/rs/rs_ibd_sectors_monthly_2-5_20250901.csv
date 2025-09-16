@@ -1,0 +1,5 @@
+ticker,monthly_monthly_monthly_1m_rs_vs_QQQ,monthly_monthly_monthly_1m_stock_return,monthly_monthly_monthly_1m_benchmark_return_QQQ,date,monthly_monthly_monthly_3m_rs_vs_QQQ,monthly_monthly_monthly_3m_stock_return,monthly_monthly_monthly_3m_benchmark_return_QQQ,monthly_monthly_monthly_6m_rs_vs_QQQ,monthly_monthly_monthly_6m_stock_return,monthly_monthly_monthly_6m_benchmark_return_QQQ,timeframe
+Electronic technology,1.0136,0.0237,0.0099,2025-09-01,1.0082,0.0060,-0.0022,1.0452,0.0630,0.0171,monthly
+Health technology,0.9814,-0.0088,0.0099,2025-09-01,0.9774,-0.0248,-0.0022,0.9429,-0.0409,0.0171,monthly
+Retail trade,1.0078,0.0178,0.0099,2025-09-01,1.0028,0.0006,-0.0022,0.9988,0.0159,0.0171,monthly
+Technology services,1.0117,0.0217,0.0099,2025-09-01,1.0021,-0.0001,-0.0022,1.0355,0.0532,0.0171,monthly

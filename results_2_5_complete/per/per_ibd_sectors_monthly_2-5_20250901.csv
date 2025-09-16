@@ -1,0 +1,10 @@
+ticker,date,timeframe,monthly_monthly_monthly_1m_rs_vs_QQQ_per_all,monthly_monthly_monthly_3m_rs_vs_QQQ_per_all,monthly_monthly_monthly_6m_rs_vs_QQQ_per_all,monthly_monthly_monthly_1m_rs_vs_QQQ_per_SP500,monthly_monthly_monthly_3m_rs_vs_QQQ_per_SP500,monthly_monthly_monthly_6m_rs_vs_QQQ_per_SP500
+Consumer non-durables,2025-09-01,monthly,12,23,34,12,23,34
+Consumer services,2025-09-01,monthly,34,88,66,34,88,66
+Electronic technology,2025-09-01,monthly,99,77,99,99,77,99
+Health technology,2025-09-01,monthly,45,34,45,45,34,45
+Producer manufacturing,2025-09-01,monthly,77,99,23,77,99,23
+Retail trade,2025-09-01,monthly,66,66,77,66,66,77
+Technology services,2025-09-01,monthly,88,55,88,88,55,88
+Transportation,2025-09-01,monthly,55,45,55,55,45,55
+Utilities,2025-09-01,monthly,23,12,12,23,12,12

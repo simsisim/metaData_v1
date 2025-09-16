@@ -1,0 +1,11 @@
+ticker,weekly_weekly_weekly_10w_rs_vs_QQQ,weekly_weekly_weekly_10w_stock_return,weekly_weekly_weekly_10w_benchmark_return_QQQ,date,weekly_weekly_weekly_15w_rs_vs_QQQ,weekly_weekly_weekly_15w_stock_return,weekly_weekly_weekly_15w_benchmark_return_QQQ,weekly_weekly_weekly_1w_rs_vs_QQQ,weekly_weekly_weekly_1w_stock_return,weekly_weekly_weekly_1w_benchmark_return_QQQ,weekly_weekly_weekly_3w_rs_vs_QQQ,weekly_weekly_weekly_3w_stock_return,weekly_weekly_weekly_3w_benchmark_return_QQQ,weekly_weekly_weekly_5w_rs_vs_QQQ,weekly_weekly_weekly_5w_stock_return,weekly_weekly_weekly_5w_benchmark_return_QQQ,timeframe
+Beverages: non-alcoholic,0.9285,-0.0230,0.0522,2025-09-01,0.8593,-0.0269,0.1325,0.9886,-0.0016,0.0099,0.9524,-0.0497,-0.0022,0.9269,-0.0360,0.0400,weekly
+Cable/Satellite TV,0.6885,-0.2755,0.0522,2025-09-01,0.6381,-0.2774,0.1325,0.9799,-0.0104,0.0099,0.9898,-0.0124,-0.0022,0.9628,0.0014,0.0400,weekly
+Electric utilities,0.9245,-0.0272,0.0522,2025-09-01,0.9040,0.0238,0.1325,0.9712,-0.0191,0.0099,0.9508,-0.0513,-0.0022,0.8733,-0.0917,0.0400,weekly
+Information technology services,0.8730,-0.0814,0.0522,2025-09-01,0.8061,-0.0871,0.1325,0.9952,0.0051,0.0099,1.0223,0.0200,-0.0022,0.9422,-0.0200,0.0400,weekly
+Internet software/Services,1.0358,0.0899,0.0522,2025-09-01,1.0778,0.2206,0.1325,1.0387,0.0490,0.0099,1.0308,0.0285,-0.0022,1.0479,0.0898,0.0400,weekly
+Medical specialties,0.9059,-0.0468,0.0522,2025-09-01,0.8470,-0.0408,0.1325,0.9811,-0.0091,0.0099,0.9804,-0.0218,-0.0022,0.9866,0.0261,0.0400,weekly
+Packaged software,0.9527,0.0024,0.0522,2025-09-01,0.9578,0.0847,0.1325,0.9724,-0.0180,0.0099,0.9618,-0.0403,-0.0022,0.9189,-0.0443,0.0400,weekly
+Pharmaceuticals: major,0.9720,0.0227,0.0522,2025-09-01,0.8692,-0.0157,0.1325,0.9969,0.0068,0.0099,1.0086,0.0063,-0.0022,0.9295,-0.0332,0.0400,weekly
+Semiconductors,1.0252,0.0787,0.0522,2025-09-01,1.1217,0.2703,0.1325,1.0080,0.0180,0.0099,0.9963,-0.0059,-0.0022,1.0015,0.0416,0.0400,weekly
+Specialty stores,0.9344,-0.0168,0.0522,2025-09-01,0.8476,-0.0401,0.1325,1.0110,0.0210,0.0099,0.9945,-0.0077,-0.0022,0.9751,0.0141,0.0400,weekly

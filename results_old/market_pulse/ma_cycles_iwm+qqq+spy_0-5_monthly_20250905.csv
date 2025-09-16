@@ -1,0 +1,4 @@
+date,timeframe,index,ma_period,cycle_mode,current_cycle_type,current_candles,current_max_dist_pct,max_bull_candles,max_bull_dist_pct,avg_bull_candles,avg_bull_dist_pct,max_bear_candles,max_bear_dist_pct,avg_bear_candles,avg_bear_dist_pct,total_bull_cycles,total_bear_cycles,current_price,current_ma,chart_timeframe
+20250905,monthly,SPY,50,Sharp,bull,88,17.471262641756923,88,17.471262641756923,52.5,10.174723249377752,48,19.28520583378347,48.0,19.28520583378347,2,1,647.24,633.14,200
+20250905,monthly,QQQ,50,Sharp,bull,88,22.979067873684382,88,22.979067873684382,35.0,10.001809093952735,48,23.012876359717367,25.0,12.196221032645502,3,2,576.06,564.62,200
+20250905,monthly,IWM,50,Sharp,bull,24,11.219809271102287,59,15.242538306169774,18.0,5.800338564606342,52,24.002834379399882,14.0,7.087744230056006,5,5,237.77,224.85,200

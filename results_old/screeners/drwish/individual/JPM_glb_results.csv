@@ -1,0 +1,4 @@
+level,detection_date,detection_bar,confirmation_date,confirmation_bar,breakout_date,breakout_bar,is_confirmed,is_broken
+296.0400085449219,2025-07-07,79,2025-07-07,-1,2025-07-21,81.0,True,True
+301.2900085449219,2025-07-28,82,2025-07-28,-1,2025-08-29,87.0,True,True
+305.1499938964844,2025-09-01,88,2025-09-01,-1,,,True,False

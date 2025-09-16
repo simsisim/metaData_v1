@@ -36,14 +36,15 @@ class RSProcessor:
         self.ibd_calculator = IBDRelativeStrengthCalculator(config, user_config)
         self.composite_builder = SectorCompositeBuilder(config, user_config)
         
-    def process_rs_analysis(self, ticker_list, ticker_choice=0):
+    def process_rs_analysis(self, ticker_list, ticker_choice=0, timeframes=None):
         """
         Run complete RS analysis for stocks, sectors, and industries.
-        
+
         Args:
             ticker_list: List of ticker symbols to analyze
             ticker_choice: User ticker choice number
-            
+            timeframes: List of timeframes to process (overrides individual RS flags if provided)
+
         Returns:
             Dictionary with results summary
         """
@@ -62,15 +63,27 @@ class RSProcessor:
             'errors': []
         }
         
-        # Determine which timeframes to process based on RS-specific config flags
-        timeframes = []
-        if getattr(self.user_config, 'rs_daily_enable', True):
-            timeframes.append('daily')
-        if getattr(self.user_config, 'rs_weekly_enable', False):
-            timeframes.append('weekly')
-        if getattr(self.user_config, 'rs_monthly_enable', False):
-            timeframes.append('monthly')
-            
+        # Determine which timeframes to process - respect global timeframe permissions
+        if timeframes is not None:
+            # Global timeframes provided - use them with individual RS flags as filter
+            enabled_timeframes = []
+            for timeframe in timeframes:
+                rs_flag = f'rs_{timeframe}_enable'
+                if getattr(self.user_config, rs_flag, True):
+                    enabled_timeframes.append(timeframe)
+                else:
+                    logger.info(f"Skipping {timeframe} - RS flag {rs_flag} is disabled")
+            timeframes = enabled_timeframes
+        else:
+            # No global timeframes provided - use RS-specific config flags (legacy behavior)
+            timeframes = []
+            if getattr(self.user_config, 'rs_daily_enable', True):
+                timeframes.append('daily')
+            if getattr(self.user_config, 'rs_weekly_enable', False):
+                timeframes.append('weekly')
+            if getattr(self.user_config, 'rs_monthly_enable', False):
+                timeframes.append('monthly')
+
         if not timeframes:
             logger.warning("No timeframes enabled for RS processing")
             return results_summary
@@ -455,16 +468,17 @@ class RSProcessor:
             return []
 
 
-def run_rs_analysis(ticker_list, config, user_config, ticker_choice=0):
+def run_rs_analysis(ticker_list, config, user_config, ticker_choice=0, timeframes=None):
     """
     Standalone function to run complete RS analysis.
-    
+
     Args:
         ticker_list: List of ticker symbols
         config: Config object
         user_config: User configuration object
         ticker_choice: User ticker choice number
-        
+        timeframes: List of timeframes to process (overrides individual RS flags if provided)
+
     Returns:
         Results summary dictionary
     """
@@ -481,7 +495,7 @@ def run_rs_analysis(ticker_list, config, user_config, ticker_choice=0):
     
     # Create RS processor and run analysis
     rs_processor = RSProcessor(config, user_config)
-    results = rs_processor.process_rs_analysis(ticker_list, ticker_choice)
+    results = rs_processor.process_rs_analysis(ticker_list, ticker_choice, timeframes)
 
     # Generate summary
     summary = rs_processor.get_rs_summary(ticker_choice)

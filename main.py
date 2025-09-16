@@ -1181,13 +1181,13 @@ def main() -> None:
         print(f"📊 Total tickers for processing: {len(tickers_df)}")
         print(f"🔍 Sample tickers: {tickers_df['ticker'].head(10).tolist()}")
         
-        # Define timeframes to process
+        # Define timeframes to process - YF_*_data flags act as master switches
         timeframes_to_process = []
-        if user_config.load_daily_data:
+        if user_config.load_daily_data and getattr(user_config, 'yf_daily_data', True):
             timeframes_to_process.append('daily')
-        if user_config.load_weekly_data:
-            timeframes_to_process.append('weekly') 
-        if user_config.load_monthly_data:
+        if user_config.load_weekly_data and getattr(user_config, 'yf_weekly_data', True):
+            timeframes_to_process.append('weekly')
+        if user_config.load_monthly_data and getattr(user_config, 'yf_monthly_data', True):
             timeframes_to_process.append('monthly')
         if user_config.load_intraday_data:
             timeframes_to_process.append('intraday')
@@ -1269,12 +1269,13 @@ def main() -> None:
     # Import RS processing module
     from src.rs_processor import run_rs_analysis
     
-    # Run RS analysis if enabled
+    # Run RS analysis if enabled - pass filtered timeframes
     rs_results = run_rs_analysis(
         ticker_list=tickers_df['ticker'].tolist(),
         config=config,
         user_config=user_config,
-        ticker_choice=user_config.ticker_choice
+        ticker_choice=user_config.ticker_choice,
+        timeframes=timeframes_to_process
     )
     
     if rs_results.get('status') == 'skipped':

@@ -31,8 +31,8 @@ write_info_file,TRUE,Write detailed info files during processing
 ticker_info_TW,TRUE,Get ticker info from TradingView universe file
 ticker_info_TW_file,tradingview_universe_info.csv,File name for TradingView ticker info
 ticker_info_YF,FALSE,Download ticker info from YFinance
-ticker_choice,0-5,Ticker combination choice (0-17)
-batch_size,521,Global batch size for data processing and calculations
+ticker_choice,2-5,Ticker combination choice (0-17)
+batch_size,256,Global batch size for data processing and calculations
 ,,
 # TICKER GROUP CHOICES (ticker_choice values),,
 # ==========================================,,
