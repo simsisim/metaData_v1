@@ -4,7 +4,7 @@
     "timeframe": "daily",
     "ticker_choice": "0-5",
     "data_date": "20250905",
-    "analysis_date": "2025-09-15 20:44:15",
+    "analysis_date": "2025-09-16 07:25:35",
     "analysis_period_days": 50,
     "recent_activity_period_days": 25,
     "ftd_price_threshold_pct": 1.5,
@@ -17,11 +17,11 @@
     "total_dd_signals": 7,
     "latest_20_ftd_count": 1,
     "latest_20_dd_count": 7,
-    "market_state": "Uptrend",
-    "confidence": "Moderate",
+    "market_state": "Neutral",
+    "confidence": "Low",
     "latest_signal": "FTD (2025-08-22)",
-    "signal_strength": "Moderate Bullish",
-    "ftd_dd_ratio": 1.0
+    "signal_strength": "Neutral",
+    "ftd_dd_ratio": 0.0
   },
   "follow_through_days": {
     "description": "Latest 20 Follow-Through Days (FTDs) - bullish signals with strong volume",

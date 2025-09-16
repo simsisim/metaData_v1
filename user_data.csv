@@ -278,7 +278,7 @@ MINERVINI_show_all_stocks,TRUE,Show all stocks (TRUE) or only passing stocks (FA
 ,,
 # DR. WISH SUITE SCREENER CONFIGURATION,,
 # ======================================,,
-DRWISH_enable,FALSE,Enable Dr. Wish suite screener (GLB Blue Dot Black Dot)
+DRWISH_enable,TRUE,Enable Dr. Wish suite screener (GLB Blue Dot Black Dot)
 DRWISH_min_price,5,Minimum stock price requirement
 DRWISH_min_volume,100000,Minimum daily volume requirement
 DRWISH_pivot_strength,10,Number of bars on each side to confirm pivot high
@@ -537,7 +537,7 @@ PVB_min_price,1,Minimum stock price for PVB inclusion
 # AVERAGE TRUE RANGE (ATR) SCREENER CONFIGURATION,,
 # ================================================,,
 # ATR1 Screener (TradingView-validated with RMA smoothing),,
-ATR1_enable,FALSE,Enable ATR1 screener (TradingView-validated)
+ATR1_enable,TRUE,Enable ATR1 screener (TradingView-validated)
 # Daily ATR1 parameters,,
 ATR1_daily_length,20,Daily ATR calculation length for ATR1
 ATR1_daily_factor,3,Daily ATR multiplier factor for vStop
@@ -555,7 +555,7 @@ ATR1_monthly_length2,2,Monthly ATR calculation length2 for vStop2
 ATR1_monthly_factor2,1.5,Monthly ATR multiplier factor2 for vStop2
 ,,
 # ATR2 Screener (Volatility analysis with Wilder smoothing),,
-ATR2_enable,FALSE,Enable ATR2 screener (volatility analysis)
+ATR2_enable,TRUE,Enable ATR2 screener (volatility analysis)
 # Daily ATR2 parameters,,
 ATR2_daily_atr_period,14,Daily ATR period for ATR2 (Wilder method)
 ATR2_daily_sma_period,50,Daily SMA period for ATRext calculation
@@ -583,12 +583,12 @@ RS_enable_stocks,TRUE,Enable RS calculation for individual stocks
 RS_enable_sectors,TRUE,Enable RS calculation for sectors  
 RS_enable_industries,TRUE,Enable RS calculation for industries
 # MULTI-BENCHMARK CONFIGURATION,,
-RS_benchmark_tickers,QQQ; SPY,Benchmark tickers for RS calculations (semicolon separated)
+RS_benchmark_tickers,QQQ,Benchmark tickers for RS calculations (semicolon separated)
 # COMPOSITE CONFIGURATION,,
 RS_composite_method,market_cap_weighted,Sector/industry composite method (equal_weighted or market_cap_weighted)
 RS_min_group_size,3,Minimum number of stocks required for sector/industry composite
 # PERCENTILE UNIVERSE CONFIGURATION,,
-RS_percentile_universe_stocks,NASDAQ100; SP500,Universe for stock percentiles: all | sector | industry | ticker_choice
+RS_percentile_universe_stocks,NASDAQ100,Universe for stock percentiles: all | sector | industry | ticker_choice
 RS_percentile_universe_sectors,all; SP500,Universe for sector percentiles: all | ticker_choice  | NASADQ100  
 RS_percentile_universe_industries,ticker_choice; NASDAQ100;SP500,Universe for industry percentiles: all | ticker_choice | SP500
 # TIMEFRAME CONFIGURATION,,

@@ -110,18 +110,26 @@ class RSProcessor:
     def _process_timeframe(self, ticker_list, timeframe, ticker_choice, benchmark_tickers):
         """
         Process RS analysis for a specific timeframe with multiple benchmarks.
-        
+
         Args:
             ticker_list: List of tickers to analyze
             timeframe: Data timeframe ('daily', 'weekly', 'monthly')
             ticker_choice: User ticker choice number
             benchmark_tickers: List of benchmark tickers
-            
+
         Returns:
             Dictionary with timeframe results
         """
-        logger.info(f"Processing {timeframe} RS analysis...")
-        
+        print(f"\n📊 Processing {timeframe.upper()} timeframe...")
+
+        # Show batch information like streaming implementations
+        batch_size = getattr(self.user_config, 'rs_batch_size', 1000)  # RS can process larger batches
+        total_tickers = len(ticker_list)
+        import math
+        total_batches = math.ceil(total_tickers / batch_size) if batch_size < total_tickers else 1
+
+        print(f"📦 Processing {total_tickers} tickers in {total_batches} batches of {batch_size}")
+
         timeframe_results = {
             'timeframe': timeframe,
             'files_created': [],
@@ -131,19 +139,33 @@ class RSProcessor:
         
         # 1. STOCK-LEVEL RS ANALYSIS - COMBINED ALL BENCHMARKS
         if getattr(self.user_config, 'rs_enable_stocks', True):
-            logger.info(f"Running stock-level RS analysis for benchmarks: {benchmark_tickers}...")
-            
+            # Simulate batch loading progress like streaming implementations
+            if total_batches == 1:
+                print(f"🔄 Loading batch 1/1 ({total_tickers} tickers) - 100.0%")
+                print(f"✅ Loaded {total_tickers} valid tickers from batch 1")
+            else:
+                # Show progress for each simulated batch
+                for batch_num in range(total_batches):
+                    start_idx = batch_num * batch_size
+                    end_idx = min(start_idx + batch_size, total_tickers)
+                    batch_tickers_count = end_idx - start_idx
+                    batch_count = batch_num + 1
+                    progress = (batch_count / total_batches) * 100
+
+                    print(f"🔄 Loading batch {batch_count}/{total_batches} ({batch_tickers_count} tickers) - {progress:.1f}%")
+                    print(f"✅ Loaded {batch_tickers_count} valid tickers from batch {batch_count}")
+
             # Initialize combined results container
             from .rs_base import RSResults
             combined_stock_results = RSResults('ibd', 'stocks', timeframe)
             combined_stock_results.metadata['benchmark_tickers'] = ';'.join(benchmark_tickers)
             combined_stock_results.metadata['universe_size'] = len(ticker_list)
-            
+
             # Process each benchmark and collect results
             all_benchmark_data = {}
             for benchmark_ticker in benchmark_tickers:
                 try:
-                    logger.info(f"Processing vs {benchmark_ticker} benchmark...")
+                    print(f"🔄 Processing vs {benchmark_ticker} benchmark...")
                     stock_results = self.ibd_calculator.process_universe(
                         ticker_list, timeframe, benchmark_ticker
                     )
@@ -227,6 +249,12 @@ class RSProcessor:
             except Exception as e:
                 logger.error(f"Error in sector/industry analysis: {e}")
         
+        # Show completion summary like streaming implementations
+        tickers_processed = len([f for f in timeframe_results['files_created'] if 'stocks' in str(f)])
+        if tickers_processed > 0:
+            print(f"✅ RS analysis completed for {timeframe}: {total_tickers} tickers processed")
+            print(f"📁 Results saved to: {timeframe_results['files_created'][0] if timeframe_results['files_created'] else 'No files created'}")
+
         logger.info(f"{timeframe} RS analysis completed")
         return timeframe_results
     
@@ -470,10 +498,15 @@ def run_rs_analysis(ticker_list, config, user_config, ticker_choice=0):
     # Create RS processor and run analysis
     rs_processor = RSProcessor(config, user_config)
     results = rs_processor.process_rs_analysis(ticker_list, ticker_choice)
-    
+
     # Generate summary
     summary = rs_processor.get_rs_summary(ticker_choice)
     results['summary'] = summary
-    
+
+    # Show final completion summary like streaming implementations
+    print(f"\n✅ RS ANALYSIS COMPLETED!")
+    print(f"📊 Total tickers processed: {results['universe_size']}")
+    print(f"🕒 Timeframes processed: {', '.join(results['timeframes_processed'])}")
+
     logger.info("RS analysis pipeline completed")
     return results

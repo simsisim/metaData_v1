@@ -1,2 +1,0 @@
-ticker,screen_type,signal_type,signal_date,current_price,signal_price,sma,volume,volume_highest,days_since_signal,price_change_pct,volume_change_pct,volume_surge,score,signal_day_change_abs,signal_day_change_pct,performance_since_signal
-CIBR,pvb,Close Buy,2025-08-25,73.51000213623047,73.13999938964844,73.22298126220703,2966300.0,11547700.0,7,0.39198195576828354,-76.65768941001238,-74.31263368462983,0,0.9619979858398438,1.3328132770784678,0.5058828953646369

@@ -1,7 +1,7 @@
-ticker,date,timeframe,weekly_weekly_weekly_10w_rs_vs_QQQ_per_all,weekly_weekly_weekly_10w_rs_vs_SPY_per_all,weekly_weekly_weekly_15w_rs_vs_QQQ_per_all,weekly_weekly_weekly_15w_rs_vs_SPY_per_all,weekly_weekly_weekly_1w_rs_vs_QQQ_per_all,weekly_weekly_weekly_1w_rs_vs_SPY_per_all,weekly_weekly_weekly_3w_rs_vs_QQQ_per_all,weekly_weekly_weekly_3w_rs_vs_SPY_per_all,weekly_weekly_weekly_5w_rs_vs_QQQ_per_all,weekly_weekly_weekly_5w_rs_vs_SPY_per_all,weekly_weekly_weekly_10w_rs_vs_QQQ_per_SP500,weekly_weekly_weekly_10w_rs_vs_SPY_per_SP500,weekly_weekly_weekly_15w_rs_vs_QQQ_per_SP500,weekly_weekly_weekly_15w_rs_vs_SPY_per_SP500,weekly_weekly_weekly_1w_rs_vs_QQQ_per_SP500,weekly_weekly_weekly_1w_rs_vs_SPY_per_SP500,weekly_weekly_weekly_3w_rs_vs_QQQ_per_SP500,weekly_weekly_weekly_3w_rs_vs_SPY_per_SP500,weekly_weekly_weekly_5w_rs_vs_QQQ_per_SP500,weekly_weekly_weekly_5w_rs_vs_SPY_per_SP500
-Consumer non-durables,2025-09-01,weekly,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17
-Electronic technology,2025-09-01,weekly,66,66,66,66,99,99,66,66,66,66,66,66,66,66,99,99,66,66,66,66
-Finance,2025-09-01,weekly,99,99,99,99,50,50,99,99,99,99,99,99,99,99,50,50,99,99,99,99
-Health technology,2025-09-01,weekly,83,83,83,83,34,34,83,83,83,83,83,83,83,83,34,34,83,83,83,83
-Retail trade,2025-09-01,weekly,34,34,34,34,66,66,34,34,34,34,34,34,34,34,66,66,34,34,34,34
-Technology services,2025-09-01,weekly,50,50,50,50,83,83,50,50,50,50,50,50,50,50,83,83,50,50,50,50
+ticker,date,timeframe,weekly_weekly_weekly_10w_rs_vs_QQQ_per_all,weekly_weekly_weekly_15w_rs_vs_QQQ_per_all,weekly_weekly_weekly_1w_rs_vs_QQQ_per_all,weekly_weekly_weekly_3w_rs_vs_QQQ_per_all,weekly_weekly_weekly_5w_rs_vs_QQQ_per_all,weekly_weekly_weekly_10w_rs_vs_QQQ_per_SP500,weekly_weekly_weekly_15w_rs_vs_QQQ_per_SP500,weekly_weekly_weekly_1w_rs_vs_QQQ_per_SP500,weekly_weekly_weekly_3w_rs_vs_QQQ_per_SP500,weekly_weekly_weekly_5w_rs_vs_QQQ_per_SP500
+Consumer non-durables,2025-09-01,weekly,17,17,17,17,34,17,17,17,17,34
+Electronic technology,2025-09-01,weekly,99,99,99,66,99,99,99,99,66,99
+Finance,2025-09-01,weekly,50,34,50,83,50,50,34,50,83,50
+Health technology,2025-09-01,weekly,34,50,34,99,17,34,50,34,99,17
+Retail trade,2025-09-01,weekly,66,66,66,50,83,66,66,66,50,83
+Technology services,2025-09-01,weekly,83,83,83,34,66,83,83,83,34,66

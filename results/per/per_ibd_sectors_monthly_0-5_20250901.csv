@@ -1,7 +1,7 @@
-ticker,date,timeframe,monthly_monthly_monthly_1m_rs_vs_QQQ_per_all,monthly_monthly_monthly_1m_rs_vs_SPY_per_all,monthly_monthly_monthly_3m_rs_vs_QQQ_per_all,monthly_monthly_monthly_3m_rs_vs_SPY_per_all,monthly_monthly_monthly_6m_rs_vs_QQQ_per_all,monthly_monthly_monthly_6m_rs_vs_SPY_per_all,monthly_monthly_monthly_1m_rs_vs_QQQ_per_SP500,monthly_monthly_monthly_1m_rs_vs_SPY_per_SP500,monthly_monthly_monthly_3m_rs_vs_QQQ_per_SP500,monthly_monthly_monthly_3m_rs_vs_SPY_per_SP500,monthly_monthly_monthly_6m_rs_vs_QQQ_per_SP500,monthly_monthly_monthly_6m_rs_vs_SPY_per_SP500
-Consumer non-durables,2025-09-01,monthly,99,99,99,99,99,99,99,99,99,99,99,99
-Electronic technology,2025-09-01,monthly,66,66,50,50,66,66,66,66,50,50,66,66
-Finance,2025-09-01,monthly,34,34,83,83,83,83,34,34,83,83,83,83
-Health technology,2025-09-01,monthly,17,17,17,17,17,17,17,17,17,17,17,17
-Retail trade,2025-09-01,monthly,83,83,66,66,34,34,83,83,66,66,34,34
-Technology services,2025-09-01,monthly,50,50,34,34,50,50,50,50,34,34,50,50
+ticker,date,timeframe,monthly_monthly_monthly_1m_rs_vs_QQQ_per_all,monthly_monthly_monthly_3m_rs_vs_QQQ_per_all,monthly_monthly_monthly_6m_rs_vs_QQQ_per_all,monthly_monthly_monthly_1m_rs_vs_QQQ_per_SP500,monthly_monthly_monthly_3m_rs_vs_QQQ_per_SP500,monthly_monthly_monthly_6m_rs_vs_QQQ_per_SP500
+Consumer non-durables,2025-09-01,monthly,17,17,50,17,17,50
+Electronic technology,2025-09-01,monthly,99,91,99,99,91,99
+Finance,2025-09-01,monthly,50,50,34,50,50,34
+Health technology,2025-09-01,monthly,34,34,17,34,34,17
+Retail trade,2025-09-01,monthly,66,91,66,66,91,66
+Technology services,2025-09-01,monthly,83,66,83,83,66,83

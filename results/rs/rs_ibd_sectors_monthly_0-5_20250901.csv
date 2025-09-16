@@ -1,7 +1,7 @@
-ticker,monthly_monthly_monthly_1m_rs_vs_QQQ,monthly_monthly_monthly_1m_stock_return,monthly_monthly_monthly_1m_benchmark_return_QQQ,date,monthly_monthly_monthly_1m_rs_vs_SPY,monthly_monthly_monthly_1m_benchmark_return_SPY,monthly_monthly_monthly_3m_rs_vs_QQQ,monthly_monthly_monthly_3m_stock_return,monthly_monthly_monthly_3m_benchmark_return_QQQ,monthly_monthly_monthly_3m_rs_vs_SPY,monthly_monthly_monthly_3m_benchmark_return_SPY,monthly_monthly_monthly_6m_rs_vs_QQQ,monthly_monthly_monthly_6m_stock_return,monthly_monthly_monthly_6m_benchmark_return_QQQ,monthly_monthly_monthly_6m_rs_vs_SPY,monthly_monthly_monthly_6m_benchmark_return_SPY,timeframe
-Consumer non-durables,1.1228,0.1340,0.0099,2025-09-01,1.1301,0.0034,1.1375,0.1350,-0.0022,1.1283,0.0059,1.1105,0.1295,0.0171,1.1118,0.0159,monthly
-Electronic technology,1.0305,0.0407,0.0099,2025-09-01,1.0372,0.0034,1.0255,0.0232,-0.0022,1.0172,0.0059,1.0615,0.0796,0.0171,1.0627,0.0159,monthly
-Finance,0.9903,0.0002,0.0099,2025-09-01,0.9968,0.0034,1.1094,0.1070,-0.0022,1.1005,0.0059,1.0883,0.1069,0.0171,1.0896,0.0159,monthly
-Health technology,0.9662,-0.0242,0.0099,2025-09-01,0.9725,0.0034,0.9752,-0.0269,-0.0022,0.9674,0.0059,0.9539,-0.0298,0.0171,0.9550,0.0159,monthly
-Retail trade,1.0464,0.0568,0.0099,2025-09-01,1.0532,0.0034,1.0442,0.0419,-0.0022,1.0358,0.0059,1.0374,0.0551,0.0171,1.0386,0.0159,monthly
-Technology services,1.0212,0.0313,0.0099,2025-09-01,1.0278,0.0034,1.0122,0.0099,-0.0022,1.0040,0.0059,1.0443,0.0622,0.0171,1.0456,0.0159,monthly
+ticker,monthly_monthly_monthly_1m_rs_vs_QQQ,monthly_monthly_monthly_1m_stock_return,monthly_monthly_monthly_1m_benchmark_return_QQQ,date,monthly_monthly_monthly_3m_rs_vs_QQQ,monthly_monthly_monthly_3m_stock_return,monthly_monthly_monthly_3m_benchmark_return_QQQ,monthly_monthly_monthly_6m_rs_vs_QQQ,monthly_monthly_monthly_6m_stock_return,monthly_monthly_monthly_6m_benchmark_return_QQQ,timeframe
+Consumer non-durables,0.9781,-0.0122,0.0099,2025-09-01,0.9908,-0.0114,-0.0022,0.9986,0.0157,0.0171,monthly
+Electronic technology,1.0135,0.0236,0.0099,2025-09-01,1.0089,0.0066,-0.0022,1.0450,0.0628,0.0171,monthly
+Finance,0.9901,-0.0000,0.0099,2025-09-01,1.0022,0.0000,-0.0022,0.9966,0.0137,0.0171,monthly
+Health technology,0.9861,-0.0041,0.0099,2025-09-01,0.9952,-0.0070,-0.0022,0.9856,0.0024,0.0171,monthly
+Retail trade,1.0106,0.0206,0.0099,2025-09-01,1.0089,0.0067,-0.0022,1.0147,0.0321,0.0171,monthly
+Technology services,1.0116,0.0216,0.0099,2025-09-01,1.0028,0.0006,-0.0022,1.0305,0.0481,0.0171,monthly
