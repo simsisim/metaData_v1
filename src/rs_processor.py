@@ -122,7 +122,7 @@ class RSProcessor:
         """
         print(f"\n📊 Processing {timeframe.upper()} timeframe...")
 
-        # Show batch information like streaming implementations
+        # Get batch size for actual RS processing (not display simulation)
         batch_size = getattr(self.user_config, 'batch_size', 100)  # Use standard batch_size from user config
         total_tickers = len(ticker_list)
         import math
@@ -136,25 +136,9 @@ class RSProcessor:
             'universe_info': None,
             'composite_indices': None
         }
-        
+
         # 1. STOCK-LEVEL RS ANALYSIS - COMBINED ALL BENCHMARKS
         if getattr(self.user_config, 'rs_enable_stocks', True):
-            # Simulate batch loading progress like streaming implementations
-            if total_batches == 1:
-                print(f"🔄 Loading batch 1/1 ({total_tickers} tickers) - 100.0%")
-                print(f"✅ Loaded {total_tickers} valid tickers from batch 1")
-            else:
-                # Show progress for each simulated batch
-                for batch_num in range(total_batches):
-                    start_idx = batch_num * batch_size
-                    end_idx = min(start_idx + batch_size, total_tickers)
-                    batch_tickers_count = end_idx - start_idx
-                    batch_count = batch_num + 1
-                    progress = (batch_count / total_batches) * 100
-
-                    print(f"🔄 Loading batch {batch_count}/{total_batches} ({batch_tickers_count} tickers) - {progress:.1f}%")
-                    print(f"✅ Loaded {batch_tickers_count} valid tickers from batch {batch_count}")
-
             # Initialize combined results container
             from .rs_base import RSResults
             combined_stock_results = RSResults('ibd', 'stocks', timeframe)
@@ -167,7 +151,7 @@ class RSProcessor:
                 try:
                     print(f"🔄 Processing vs {benchmark_ticker} benchmark...")
                     stock_results = self.ibd_calculator.process_universe(
-                        ticker_list, timeframe, benchmark_ticker
+                        ticker_list, timeframe, benchmark_ticker, batch_size
                     )
                     
                     if stock_results.rs_values:

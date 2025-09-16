@@ -641,6 +641,7 @@ def run_all_drwish_screener_streaming(config: Config, user_config: UserConfigura
 
         # Process all batches with streaming
         if batches:
+            print(f"\n🚀 Processing {len(batches)} valid batches with DRWISH screener...")
             result = processor.process_timeframe_streaming(batches, timeframe, user_config.ticker_choice)
 
             if result and 'tickers_processed' in result:
@@ -656,7 +657,7 @@ def run_all_drwish_screener_streaming(config: Config, user_config: UserConfigura
             else:
                 print(f"⚠️  No results from streaming processing for {timeframe}")
         else:
-            print(f"⚠️  No valid batches for {timeframe}")
+            print(f"⚠️  No valid batches for {timeframe} - all batches failed to load data")
 
     print(f"\n✅ DRWISH SCREENER COMPLETED!")
     print(f"📊 Total results processed: {total_processed}")

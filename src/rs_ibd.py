@@ -134,51 +134,85 @@ class IBDRelativeStrengthCalculator(RSCalculatorBase):
     
     def process_universe(self, ticker_list, timeframe='daily', benchmark_ticker='SPY', batch_size=100):
         """
-        Process entire stock universe for RS calculations using hybrid batched approach.
-        
+        Process entire stock universe for RS calculations using true batched approach.
+
         Args:
             ticker_list: List of ticker symbols to analyze
             timeframe: Data timeframe ('daily', 'weekly', 'monthly')
             benchmark_ticker: Benchmark ticker symbol
             batch_size: Number of tickers to process per batch
-            
+
         Returns:
             RSResults object with calculated data
         """
         logger.info(f"Processing {len(ticker_list)} tickers for IBD RS calculation vs {benchmark_ticker}")
-        
+
         # Initialize results container
         results = RSResults(self.method_name, 'stocks', timeframe)
         results.metadata['benchmark_ticker'] = benchmark_ticker
         results.metadata['universe_size'] = len(ticker_list)
-        
+
         # Load benchmark data once
         benchmark_data = self.load_benchmark_data(benchmark_ticker, timeframe)
         if benchmark_data is None:
             logger.error(f"Could not load benchmark data for {benchmark_ticker}")
             return results
-            
+
         # Get analysis periods
         periods = self.get_analysis_periods(timeframe)
         logger.info(f"Calculating RS for periods: {periods}")
-        
-        # Load price data for all tickers
-        price_data = self._load_price_data(ticker_list, timeframe)
-        if price_data.empty:
-            logger.error("No price data loaded")
-            return results
-        
-        # Calculate RS values
-        rs_results = self.calculate_stock_rs(price_data, benchmark_data, periods, benchmark_ticker)
-        
-        # Store RS values (percentiles will be calculated separately by PER processor)
-        for column_suffix, period_df in rs_results.items():
-            results.rs_values[column_suffix] = period_df
-        
+
+        # Process tickers in batches for memory efficiency
+        import math
+        total_batches = math.ceil(len(ticker_list) / batch_size)
+        processed_count = 0
+
+        for batch_num in range(total_batches):
+            start_idx = batch_num * batch_size
+            end_idx = min(start_idx + batch_size, len(ticker_list))
+            batch_tickers = ticker_list[start_idx:end_idx]
+            batch_count = batch_num + 1
+
+            logger.info(f"🔄 Processing RS batch {batch_count}/{total_batches} ({len(batch_tickers)} tickers) - {(batch_count/total_batches)*100:.1f}%")
+
+            # Load price data for this batch only
+            batch_price_data = self._load_price_data(batch_tickers, timeframe)
+            if batch_price_data.empty:
+                logger.warning(f"No price data loaded for batch {batch_count}")
+                continue
+
+            # Calculate RS values for this batch
+            batch_rs_results = self.calculate_stock_rs(batch_price_data, benchmark_data, periods, benchmark_ticker)
+
+            # Merge batch results into main results
+            for column_suffix, period_df in batch_rs_results.items():
+                if column_suffix not in results.rs_values:
+                    results.rs_values[column_suffix] = period_df
+                else:
+                    # Concatenate with existing results
+                    results.rs_values[column_suffix] = pd.concat([
+                        results.rs_values[column_suffix],
+                        period_df
+                    ], ignore_index=False)
+
+            processed_count += len(batch_tickers)
+            logger.info(f"✅ RS batch {batch_count} completed: {len(batch_tickers)} tickers processed")
+
+            # Memory cleanup
+            del batch_price_data
+            del batch_rs_results
+
+            # Force garbage collection for large batches
+            if len(batch_tickers) > 50:
+                import gc
+                gc.collect()
+
+        logger.info(f"✅ RS calculation completed: {processed_count} tickers processed in {total_batches} batches")
+
         # Set calculation date in metadata
         if benchmark_data is not None and len(benchmark_data) > 0:
             results.metadata['calculation_date'] = str(benchmark_data.index[-1])
-        
+
         return results
     
     def _calculate_percentile_rankings(self, rs_series):

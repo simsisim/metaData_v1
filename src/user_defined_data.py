@@ -1638,6 +1638,7 @@ def get_drwish_params_for_timeframe(config: UserConfiguration, timeframe: str) -
         Dictionary with Dr. Wish parameters for the timeframe
     """
     return {
+        'timeframe': timeframe,  # Add timeframe parameter
         'min_price': config.drwish_min_price,
         'min_volume': config.drwish_min_volume,
         'pivot_strength': config.drwish_pivot_strength,

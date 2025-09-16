@@ -28,31 +28,56 @@ class DrWishCalculator:
     
     def __init__(self, config: Dict[str, Any]):
         self.config = config
-        # GLB parameters
-        self.pivot_strength = int(config.get('pivot_strength', 10))
+        self.timeframe = config.get('timeframe', 'daily')
+
+        # Timeframe multipliers for adjusting parameters
+        self.timeframe_multipliers = {
+            'daily': 1.0,
+            'weekly': 0.2,  # 1 week = ~5 days, so 1/5 = 0.2
+            'monthly': 0.05  # 1 month = ~21 days, so 1/21 ≈ 0.05
+        }
+
+        multiplier = self.timeframe_multipliers.get(self.timeframe, 1.0)
+
+        # GLB parameters (adjusted for timeframe)
+        base_pivot_strength = int(config.get('pivot_strength', 10))
+        self.pivot_strength = max(1, int(base_pivot_strength * multiplier))
         self.lookback_period = config.get('lookback_period', '3m')
         self.calculate_historical_GLB = config.get('calculate_historical_GLB', '1y')
         self.confirmation_period = config.get('confirmation_period', '2w')
         self.require_confirmation = config.get('require_confirmation', True)
-        
-        # Blue Dot parameters
-        self.blue_dot_stoch_period = int(config.get('blue_dot_stoch_period', 10))
+
+        # Blue Dot parameters (adjusted for timeframe)
+        base_stoch_period = int(config.get('blue_dot_stoch_period', 10))
+        base_sma_period = int(config.get('blue_dot_sma_period', 50))
+        self.blue_dot_stoch_period = max(2, int(base_stoch_period * multiplier))
         self.blue_dot_stoch_threshold = float(config.get('blue_dot_stoch_threshold', 20.0))
-        self.blue_dot_sma_period = int(config.get('blue_dot_sma_period', 50))
-        
-        # Black Dot parameters
-        self.black_dot_stoch_period = int(config.get('black_dot_stoch_period', 10))
+        self.blue_dot_sma_period = max(3, int(base_sma_period * multiplier))
+
+        # Black Dot parameters (adjusted for timeframe)
+        base_black_stoch_period = int(config.get('black_dot_stoch_period', 10))
+        base_black_sma_period = int(config.get('black_dot_sma_period', 30))
+        base_black_ema_period = int(config.get('black_dot_ema_period', 21))
+        self.black_dot_stoch_period = max(2, int(base_black_stoch_period * multiplier))
         self.black_dot_stoch_threshold = float(config.get('black_dot_stoch_threshold', 25.0))
-        self.black_dot_lookback = int(config.get('black_dot_lookback', 3))
-        self.black_dot_sma_period = int(config.get('black_dot_sma_period', 30))
-        self.black_dot_ema_period = int(config.get('black_dot_ema_period', 21))
-        
-        # General parameters
+        self.black_dot_lookback = max(1, int(config.get('black_dot_lookback', 3) * multiplier))
+        self.black_dot_sma_period = max(3, int(base_black_sma_period * multiplier))
+        self.black_dot_ema_period = max(3, int(base_black_ema_period * multiplier))
+
+        # General parameters (volume adjusted for timeframe)
         self.min_price = float(config.get('min_price', 5.0))
-        self.min_volume = int(config.get('min_volume', 100000))
-        self.timeframe = config.get('timeframe', 'daily')
-        
+        base_min_volume = int(config.get('min_volume', 100000))
+
+        # Adjust volume threshold for timeframe (weekly/monthly have aggregated volume)
+        volume_divisors = {'daily': 1, 'weekly': 3, 'monthly': 10}  # Conservative scaling
+        self.min_volume = base_min_volume // volume_divisors.get(self.timeframe, 1)
+
+        # Minimum data requirements (adjusted for timeframe)
+        self.min_data_points = {'daily': 100, 'weekly': 30, 'monthly': 12}.get(self.timeframe, 100)
+
         logger.info(f"DrWish calculator initialized for {self.timeframe} timeframe")
+        logger.info(f"Adjusted parameters: pivot_strength={self.pivot_strength}, stoch_period={self.blue_dot_stoch_period}, "
+                   f"sma_period={self.blue_dot_sma_period}, min_volume={self.min_volume}, min_data_points={self.min_data_points}")
 
     def calculate_stochastic(self, highs: pd.Series, lows: pd.Series, closes: pd.Series, 
                            period: int = 10) -> pd.Series:
@@ -133,7 +158,7 @@ class DrWishCalculator:
             List of GLB level records with detection/breakout dates
         """
         try:
-            if len(df) < 100:
+            if len(df) < self.min_data_points:
                 return []
             
             highs = df['High']
@@ -215,7 +240,7 @@ class DrWishCalculator:
     def detect_glb_signals(self, df: pd.DataFrame) -> pd.DataFrame:
         """Detect GLB (Green Line Breakout) signals with batch optimization"""
         try:
-            if len(df) < 100:  # Need sufficient data
+            if len(df) < self.min_data_points:  # Need sufficient data
                 return pd.DataFrame()
             
             highs = df['High']
@@ -289,7 +314,8 @@ class DrWishCalculator:
     def detect_blue_dot_signals(self, df: pd.DataFrame) -> pd.DataFrame:
         """Detect Blue Dot oversold bounce signals"""
         try:
-            if len(df) < max(self.blue_dot_stoch_period, self.blue_dot_sma_period) + 5:
+            min_required = max(self.blue_dot_stoch_period, self.blue_dot_sma_period, self.min_data_points)
+            if len(df) < min_required:
                 return pd.DataFrame()
             
             highs = df['High']
@@ -335,7 +361,9 @@ class DrWishCalculator:
     def detect_black_dot_signals(self, df: pd.DataFrame) -> pd.DataFrame:
         """Detect Black Dot oversold bounce signals"""
         try:
-            if len(df) < max(self.black_dot_stoch_period, self.black_dot_sma_period, self.black_dot_ema_period) + 10:
+            min_required = max(self.black_dot_stoch_period, self.black_dot_sma_period,
+                              self.black_dot_ema_period, self.min_data_points)
+            if len(df) < min_required:
                 return pd.DataFrame()
             
             highs = df['High']
@@ -391,25 +419,26 @@ class DrWishCalculator:
 def drwish_screener(batch_data, params=None):
     """
     Run Dr. Wish suite screener on batch data.
-    
+
     Args:
         batch_data: Dictionary of {ticker: DataFrame} with OHLCV data
         params: Dictionary with screener parameters
-        
+
     Returns:
         list: List of screening results with ticker, strategy, and signal data
     """
     if not batch_data:
         logger.warning("DrWish screener: No batch data provided")
         return []
-    
+
     # Default parameters
     default_params = {
+        'timeframe': 'daily',  # Add timeframe parameter
         'min_price': 5.0,
         'min_volume': 100000,
         'pivot_strength': 10,
         'lookback_period': '3m',
-        'confirmation_period': '2w', 
+        'confirmation_period': '2w',
         'require_confirmation': True,
         'blue_dot_stoch_period': 10,
         'blue_dot_stoch_threshold': 20.0,
@@ -440,14 +469,14 @@ def drwish_screener(batch_data, params=None):
                 continue
                 
             try:
-                # Basic filters
-                if len(df) < 100:  # Need sufficient history
+                # Basic filters (use calculator's adjusted requirements)
+                if len(df) < calculator.min_data_points:
                     continue
-                    
+
                 latest_price = df['Close'].iloc[-1]
                 latest_volume = df['Volume'].iloc[-1] if 'Volume' in df.columns else 0
-                
-                if latest_price < default_params['min_price'] or latest_volume < default_params['min_volume']:
+
+                if latest_price < calculator.min_price or latest_volume < calculator.min_volume:
                     continue
                 
                 # Run GLB analysis
