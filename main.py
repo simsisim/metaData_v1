@@ -1472,7 +1472,7 @@ def main() -> None:
         stage_analysis_results = {}
 
     # 2.5. Stage Analysis Reports - Generate PDF reports for stage analysis results
-    if sum(stage_analysis_results.values()) > 0:
+    if user_config.stage_analysis_report_enable and sum(stage_analysis_results.values()) > 0:
         try:
             print(f"\n📄 GENERATING STAGE ANALYSIS REPORTS...")
             from src.report_generators.stage_analysis_report_generator import process_stage_analysis_csv
@@ -1507,13 +1507,15 @@ def main() -> None:
         except Exception as e:
             print(f"❌ Stage analysis report generation error: {e}")
             logger.error(f"Stage analysis report generation failed: {e}")
-
-        # 3. Market Breadth Analysis - All timeframes (positioned after stage analysis)
-        market_breadth_results = run_all_market_breadth(config, user_config, timeframes_to_process)
-
-        print(f"✅ BASIC CALCULATIONS PHASE COMPLETED")
+    elif sum(stage_analysis_results.values()) > 0:
+        print(f"\n📄 Stage analysis PDF/PNG generation disabled in configuration")
     else:
-        market_breadth_results = {}
+        print(f"\n📄 No stage analysis results available for report generation")
+
+    # 3. Market Breadth Analysis - All timeframes (positioned after stage analysis)
+    market_breadth_results = run_all_market_breadth(config, user_config, timeframes_to_process)
+
+    print(f"✅ BASIC CALCULATIONS PHASE COMPLETED")
 
     # ============================
     # PHASE 2: SCREENERS

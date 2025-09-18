@@ -284,6 +284,7 @@ class UserConfiguration:
     stage_analysis_enabled: bool = True
     stage_analysis_min_price: float = 5.0
     stage_analysis_min_vol: int = 100000
+    stage_analysis_report_enable: bool = True
     stage_ema_fast_period: int = 10
     stage_sma_medium_period: int = 20
     stage_sma_slow_period: int = 50
@@ -1033,6 +1034,7 @@ def read_user_data(file_path: str = 'user_data.csv') -> UserConfiguration:
             'stage_analysis_enabled': ('stage_analysis_enabled', parse_boolean),
             'stage_analysis_min_price': ('stage_analysis_min_price', float),
             'stage_analysis_min_vol': ('stage_analysis_min_vol', int),
+            'stage_analysis_report_enable': ('stage_analysis_report_enable', parse_boolean),
             'stage_ema_fast_period': ('stage_ema_fast_period', int),
             'stage_sma_medium_period': ('stage_sma_medium_period', int),
             'stage_sma_slow_period': ('stage_sma_slow_period', int),
