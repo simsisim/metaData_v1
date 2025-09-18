@@ -1406,6 +1406,8 @@ def read_user_data(file_path: str = 'user_data.csv') -> UserConfiguration:
             # Output configuration
             'MARKET_BREADTH_save_detailed_results': ('market_breadth_save_detailed_results', parse_boolean),
             'MARKET_BREADTH_output_dir': ('market_breadth_output_dir', str),
+            'MARKET_BREADTH_tornado_chart': ('market_breadth_tornado_chart', parse_boolean),
+            'MARKET_BREADTH_tornado_chart_display_units_time': ('market_breadth_tornado_chart_display_units_time', int),
             
             # Dashboard Configuration
             'DASHBOARD_enable': ('dashboard_enable', parse_boolean),

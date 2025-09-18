@@ -79,7 +79,15 @@ class SimpleUniverseGenerator:
             # Generate market cap universe files
             market_cap_results = self._generate_market_cap_universes(df)
             results.update(market_cap_results)
-            
+
+            # Generate exchange universe files
+            exchange_results = self._generate_exchange_universes(df)
+            results.update(exchange_results)
+
+            # Generate analyst rating universe files
+            rating_results = self._generate_analyst_rating_universes(df)
+            results.update(rating_results)
+
             logger.info(f"Generated {len(results)} universe files")
             
         except Exception as e:
@@ -314,8 +322,96 @@ class SimpleUniverseGenerator:
                 logger.error(f"Error processing market cap category {category}: {e}")
         
         return results
-    
-    def _create_universe_file(self, universe_name: str, ticker_list: List[str], 
+
+    def _generate_exchange_universes(self, df: pd.DataFrame) -> Dict[str, int]:
+        """
+        Generate universe files for all exchanges.
+
+        Args:
+            df: DataFrame with exchange information
+
+        Returns:
+            Dict mapping universe name to ticker count
+        """
+        results = {}
+
+        if 'exchange' not in df.columns:
+            logger.warning("No exchange column found")
+            return results
+
+        # Get all unique exchanges (excluding empty/null values)
+        exchanges = df['exchange'].dropna().unique()
+        logger.info(f"Found {len(exchanges)} exchanges")
+
+        for exchange in exchanges:
+            try:
+                if pd.isna(exchange) or exchange == '':
+                    continue
+
+                # Filter tickers for this exchange
+                exchange_tickers = df[df['exchange'] == exchange]['ticker'].tolist()
+
+                if exchange_tickers:
+                    # Clean exchange name for filename
+                    clean_name = self._clean_filename(exchange)
+                    universe_name = f"ticker_universe_exchange_{clean_name}"
+
+                    # Create universe file
+                    self._create_universe_file(universe_name, exchange_tickers, df, f"exchange={exchange}")
+                    results[universe_name] = len(exchange_tickers)
+
+                    logger.info(f"Created {universe_name}.csv with {len(exchange_tickers)} tickers")
+
+            except Exception as e:
+                logger.error(f"Error processing exchange {exchange}: {e}")
+
+        return results
+
+    def _generate_analyst_rating_universes(self, df: pd.DataFrame) -> Dict[str, int]:
+        """
+        Generate universe files for all analyst ratings.
+
+        Args:
+            df: DataFrame with analyst rating information
+
+        Returns:
+            Dict mapping universe name to ticker count
+        """
+        results = {}
+
+        if 'analyst rating' not in df.columns:
+            logger.warning("No analyst rating column found")
+            return results
+
+        # Get all unique analyst ratings (excluding empty/null values)
+        ratings = df['analyst rating'].dropna().unique()
+        logger.info(f"Found {len(ratings)} analyst ratings")
+
+        for rating in ratings:
+            try:
+                if pd.isna(rating) or rating == '':
+                    continue
+
+                # Filter tickers for this rating
+                rating_tickers = df[df['analyst rating'] == rating]['ticker'].tolist()
+
+                if rating_tickers:
+                    # Clean rating name for filename
+                    clean_name = self._clean_filename(rating)
+                    universe_name = f"ticker_universe_rating_{clean_name}"
+
+                    # Create universe file
+                    self._create_universe_file(universe_name, rating_tickers, df, f"analyst_rating={rating}")
+                    results[universe_name] = len(rating_tickers)
+
+                    logger.info(f"Created {universe_name}.csv with {len(rating_tickers)} tickers")
+
+            except Exception as e:
+                logger.error(f"Error processing analyst rating {rating}: {e}")
+
+        return results
+
+    def _create_universe_file(self, universe_name: str, ticker_list: List[str],
                             full_df: pd.DataFrame, filter_description: str):
         """
         Create a universe CSV file with the specified tickers.
@@ -380,13 +476,15 @@ class SimpleUniverseGenerator:
             return "No universe files generated"
         
         # Count by type
-        index_count = len([k for k in results.keys() if k.startswith('ticker_universe_') and not any(x in k for x in ['sectors_', 'industry_', 'market_cap_'])])
+        index_count = len([k for k in results.keys() if k.startswith('ticker_universe_') and not any(x in k for x in ['sectors_', 'industry_', 'market_cap_', 'exchange_', 'rating_'])])
         sector_count = len([k for k in results.keys() if 'sectors_' in k])
         industry_count = len([k for k in results.keys() if 'industry_' in k])
         market_cap_count = len([k for k in results.keys() if 'market_cap_' in k])
-        
+        exchange_count = len([k for k in results.keys() if 'exchange_' in k])
+        rating_count = len([k for k in results.keys() if 'rating_' in k])
+
         total_tickers = sum(results.values())
-        
+
         summary = f"""Universe Generation Summary:
 ================================
 Total files generated: {len(results)}
@@ -394,6 +492,8 @@ Total files generated: {len(results)}
 - Sector universes: {sector_count}
 - Industry universes: {industry_count}
 - Market cap universes: {market_cap_count}
+- Exchange universes: {exchange_count}
+- Analyst rating universes: {rating_count}
 
 Total ticker entries: {total_tickers}
 Output directory: {self.universe_dir}

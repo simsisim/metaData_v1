@@ -240,7 +240,37 @@ class UnifiedTickerGenerator:
         if index_counts:
             top_indexes = sorted(index_counts.items(), key=lambda x: x[1], reverse=True)[:10]
             print(f"🎯 Top indexes: {', '.join([f'{name}({count})' for name, count in top_indexes])}")
-        
+
+        # Add boolean columns for exchange categories
+        exchange_counts = {}
+        if 'exchange' in df_enhanced.columns:
+            exchanges = df_enhanced['exchange'].dropna().unique()
+            for exchange in exchanges:
+                if pd.notna(exchange) and exchange != '':
+                    col_name = f'exchange_{exchange}'
+                    df_enhanced[col_name] = (df_enhanced['exchange'] == exchange)
+                    exchange_counts[col_name] = df_enhanced[col_name].sum()
+
+            print(f"🏗️  Created {len(exchange_counts)} boolean exchange columns")
+            if exchange_counts:
+                print(f"🎯 Exchanges: {', '.join([f'{name}({count})' for name, count in exchange_counts.items()])}")
+
+        # Add boolean columns for analyst rating categories
+        rating_counts = {}
+        if 'analyst rating' in df_enhanced.columns:
+            ratings = df_enhanced['analyst rating'].dropna().unique()
+            for rating in ratings:
+                if pd.notna(rating) and rating != '':
+                    # Clean rating name for column (handle spaces and special chars)
+                    clean_rating = rating.replace(' ', '_').replace('-', '_')
+                    col_name = f'rating_{clean_rating}'
+                    df_enhanced[col_name] = (df_enhanced['analyst rating'] == rating)
+                    rating_counts[col_name] = df_enhanced[col_name].sum()
+
+            print(f"🏗️  Created {len(rating_counts)} boolean rating columns")
+            if rating_counts:
+                print(f"🎯 Ratings: {', '.join([f'{name}({count})' for name, count in rating_counts.items()])}")
+
         return df_enhanced
     
     def _parse_user_choice(self, user_choice):

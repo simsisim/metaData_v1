@@ -1054,6 +1054,13 @@ def run_all_market_breadth(config: Config, user_config: UserConfiguration, timef
                                     print(f"   📊 {Path(chart_file).name}")
                             else:
                                 print(f"⚠️  No charts generated for {timeframe}")
+
+                            # Generate tornado charts if enabled
+                            tornado_files = analyzer._generate_tornado_charts_from_csv(timeframe, data_date)
+                            if tornado_files:
+                                print(f"✅ Generated {len(tornado_files)} tornado chart(s) for {timeframe}")
+                                for tornado_file in tornado_files:
+                                    print(f"   🌪️  {Path(tornado_file).name}")
                         else:
                             print(f"⚠️  No data date available for chart generation ({timeframe})")
 

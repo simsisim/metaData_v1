@@ -153,7 +153,7 @@ monthly_monthly_periods,2;3;6,Monthly data: monthly percent change periods (mont
 stage_analysis_min_price,1,stage_analysis_min_price
 stage_analysis_min_vol,10000,stage_analysis_min_vol
 # Daily stage analysis,,
-stage_analysis_daily_enabled,FALSE,Enable daily stage analysis calculations
+stage_analysis_daily_enabled,TRUE,Enable daily stage analysis calculations
 stage_daily_ema_fast_period,10,Daily: Fast EMA period for stage analysis
 stage_daily_sma_medium_period,20,Daily: Medium SMA period for stage analysis
 stage_daily_sma_slow_period,50,Daily: Slow SMA period for stage analysis
@@ -198,7 +198,7 @@ MARKET_BREADTH_monthly_enable,FALSE,Enable monthly market breadth calculations
 MARKET_BREADTH_monthly_ma_periods,3;6;12,Monthly moving average periods for breadth analysis (semicolon separated)
 MARKET_BREADTH_monthly_new_high_lows_periods,12;3;1,Monthly new highs/lows periods (semicolon separated: long;medium;short)
 ,,
-MARKET_BREADTH_universe,SP500; NASDAQ100; Russell1000,Default universe for breadth analysis (all | SP500 | NASDAQ100|SP500+NASDAQ100| SP500;NASADQ100 etc)
+MARKET_BREADTH_universe,SP500;NASDAQ100;exchange_NYSE,Default universe for breadth analysis (all | SP500 | NASDAQ100|SP500+NASDAQ100| SP500;NASADQ100 etc)
 ,,
 # GENERIC THRESHOLDS (POSITION-BASED - APPLIES TO ALL TIMEFRAMES),,
 # New highs thresholds for long/medium/short periods,,
@@ -234,14 +234,17 @@ MARKET_BREADTH_chart_history_weeks,12,Weekly charts: display last 52 weeks (1 ye
 MARKET_BREADTH_chart_history_months,3,Monthly charts: display last 12 months (1 year)
 ,,
 # LEGACY SETTINGS (DEPRECATED - USE NEW GENERIC SETTINGS ABOVE),,
-MARKET_BREADTH_lookback_days,252,DEPRECATED: Use timeframe-specific new_high_lows_periods instead
-MARKET_BREADTH_ma_periods,20;50;200,DEPRECATED: Use timeframe-specific ma_periods instead
-MARKET_BREADTH_daily_252day_new_highs_threshold,100,DEPRECATED: Use new_highs_threshold_long instead
-MARKET_BREADTH_ten_day_success_threshold,5,DEPRECATED: Use success_threshold_pct_long instead
-MARKET_BREADTH_daily_20day_new_highs_threshold,100,DEPRECATED: Use new_highs_threshold_short instead
-MARKET_BREADTH_twenty_day_success_threshold,10,DEPRECATED: Use success_threshold_pct_short instead
-MARKET_BREADTH_daily_63day_new_highs_threshold,100,DEPRECATED: Use new_highs_threshold_medium instead
-MARKET_BREADTH_sixty_three_day_success_threshold,30,DEPRECATED: Use success_threshold_pct_medium instead
+#MARKET_BREADTH_lookback_days,252,DEPRECATED: Use timeframe-specific new_high_lows_periods instead
+#MARKET_BREADTH_ma_periods,20;50;200,DEPRECATED: Use timeframe-specific ma_periods instead
+#MARKET_BREADTH_daily_252day_new_highs_threshold,100,DEPRECATED: Use new_highs_threshold_long instead
+#MARKET_BREADTH_ten_day_success_threshold,5,DEPRECATED: Use success_threshold_pct_long instead
+#MARKET_BREADTH_daily_20day_new_highs_threshold,100,DEPRECATED: Use new_highs_threshold_short instead
+#MARKET_BREADTH_twenty_day_success_threshold,10,DEPRECATED: Use success_threshold_pct_short instead
+#MARKET_BREADTH_daily_63day_new_highs_threshold,100,DEPRECATED: Use new_highs_threshold_medium instead
+#MARKET_BREADTH_sixty_three_day_success_threshold,30,DEPRECATED: Use success_threshold_pct_medium instead
+,,
+MARKET_BREADTH_tornado_chart,TRUE,
+MARKET_BREADTH_tornado_chart_display_units_time,10,days for chart display
 ,,
 # OUTPUT CONFIGURATION,,
 MARKET_BREADTH_save_detailed_results,TRUE,Save detailed breadth calculations to CSV files

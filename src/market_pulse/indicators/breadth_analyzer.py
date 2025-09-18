@@ -324,6 +324,27 @@ class BreadthAnalyzer(BaseIndicator):
             logger.error(f"Error generating charts from enhanced CSV: {e}")
             return []
 
+    def _generate_tornado_charts_from_csv(self, timeframe: str, data_date: str) -> List[str]:
+        """
+        Generate tornado charts from market breadth CSV files.
+
+        Args:
+            timeframe: Data timeframe ('daily', 'weekly', 'monthly')
+            data_date: Data date string (YYYYMMDD)
+
+        Returns:
+            List of generated tornado chart file paths
+        """
+        if not getattr(self.user_config, 'market_breadth_tornado_chart', False):
+            return []
+
+        try:
+            from .breadth_analyzer_tornado import generate_breadth_tornado_charts
+            return generate_breadth_tornado_charts(timeframe, data_date, self.user_config, self.config)
+        except Exception as e:
+            logger.error(f"Error generating breadth tornado charts: {e}")
+            return []
+
     def _find_breadth_csv_file(self, universe: str, ticker_choice: str, timeframe: str, data_date: str) -> tuple[Optional[Path], bool, Optional[str]]:
         """
         Find market breadth CSV file with case-insensitive lookup and force file support.
@@ -353,7 +374,7 @@ class BreadthAnalyzer(BaseIndicator):
                 # Extract universe name from filename and compare case-insensitively
                 filename_parts = csv_file.stem.split('_')
                 if len(filename_parts) >= 3:
-                    file_universe = filename_parts[2]  # market_breadth_UNIVERSE_choice_timeframe_date
+                    file_universe = '_'.join(filename_parts[2:-3])  # Reconstruct universe name for names with underscores
                     if file_universe.lower() == universe.lower():
                         logger.debug(f"Found case-insensitive match: {csv_file.name} for universe {universe}")
                         return csv_file, False, data_date
@@ -374,10 +395,10 @@ class BreadthAnalyzer(BaseIndicator):
             for csv_file in breadth_dir.glob(force_pattern):
                 filename_parts = csv_file.stem.split('_')
                 if len(filename_parts) >= 5:
-                    file_universe = filename_parts[2]
+                    file_universe = '_'.join(filename_parts[2:-3])  # Reconstruct universe name for names with underscores
                     if file_universe.lower() == universe.lower():
                         # Extract date from filename for sorting
-                        file_date = filename_parts[4]  # market_breadth_UNIVERSE_choice_timeframe_DATE
+                        file_date = filename_parts[-1]  # market_breadth_UNIVERSE_choice_timeframe_DATE
                         matching_files.append((csv_file, file_date))
 
             if matching_files:
