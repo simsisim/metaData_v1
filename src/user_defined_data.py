@@ -27,6 +27,11 @@ class UserConfiguration:
     tw_fin_data: bool = False
     zacks_fin_data: bool = False
     
+    # GLOBAL EXECUTION PHASE CONTROL
+    BASIC: bool = True        # Execute data processing and core calculations phase
+    SCREENERS: bool = True    # Execute screening and analysis phase
+    POST_PROCESS: bool = True # Execute post-processing and report generation phase
+
     # General settings
     write_info_file: bool = True
     ticker_info_TW: bool = False
@@ -40,10 +45,6 @@ class UserConfiguration:
     
     # POST-PROCESSING CONFIGURATION
     # Input historical data sources (local data loading)
-    load_daily_data: bool = True
-    load_weekly_data: bool = False
-    load_monthly_data: bool = False
-    load_intraday_data: bool = False
     yf_daily_data_files: str = "data/market_data/daily/"
     yf_weekly_data_files: str = "data/market_data/weekly/"
     yf_monthly_data_files: str = "data/market_data/monthly/"
@@ -109,7 +110,25 @@ class UserConfiguration:
     # Monthly RS Configuration
     index_monthly_rs_periods: str = "3;6;12"    # Monthly RS periods (months)
     
-    # Basic calculations
+    # Output directory configuration
+    basic_calculation_output_dir: str = "results/basic_calculation"
+    stage_analysis_output_dir: str = "results/stage_analysis"
+    rs_output_dir: str = "results/rs"
+    per_output_dir: str = "results/per"
+    # Screener output directories
+    pvb_TWmodel_output_dir: str = "results/screeners/pvb"
+    atr1_output_dir: str = "results/screeners/atr1"
+    drwish_output_dir: str = "results/screeners/drwish"
+    giusti_output_dir: str = "results/screeners/giusti"
+    minervini_output_dir: str = "results/screeners/minervini"
+    stockbee_output_dir: str = "results/screeners/stockbee"
+    qullamaggie_output_dir: str = "results/screeners/qullamaggie"
+    adl_screener_output_dir: str = "results/screeners/adl"
+    guppy_screener_output_dir: str = "results/screeners/guppy"
+    gold_launch_pad_output_dir: str = "results/screeners/gold_launch_pad"
+    rti_output_dir: str = "results/screeners/rti"
+
+    # Basic calculations (legacy)
     basic_calculation_file: str = "basic_calculations.csv"
     # Basic calculations timeframe enable flags
     basic_calc_daily_enable: bool = True
@@ -263,6 +282,8 @@ class UserConfiguration:
     
     # STAGE ANALYSIS CONFIGURATION - Legacy (deprecated)
     stage_analysis_enabled: bool = True
+    stage_analysis_min_price: float = 5.0
+    stage_analysis_min_vol: int = 100000
     stage_ema_fast_period: int = 10
     stage_sma_medium_period: int = 20
     stage_sma_slow_period: int = 50
@@ -339,29 +360,32 @@ class UserConfiguration:
     indicators_easy_trade_signal: int = 9
     
     # PVB (Price Volume Breakout) screener settings
-    pvb_enable: bool = True
+    pvb_TWmodel_enable: bool = True
+    pvb_TWmodel_daily_enable: bool = True
+    pvb_TWmodel_weekly_enable: bool = True
+    pvb_TWmodel_monthly_enable: bool = True
     # Daily timeframe PVB parameters
-    pvb_daily_price_breakout_period: int = 60
-    pvb_daily_volume_breakout_period: int = 60
-    pvb_daily_trendline_length: int = 50
-    pvb_daily_close_threshold: int = 5
-    pvb_daily_signal_max_age: int = 100
+    pvb_TWmodel_daily_price_breakout_period: int = 60
+    pvb_TWmodel_daily_volume_breakout_period: int = 60
+    pvb_TWmodel_daily_trendline_length: int = 50
+    pvb_TWmodel_daily_close_threshold: int = 5
+    pvb_TWmodel_daily_signal_max_age: int = 100
     # Weekly timeframe PVB parameters
-    pvb_weekly_price_breakout_period: int = 12
-    pvb_weekly_volume_breakout_period: int = 12
-    pvb_weekly_trendline_length: int = 10
-    pvb_weekly_close_threshold: int = 2
-    pvb_weekly_signal_max_age: int = 20
+    pvb_TWmodel_weekly_price_breakout_period: int = 12
+    pvb_TWmodel_weekly_volume_breakout_period: int = 12
+    pvb_TWmodel_weekly_trendline_length: int = 10
+    pvb_TWmodel_weekly_close_threshold: int = 2
+    pvb_TWmodel_weekly_signal_max_age: int = 20
     # Monthly timeframe PVB parameters
-    pvb_monthly_price_breakout_period: int = 6
-    pvb_monthly_volume_breakout_period: int = 6
-    pvb_monthly_trendline_length: int = 4
-    pvb_monthly_close_threshold: int = 1
-    pvb_monthly_signal_max_age: int = 6
+    pvb_TWmodel_monthly_price_breakout_period: int = 6
+    pvb_TWmodel_monthly_volume_breakout_period: int = 6
+    pvb_TWmodel_monthly_trendline_length: int = 4
+    pvb_TWmodel_monthly_close_threshold: int = 1
+    pvb_TWmodel_monthly_signal_max_age: int = 6
     # Common PVB parameters
-    pvb_order_direction: str = "Long and Short"
-    pvb_min_volume: int = 10000
-    pvb_min_price: float = 1.0
+    pvb_TWmodel_order_direction: str = "Long and Short"
+    pvb_TWmodel_min_volume: int = 10000
+    pvb_TWmodel_min_price: float = 1.0
     
     # MINERVINI TEMPLATE SCREENER CONFIGURATION
     minervini_enable: bool = True
@@ -416,7 +440,7 @@ class UserConfiguration:
     volume_suite_hv_stdv: bool = True
     volume_suite_enhanced_anomaly: bool = True
     volume_suite_volume_indicators: bool = True
-    volume_suite_pvb_integration: bool = True
+    volume_suite_pvb_TWmodel_integration: bool = True
     
     # HV Absolute parameters
     volume_suite_hv_month_cutoff: int = 15
@@ -538,11 +562,11 @@ class UserConfiguration:
     rti_save_individual_files: bool = True
     
     # PVB Integration parameters
-    volume_suite_pvb_price_period: int = 30
-    volume_suite_pvb_volume_period: int = 30
-    volume_suite_pvb_trend_length: int = 50
-    volume_suite_pvb_volume_multiplier: float = 1.5
-    volume_suite_pvb_direction: str = "Long"
+    volume_suite_pvb_TWmodel_price_period: int = 30
+    volume_suite_pvb_TWmodel_volume_period: int = 30
+    volume_suite_pvb_TWmodel_trend_length: int = 50
+    volume_suite_pvb_TWmodel_volume_multiplier: float = 1.5
+    volume_suite_pvb_TWmodel_direction: str = "Long"
     
     # Output settings
     volume_suite_output_dir: str = "results/screeners/volume_suite"
@@ -558,9 +582,6 @@ class UserConfiguration:
     
     # GMI Configuration
     market_pulse_gmi_enable: bool = True
-    market_pulse_gmi_enable_daily: bool = True
-    market_pulse_gmi_enable_weekly: bool = True
-    market_pulse_gmi_enable_monthly: bool = True
     market_pulse_gmi_threshold: int = 3
     market_pulse_gmi_confirmation_days: int = 2
     market_pulse_gmi_short_term_sma: int = 50
@@ -568,12 +589,9 @@ class UserConfiguration:
     market_pulse_gmi_mf_index: str = "SPY"
     market_pulse_gmi_mf_ma_period: int = 50
     market_pulse_gmi_breath_file_suffix: str = "latest"  # "latest" or specific date "YYYY-MM-DD"
-    
+
     # GMI2 Configuration (Multi-SMA Requirements Model)
     market_pulse_gmi2_enable: bool = False
-    market_pulse_gmi2_enable_daily: bool = False
-    market_pulse_gmi2_enable_weekly: bool = False
-    market_pulse_gmi2_enable_monthly: bool = False
     market_pulse_gmi2_index: str = "SPY;QQQ"  # Multiple indexes separated by semicolon
     market_pulse_gmi2_sma: str = "10;20;50;150"  # Exactly 4 SMA values separated by semicolon
     market_pulse_gmi2_index_stochastic_threshold: int = 20
@@ -599,9 +617,24 @@ class UserConfiguration:
     market_pulse_chillax_ma_fast_period: int = 10
     market_pulse_chillax_ma_slow_period: int = 20
     market_pulse_chillax_trend_days: int = 5  # Days to check for trend confirmation
+
+    # Chillax MAs Enhanced Configuration
+    market_pulse_chillax_mas_indexes: str = "SPY;QQQ;IWM"  # Chillax MA analysis indexes (semicolon separated)
+    market_pulse_chillax_mas_sma: str = "10;20"  # Chillax MA SMA periods (semicolon separated)
+    market_pulse_chillax_mas_charts: str = "SPY;QQQ"  # Indexes to create charts for (if empty creates for all chillax_mas_indexes)
+    market_pulse_chillax_mas_charts_timeframe: int = 150  # Chart timeframe in trading days (150 daily = ~30 weeks)
+    market_pulse_chillax_display_sma: str = "50;150;200"  # Additional moving averages to be displayed on chart
     
-    # Moving Average Cycles Configuration
+    # Moving Average Cycles Enhanced Configuration
     market_pulse_ma_cycles_enable: bool = True
+    market_pulse_ma_cycles_indexes: str = "SPY;QQQ;IWM"  # MA Cycles analysis indexes (semicolon separated)
+    market_pulse_ma_cycles_ma_period: str = "20;50"  # MA periods for cycle analysis (semicolon separated)
+    market_pulse_ma_cycles_charts: str = "SPY;QQQ"  # Indexes to create charts for (if empty creates for all ma_cycles_indexes)
+    market_pulse_ma_cycles_charts_timeframe: int = 200  # Chart timeframe in trading days
+    market_pulse_ma_cycles_cycle_mode: str = "Sharp"  # Cycle detection mode (Sharp, Smooth, etc.)
+    market_pulse_ma_cycles_smoothed_candles: int = 3  # Number of candles for smoothing
+
+    # Legacy MA Cycles Configuration (for backward compatibility)
     market_pulse_ma_cycles_reference_period: int = 50
     market_pulse_ma_cycles_min_cycle_length: int = 5
     
@@ -609,13 +642,16 @@ class UserConfiguration:
     market_pulse_output_dir: str = "results/market_pulse"
     market_pulse_save_detailed_results: bool = True
     market_pulse_generate_alerts: bool = True
+
+    # Report Generation Configuration
+    market_pulse_ftd_dd_report_enable: bool = False
+    market_pulse_comprehensive_report_enable: bool = True
     
     # Market Breadth Analysis Configuration
     market_breadth_enable: bool = True
-    # Timeframe configuration
     market_breadth_daily_enable: bool = True
-    market_breadth_weekly_enable: bool = True
-    market_breadth_monthly_enable: bool = True
+    market_breadth_weekly_enable: bool = False
+    market_breadth_monthly_enable: bool = False
     market_breadth_universe: dict = field(default_factory=lambda: {
         'type': 'single',
         'universes': ['all'],
@@ -642,6 +678,10 @@ class UserConfiguration:
     # Moving average breadth thresholds
     market_breadth_strong_ma_breadth_threshold: float = 80.0
     market_breadth_weak_ma_breadth_threshold: float = 20.0
+    # Chart history display configuration (all represent 1 year in respective timeframes)
+    market_breadth_chart_history_days: int = 252      # Daily charts: 252 days (1 year)
+    market_breadth_chart_history_weeks: int = 52      # Weekly charts: 52 weeks (1 year)
+    market_breadth_chart_history_months: int = 12     # Monthly charts: 12 months (1 year)
     # Output configuration
     market_breadth_save_detailed_results: bool = True
     market_breadth_output_dir: str = "results/market_breadth"
@@ -776,13 +816,14 @@ def read_user_data(file_path: str = 'user_data.csv') -> UserConfiguration:
             'ticker_info_YF': ('ticker_info_YF', parse_boolean),
             'ticker_choice': ('ticker_choice', str),
             'batch_size': ('batch_size', int),
-            
+
+            # Global execution phase flags
+            'BASIC': ('BASIC', parse_boolean),
+            'SCREENERS': ('SCREENERS', parse_boolean),
+            'POST_PROCESS': ('POST_PROCESS', parse_boolean),
+
             # POST-PROCESSING CONFIGURATION
             # Input historical data sources (local data loading)
-            'load_daily_data': ('load_daily_data', parse_boolean),
-            'load_weekly_data': ('load_weekly_data', parse_boolean),
-            'load_monthly_data': ('load_monthly_data', parse_boolean),
-            'load_intraday_data': ('load_intraday_data', parse_boolean),
             'YF_daily_data_files': ('yf_daily_data_files', str),
             'YF_weekly_data_files': ('yf_weekly_data_files', str),
             'YF_monthly_data_files': ('yf_monthly_data_files', str),
@@ -830,7 +871,25 @@ def read_user_data(file_path: str = 'user_data.csv') -> UserConfiguration:
             'index_daily_quarterly_periods': ('index_daily_quarterly_periods', str),
             'index_daily_yearly_periods': ('index_daily_yearly_periods', str),
             
-            # Basic calculations
+            # Output directory configuration
+            'BASIC_CALCULATION_output_dir': ('basic_calculation_output_dir', str),
+            'STAGE_ANALYSIS_output_dir': ('stage_analysis_output_dir', str),
+            'RS_output_dir': ('rs_output_dir', str),
+            'PER_output_dir': ('per_output_dir', str),
+            # Screener output directories
+            'PVB_TWmodel_output_dir': ('pvb_TWmodel_output_dir', str),
+            'ATR1_output_dir': ('atr1_output_dir', str),
+            'DRWISH_output_dir': ('drwish_output_dir', str),
+            'GIUSTI_output_dir': ('giusti_output_dir', str),
+            'MINERVINI_output_dir': ('minervini_output_dir', str),
+            'STOCKBEE_output_dir': ('stockbee_output_dir', str),
+            'QULLAMAGGIE_output_dir': ('qullamaggie_output_dir', str),
+            'ADL_SCREENER_output_dir': ('adl_screener_output_dir', str),
+            'GUPPY_SCREENER_output_dir': ('guppy_screener_output_dir', str),
+            'GOLD_LAUNCH_PAD_output_dir': ('gold_launch_pad_output_dir', str),
+            'RTI_output_dir': ('rti_output_dir', str),
+
+            # Basic calculations (legacy)
             'Basic_calculation_file': ('basic_calculation_file', str),
             'Basic_calc_daily_enable': ('basic_calc_daily_enable', parse_boolean),
             'Basic_calc_weekly_enable': ('basic_calc_weekly_enable', parse_boolean),
@@ -880,7 +939,15 @@ def read_user_data(file_path: str = 'user_data.csv') -> UserConfiguration:
             'REPORT_max_tickers_display': ('report_max_tickers_display', int),
             'REPORT_format': ('report_format', str),
             'REPORT_include_metadata': ('report_include_metadata', parse_boolean),
-            
+
+            # Market Breadth Report Configuration (Independent of global REPORT_ settings)
+            'MARKET_BREADTH_REPORT_enable': ('market_breadth_report_enable', parse_boolean),
+            'MARKET_BREADTH_REPORT_template_type': ('market_breadth_report_template_type', str),
+            'MARKET_BREADTH_force_file': ('market_breadth_force_file', parse_boolean),
+
+            # Market Pulse GMI/GMI2 Report Configuration
+            'MARKET_PULSE_GMIGMI2_REPORT_enable': ('market_pulse_gmigmi2_report_enable', parse_boolean),
+
             # Technical Indicators Configuration
             'daily_ema_periods': ('daily_ema_periods', str),
             'daily_sma_periods': ('daily_sma_periods', str),
@@ -964,6 +1031,8 @@ def read_user_data(file_path: str = 'user_data.csv') -> UserConfiguration:
             
             # Legacy Stage Analysis Configuration (deprecated)
             'stage_analysis_enabled': ('stage_analysis_enabled', parse_boolean),
+            'stage_analysis_min_price': ('stage_analysis_min_price', float),
+            'stage_analysis_min_vol': ('stage_analysis_min_vol', int),
             'stage_ema_fast_period': ('stage_ema_fast_period', int),
             'stage_sma_medium_period': ('stage_sma_medium_period', int),
             'stage_sma_slow_period': ('stage_sma_slow_period', int),
@@ -1045,29 +1114,32 @@ def read_user_data(file_path: str = 'user_data.csv') -> UserConfiguration:
             'BASIC_value_momentum_enable': ('basic_value_momentum_enable', parse_boolean),
             
             # PVB (Price Volume Breakout) Configuration
-            'PVB_enable': ('pvb_enable', parse_boolean),
+            'PVB_TWmodel_enable': ('pvb_TWmodel_enable', parse_boolean),
+            'PVB_TWmodel_daily_enable': ('pvb_TWmodel_daily_enable', parse_boolean),
+            'PVB_TWmodel_weekly_enable': ('pvb_TWmodel_weekly_enable', parse_boolean),
+            'PVB_TWmodel_monthly_enable': ('pvb_TWmodel_monthly_enable', parse_boolean),
             # Daily timeframe PVB parameters
-            'PVB_daily_price_breakout_period': ('pvb_daily_price_breakout_period', int),
-            'PVB_daily_volume_breakout_period': ('pvb_daily_volume_breakout_period', int),
-            'PVB_daily_trendline_length': ('pvb_daily_trendline_length', int),
-            'PVB_daily_close_threshold': ('pvb_daily_close_threshold', int),
-            'PVB_daily_signal_max_age': ('pvb_daily_signal_max_age', int),
+            'PVB_TWmodel_daily_price_breakout_period': ('pvb_TWmodel_daily_price_breakout_period', int),
+            'PVB_TWmodel_daily_volume_breakout_period': ('pvb_TWmodel_daily_volume_breakout_period', int),
+            'PVB_TWmodel_daily_trendline_length': ('pvb_TWmodel_daily_trendline_length', int),
+            'PVB_TWmodel_daily_close_threshold': ('pvb_TWmodel_daily_close_threshold', int),
+            'PVB_TWmodel_daily_signal_max_age': ('pvb_TWmodel_daily_signal_max_age', int),
             # Weekly timeframe PVB parameters
-            'PVB_weekly_price_breakout_period': ('pvb_weekly_price_breakout_period', int),
-            'PVB_weekly_volume_breakout_period': ('pvb_weekly_volume_breakout_period', int),
-            'PVB_weekly_trendline_length': ('pvb_weekly_trendline_length', int),
-            'PVB_weekly_close_threshold': ('pvb_weekly_close_threshold', int),
-            'PVB_weekly_signal_max_age': ('pvb_weekly_signal_max_age', int),
+            'PVB_TWmodel_weekly_price_breakout_period': ('pvb_TWmodel_weekly_price_breakout_period', int),
+            'PVB_TWmodel_weekly_volume_breakout_period': ('pvb_TWmodel_weekly_volume_breakout_period', int),
+            'PVB_TWmodel_weekly_trendline_length': ('pvb_TWmodel_weekly_trendline_length', int),
+            'PVB_TWmodel_weekly_close_threshold': ('pvb_TWmodel_weekly_close_threshold', int),
+            'PVB_TWmodel_weekly_signal_max_age': ('pvb_TWmodel_weekly_signal_max_age', int),
             # Monthly timeframe PVB parameters
-            'PVB_monthly_price_breakout_period': ('pvb_monthly_price_breakout_period', int),
-            'PVB_monthly_volume_breakout_period': ('pvb_monthly_volume_breakout_period', int),
-            'PVB_monthly_trendline_length': ('pvb_monthly_trendline_length', int),
-            'PVB_monthly_close_threshold': ('pvb_monthly_close_threshold', int),
-            'PVB_monthly_signal_max_age': ('pvb_monthly_signal_max_age', int),
+            'PVB_TWmodel_monthly_price_breakout_period': ('pvb_TWmodel_monthly_price_breakout_period', int),
+            'PVB_TWmodel_monthly_volume_breakout_period': ('pvb_TWmodel_monthly_volume_breakout_period', int),
+            'PVB_TWmodel_monthly_trendline_length': ('pvb_TWmodel_monthly_trendline_length', int),
+            'PVB_TWmodel_monthly_close_threshold': ('pvb_TWmodel_monthly_close_threshold', int),
+            'PVB_TWmodel_monthly_signal_max_age': ('pvb_TWmodel_monthly_signal_max_age', int),
             # Common PVB parameters
-            'PVB_order_direction': ('pvb_order_direction', str),
-            'PVB_min_volume': ('pvb_min_volume', int),
-            'PVB_min_price': ('pvb_min_price', float),
+            'PVB_TWmodel_order_direction': ('pvb_TWmodel_order_direction', str),
+            'PVB_TWmodel_min_volume': ('pvb_TWmodel_min_volume', int),
+            'PVB_TWmodel_min_price': ('pvb_TWmodel_min_price', float),
             
             # Minervini Template Screener Configuration
             'MINERVINI_enable': ('minervini_enable', parse_boolean),
@@ -1203,7 +1275,7 @@ def read_user_data(file_path: str = 'user_data.csv') -> UserConfiguration:
             'VOLUME_SUITE_hv_stdv': ('volume_suite_hv_stdv', parse_boolean),
             'VOLUME_SUITE_enhanced_anomaly': ('volume_suite_enhanced_anomaly', parse_boolean),
             'VOLUME_SUITE_volume_indicators': ('volume_suite_volume_indicators', parse_boolean),
-            'VOLUME_SUITE_pvb_integration': ('volume_suite_pvb_integration', parse_boolean),
+            'VOLUME_SUITE_pvb_TWmodel_integration': ('volume_suite_pvb_TWmodel_integration', parse_boolean),
             'VOLUME_SUITE_hv_month_cutoff': ('volume_suite_hv_month_cutoff', int),
             'VOLUME_SUITE_hv_day_cutoff': ('volume_suite_hv_day_cutoff', int),
             'VOLUME_SUITE_hv_std_cutoff': ('volume_suite_hv_std_cutoff', int),
@@ -1225,9 +1297,6 @@ def read_user_data(file_path: str = 'user_data.csv') -> UserConfiguration:
             # Market Pulse Configuration
             'MARKET_PULSE_enable': ('market_pulse_enable', parse_boolean),
             'MARKET_PULSE_gmi_enable': ('market_pulse_gmi_enable', parse_boolean),
-            'MARKET_PULSE_gmi_enable_daily': ('market_pulse_gmi_enable_daily', parse_boolean),
-            'MARKET_PULSE_gmi_enable_weekly': ('market_pulse_gmi_enable_weekly', parse_boolean),
-            'MARKET_PULSE_gmi_enable_monthly': ('market_pulse_gmi_enable_monthly', parse_boolean),
             'MARKET_PULSE_gmi_threshold': ('market_pulse_gmi_threshold', int),
             'MARKET_PULSE_gmi_confirmation_days': ('market_pulse_gmi_confirmation_days', int),
             'MARKET_PULSE_gmi_short_term_sma': ('market_pulse_gmi_short_term_sma', int),
@@ -1237,12 +1306,9 @@ def read_user_data(file_path: str = 'user_data.csv') -> UserConfiguration:
             'MARKET_PULSE_gmi_index2': ('market_pulse_gmi_index2', str),
             'MARKET_PULSE_gmi_MF_ma_period': ('market_pulse_gmi_mf_ma_period', int),
             'MARKET_PULSE_gmi_breath_file_suffix': ('market_pulse_gmi_breath_file_suffix', str),
-            
+
             # GMI2 Configuration mappings
             'MARKET_PULSE_gmi2_enable': ('market_pulse_gmi2_enable', parse_boolean),
-            'MARKET_PULSE_gmi2_enable_daily': ('market_pulse_gmi2_enable_daily', parse_boolean),
-            'MARKET_PULSE_gmi2_enable_weekly': ('market_pulse_gmi2_enable_weekly', parse_boolean),
-            'MARKET_PULSE_gmi2_enable_monthly': ('market_pulse_gmi2_enable_monthly', parse_boolean),
             'MARKET_PULSE_gmi2_index': ('market_pulse_gmi2_index', str),
             'MARKET_PULSE_gmi2_sma': ('market_pulse_gmi2_sma', str),
             'MARKET_PULSE_gmi2_index_stochastic_threshold': ('market_pulse_gmi2_index_stochastic_threshold', int),
@@ -1250,6 +1316,8 @@ def read_user_data(file_path: str = 'user_data.csv') -> UserConfiguration:
             'MARKET_PULSE_gmi2_confirmation_days': ('market_pulse_gmi2_confirmation_days', int),
             
             'MARKET_PULSE_ftd_dd_enable': ('market_pulse_ftd_dd_enable', parse_boolean),
+            'MARKET_PULSE_ftd_dd_report_enable': ('market_pulse_ftd_dd_report_enable', parse_boolean),
+            'MARKET_PULSE_comprehensive_report_enable': ('market_pulse_comprehensive_report_enable', parse_boolean),
             'MARKET_PULSE_dd_threshold': ('market_pulse_dd_threshold', float),
             'MARKET_PULSE_ftd_threshold': ('market_pulse_ftd_threshold', float),
             'MARKET_PULSE_ftd_optimal_days_min': ('market_pulse_ftd_optimal_days_min', int),
@@ -1262,7 +1330,24 @@ def read_user_data(file_path: str = 'user_data.csv') -> UserConfiguration:
             'MARKET_PULSE_chillax_ma_fast_period': ('market_pulse_chillax_ma_fast_period', int),
             'MARKET_PULSE_chillax_ma_slow_period': ('market_pulse_chillax_ma_slow_period', int),
             'MARKET_PULSE_chillax_trend_days': ('market_pulse_chillax_trend_days', int),
+
+            # Chillax MAs Enhanced Configuration
+            'MARKET_PULSE_chillax_mas_indexes': ('market_pulse_chillax_mas_indexes', str),
+            'MARKET_PULSE_chillax_mas_sma': ('market_pulse_chillax_mas_sma', str),
+            'MARKET_PULSE_chillax_mas_charts': ('market_pulse_chillax_mas_charts', str),
+            'MARKET_PULSE_chillax_mas_charts_timeframe': ('market_pulse_chillax_mas_charts_timeframe', int),
+            'MARKET_PULSE_chillax_display_sma': ('market_pulse_chillax_display_sma', str),
             'MARKET_PULSE_ma_cycles_enable': ('market_pulse_ma_cycles_enable', parse_boolean),
+
+            # MA Cycles Enhanced Configuration
+            'MARKET_PULSE_ma_cycles_indexes': ('market_pulse_ma_cycles_indexes', str),
+            'MARKET_PULSE_ma_cycles_ma_period': ('market_pulse_ma_cycles_ma_period', str),
+            'MARKET_PULSE_ma_cycles_charts': ('market_pulse_ma_cycles_charts', str),
+            'MARKET_PULSE_ma_cycles_charts_timeframe': ('market_pulse_ma_cycles_charts_timeframe', int),
+            'MARKET_PULSE_ma_cycles_cycle_mode': ('market_pulse_ma_cycles_cycle_mode', str),
+            'MARKET_PULSE_ma_cycles_smoothed_candles': ('market_pulse_ma_cycles_smoothed_candles', int),
+
+            # Legacy MA Cycles Configuration
             'MARKET_PULSE_ma_cycles_reference_period': ('market_pulse_ma_cycles_reference_period', int),
             'MARKET_PULSE_ma_cycles_min_cycle_length': ('market_pulse_ma_cycles_min_cycle_length', int),
             'MARKET_PULSE_output_dir': ('market_pulse_output_dir', str),
@@ -1271,11 +1356,28 @@ def read_user_data(file_path: str = 'user_data.csv') -> UserConfiguration:
             
             # Market Breadth Analysis Configuration
             'MARKET_BREADTH_enable': ('market_breadth_enable', parse_boolean),
-            # Timeframe configuration
             'MARKET_BREADTH_daily_enable': ('market_breadth_daily_enable', parse_boolean),
             'MARKET_BREADTH_weekly_enable': ('market_breadth_weekly_enable', parse_boolean),
             'MARKET_BREADTH_monthly_enable': ('market_breadth_monthly_enable', parse_boolean),
+            # Timeframe configuration
+            'MARKET_BREADTH_daily_ma_periods': ('market_breadth_daily_ma_periods', _parse_period_string),
+            'MARKET_BREADTH_daily_new_high_lows_periods': ('market_breadth_daily_new_high_lows_periods', _parse_period_string),
+            'MARKET_BREADTH_weekly_ma_periods': ('market_breadth_weekly_ma_periods', _parse_period_string),
+            'MARKET_BREADTH_weekly_new_high_lows_periods': ('market_breadth_weekly_new_high_lows_periods', _parse_period_string),
+            'MARKET_BREADTH_monthly_ma_periods': ('market_breadth_monthly_ma_periods', _parse_period_string),
+            'MARKET_BREADTH_monthly_new_high_lows_periods': ('market_breadth_monthly_new_high_lows_periods', _parse_period_string),
             'MARKET_BREADTH_universe': ('market_breadth_universe', _parse_market_breadth_universe),
+            # Generic threshold configuration
+            'MARKET_BREADTH_new_highs_threshold_long': ('market_breadth_new_highs_threshold_long', int),
+            'MARKET_BREADTH_new_highs_threshold_medium': ('market_breadth_new_highs_threshold_medium', int),
+            'MARKET_BREADTH_new_highs_threshold_short': ('market_breadth_new_highs_threshold_short', int),
+            'MARKET_BREADTH_success_window_pct_long': ('market_breadth_success_window_pct_long', int),
+            'MARKET_BREADTH_success_window_pct_medium': ('market_breadth_success_window_pct_medium', int),
+            'MARKET_BREADTH_success_window_pct_short': ('market_breadth_success_window_pct_short', int),
+            'MARKET_BREADTH_success_threshold_pct_long': ('market_breadth_success_threshold_pct_long', int),
+            'MARKET_BREADTH_success_threshold_pct_medium': ('market_breadth_success_threshold_pct_medium', int),
+            'MARKET_BREADTH_success_threshold_pct_short': ('market_breadth_success_threshold_pct_short', int),
+            # Legacy configuration (deprecated)
             'MARKET_BREADTH_lookback_days': ('market_breadth_lookback_days', int),
             'MARKET_BREADTH_ma_periods': ('market_breadth_ma_periods', _parse_period_string),
             # 252-day threshold configuration
@@ -1295,6 +1397,10 @@ def read_user_data(file_path: str = 'user_data.csv') -> UserConfiguration:
             # Moving average breadth thresholds
             'MARKET_BREADTH_strong_ma_breadth_threshold': ('market_breadth_strong_ma_breadth_threshold', float),
             'MARKET_BREADTH_weak_ma_breadth_threshold': ('market_breadth_weak_ma_breadth_threshold', float),
+            # Chart history display configuration
+            'MARKET_BREADTH_chart_history_days': ('market_breadth_chart_history_days', int),
+            'MARKET_BREADTH_chart_history_weeks': ('market_breadth_chart_history_weeks', int),
+            'MARKET_BREADTH_chart_history_months': ('market_breadth_chart_history_months', int),
             # Output configuration
             'MARKET_BREADTH_save_detailed_results': ('market_breadth_save_detailed_results', parse_boolean),
             'MARKET_BREADTH_output_dir': ('market_breadth_output_dir', str),
@@ -1524,58 +1630,64 @@ def get_atr2_params_for_timeframe(config: UserConfiguration, timeframe: str) -> 
     return base_params
 
 
-def get_pvb_params_for_timeframe(config: UserConfiguration, timeframe: str) -> dict:
+def get_pvb_TWmodel_params_for_timeframe(config: UserConfiguration, timeframe: str) -> dict:
     """
-    Get timeframe-specific PVB parameters.
+    Get timeframe-specific PVB TWmodel parameters.
     
     Args:
         config: UserConfiguration object
         timeframe: 'daily', 'weekly', or 'monthly'
         
     Returns:
-        Dictionary with PVB parameters for the specified timeframe
+        Dictionary with PVB TWmodel parameters for the specified timeframe
     """
     if timeframe == 'daily':
         return {
-            'price_breakout_period': config.pvb_daily_price_breakout_period,
-            'volume_breakout_period': config.pvb_daily_volume_breakout_period,
-            'trendline_length': config.pvb_daily_trendline_length,
-            'close_threshold': config.pvb_daily_close_threshold,
-            'signal_max_age': config.pvb_daily_signal_max_age,
-            'order_direction': config.pvb_order_direction,
-            'min_volume': config.pvb_min_volume,
-            'min_price': config.pvb_min_price,
+            'price_breakout_period': config.pvb_TWmodel_daily_price_breakout_period,
+            'volume_breakout_period': config.pvb_TWmodel_daily_volume_breakout_period,
+            'trendline_length': config.pvb_TWmodel_daily_trendline_length,
+            'close_threshold': config.pvb_TWmodel_daily_close_threshold,
+            'signal_max_age': config.pvb_TWmodel_daily_signal_max_age,
+            'order_direction': config.pvb_TWmodel_order_direction,
+            'min_volume': config.pvb_TWmodel_min_volume,
+            'min_price': config.pvb_TWmodel_min_price,
             'ticker_choice': config.ticker_choice,
             'timeframe': timeframe
         }
     elif timeframe == 'weekly':
         return {
-            'price_breakout_period': config.pvb_weekly_price_breakout_period,
-            'volume_breakout_period': config.pvb_weekly_volume_breakout_period,
-            'trendline_length': config.pvb_weekly_trendline_length,
-            'close_threshold': config.pvb_weekly_close_threshold,
-            'signal_max_age': config.pvb_weekly_signal_max_age,
-            'order_direction': config.pvb_order_direction,
-            'min_volume': config.pvb_min_volume,
-            'min_price': config.pvb_min_price,
+            'price_breakout_period': config.pvb_TWmodel_weekly_price_breakout_period,
+            'volume_breakout_period': config.pvb_TWmodel_weekly_volume_breakout_period,
+            'trendline_length': config.pvb_TWmodel_weekly_trendline_length,
+            'close_threshold': config.pvb_TWmodel_weekly_close_threshold,
+            'signal_max_age': config.pvb_TWmodel_weekly_signal_max_age,
+            'order_direction': config.pvb_TWmodel_order_direction,
+            'min_volume': config.pvb_TWmodel_min_volume,
+            'min_price': config.pvb_TWmodel_min_price,
             'ticker_choice': config.ticker_choice,
             'timeframe': timeframe
         }
     elif timeframe == 'monthly':
         return {
-            'price_breakout_period': config.pvb_monthly_price_breakout_period,
-            'volume_breakout_period': config.pvb_monthly_volume_breakout_period,
-            'trendline_length': config.pvb_monthly_trendline_length,
-            'close_threshold': config.pvb_monthly_close_threshold,
-            'signal_max_age': config.pvb_monthly_signal_max_age,
-            'order_direction': config.pvb_order_direction,
-            'min_volume': config.pvb_min_volume,
-            'min_price': config.pvb_min_price,
+            'price_breakout_period': config.pvb_TWmodel_monthly_price_breakout_period,
+            'volume_breakout_period': config.pvb_TWmodel_monthly_volume_breakout_period,
+            'trendline_length': config.pvb_TWmodel_monthly_trendline_length,
+            'close_threshold': config.pvb_TWmodel_monthly_close_threshold,
+            'signal_max_age': config.pvb_TWmodel_monthly_signal_max_age,
+            'order_direction': config.pvb_TWmodel_order_direction,
+            'min_volume': config.pvb_TWmodel_min_volume,
+            'min_price': config.pvb_TWmodel_min_price,
             'ticker_choice': config.ticker_choice,
             'timeframe': timeframe
         }
     else:
         raise ValueError(f"Unsupported timeframe: {timeframe}")
+
+
+# Legacy function for backward compatibility
+def get_pvb_params_for_timeframe(config: UserConfiguration, timeframe: str) -> dict:
+    """Legacy function - redirects to TWmodel version."""
+    return get_pvb_TWmodel_params_for_timeframe(config, timeframe)
 
 
 def get_minervini_params_for_timeframe(config: UserConfiguration, timeframe: str) -> dict:
@@ -1698,7 +1810,7 @@ def get_volume_suite_params_for_timeframe(config: UserConfiguration, timeframe: 
             'enable_hv_stdv': config.volume_suite_hv_stdv,
             'enable_enhanced_anomaly': config.volume_suite_enhanced_anomaly,
             'enable_volume_indicators': config.volume_suite_volume_indicators,
-            'enable_pvb_integration': config.volume_suite_pvb_integration,
+            'enable_pvb_integration': config.volume_suite_pvb_TWmodel_integration,
             'save_individual_files': config.volume_suite_save_individual_files,
             
             # HV Absolute parameters (timeframe-scaled)
@@ -1730,11 +1842,11 @@ def get_volume_suite_params_for_timeframe(config: UserConfiguration, timeframe: 
             'adtv_min_volume': config.volume_suite_adtv_min_volume,
             
             # PVB Integration parameters
-            'pvb_price_period': config.volume_suite_pvb_price_period,
-            'pvb_volume_period': config.volume_suite_pvb_volume_period,
-            'pvb_trend_length': config.volume_suite_pvb_trend_length,
-            'pvb_volume_multiplier': config.volume_suite_pvb_volume_multiplier,
-            'pvb_direction': config.volume_suite_pvb_direction
+            'pvb_price_period': config.volume_suite_pvb_TWmodel_price_period,
+            'pvb_volume_period': config.volume_suite_pvb_TWmodel_volume_period,
+            'pvb_trend_length': config.volume_suite_pvb_TWmodel_trend_length,
+            'pvb_volume_multiplier': config.volume_suite_pvb_TWmodel_volume_multiplier,
+            'pvb_direction': config.volume_suite_pvb_TWmodel_direction
         },
         'volume_output_dir': config.volume_suite_output_dir,
         'timeframe': timeframe

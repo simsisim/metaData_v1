@@ -75,34 +75,76 @@ class Config:
         return 'local'
 
     def _setup_directories(self):
-        """Define all directory paths."""
+        """Define all directory paths using user-configurable settings."""
+        user_config = read_user_data()
+
         self.directories = {
             # Data directories
             "DATA_DIR": self.base_dir / "data",
             "TICKERS_DIR": self.base_dir / "data" / "tickers",
-            
-            # Market data directories  
-            "MARKET_DATA_DIR": self.base_dir / "data" / "market_data",
-            "DAILY_DATA_DIR": self.base_dir / "data" / "market_data" / "daily",
-            "WEEKLY_DATA_DIR": self.base_dir / "data" / "market_data" / "weekly", 
-            "MONTHLY_DATA_DIR": self.base_dir / "data" / "market_data" / "monthly",
-            "INTRADAY_DATA_DIR": self.base_dir / "data" / "intraday",
-            
-            # Output directories for post-processing
+
+            # Market data directories - use environment-specific paths from user config
+            "MARKET_DATA_DIR": Path(self._get_environment_specific_path('daily') or "data/market_data").parent,
+            "DAILY_DATA_DIR": Path(self._get_environment_specific_path('daily') or "data/market_data/daily"),
+            "WEEKLY_DATA_DIR": Path(self._get_environment_specific_path('weekly') or "data/market_data/weekly"),
+            "MONTHLY_DATA_DIR": Path(self._get_environment_specific_path('monthly') or "data/market_data/monthly"),
+            "INTRADAY_DATA_DIR": Path(self._get_environment_specific_path('intraday') or "data/intraday"),
+
+            # Base output directories
             "RESULTS_DIR": self.base_dir / "results",
             "OVERVIEW_DIR": self.base_dir / "results" / "overview",
             "CALCULATIONS_DIR": self.base_dir / "results" / "calculations",
-            "BASIC_CALCULATION_DIR": self.base_dir / "results" / "basic_calculation",
-            "SCREENERS_DIR": self.base_dir / "results" / "screeners",
             "MODELS_DIR": self.base_dir / "results" / "models",
-            
-            # RS (Relative Strength) directories
-            "RS_DIR": self.base_dir / "results" / "RS",
-            "RS_VALUES_DIR": self.base_dir / "results" / "RS" / "rs_values",
-            "RS_PERCENTILES_DIR": self.base_dir / "results" / "RS" / "percentiles",
-            
-            # Database directory removed - using CSV files directly
+
+            # User-configurable calculation output directories
+            "BASIC_CALCULATION_DIR": self._resolve_user_directory(user_config.basic_calculation_output_dir),
+            "STAGE_ANALYSIS_DIR": self._resolve_user_directory(user_config.stage_analysis_output_dir),
+            "RS_DIR": self._resolve_user_directory(user_config.rs_output_dir),
+            "PER_DIR": self._resolve_user_directory(user_config.per_output_dir),
+
+            # User-configurable screener output directories
+            "PVB_SCREENER_DIR": self._resolve_user_directory(user_config.pvb_TWmodel_output_dir),
+            "ATR1_SCREENER_DIR": self._resolve_user_directory(user_config.atr1_output_dir),
+            "DRWISH_SCREENER_DIR": self._resolve_user_directory(user_config.drwish_output_dir),
+            "GIUSTI_SCREENER_DIR": self._resolve_user_directory(user_config.giusti_output_dir),
+            "MINERVINI_SCREENER_DIR": self._resolve_user_directory(user_config.minervini_output_dir),
+            "STOCKBEE_SCREENER_DIR": self._resolve_user_directory(user_config.stockbee_output_dir),
+            "QULLAMAGGIE_SCREENER_DIR": self._resolve_user_directory(user_config.qullamaggie_output_dir),
+            "ADL_SCREENER_DIR": self._resolve_user_directory(user_config.adl_screener_output_dir),
+            "GUPPY_SCREENER_DIR": self._resolve_user_directory(user_config.guppy_screener_output_dir),
+            "GOLD_LAUNCH_PAD_SCREENER_DIR": self._resolve_user_directory(user_config.gold_launch_pad_output_dir),
+            "RTI_SCREENER_DIR": self._resolve_user_directory(user_config.rti_output_dir),
+
+            # Legacy screeners directory for backwards compatibility
+            "SCREENERS_DIR": self.base_dir / "results" / "screeners",
+
+            # RS sub-directories (based on user RS directory)
+            "RS_VALUES_DIR": self._resolve_user_directory(user_config.rs_output_dir) / "rs_values",
+            "RS_PERCENTILES_DIR": self._resolve_user_directory(user_config.per_output_dir),  # PER gets its own directory now
         }
+
+    def _resolve_user_directory(self, user_path):
+        """
+        Resolve user-configured directory path.
+        Supports both relative and absolute paths.
+
+        Args:
+            user_path (str): User-configured directory path
+
+        Returns:
+            Path: Resolved directory path
+        """
+        if not user_path:
+            # Fallback to default if path is empty
+            return self.base_dir / "results"
+
+        user_path_str = str(user_path).strip()
+        if os.path.isabs(user_path_str):
+            # Absolute path - use as is
+            return Path(user_path_str)
+        else:
+            # Relative path - resolve relative to base directory
+            return self.base_dir / user_path_str
     
     def _setup_paths(self):
         """Define specific file paths."""

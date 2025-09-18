@@ -1,0 +1,4 @@
+level,detection_date,detection_bar,confirmation_date,confirmation_bar,breakout_date,breakout_bar,is_confirmed,is_broken
+5317.150097718396,2024-12-12,239,2024-12-12,-1,2025-05-19,345.0,True,True
+5631.33984375,2025-06-06,358,2025-06-06,-1,2025-06-27,372.0,True,True
+5839.41015625,2025-07-08,378,2025-07-08,-1,,,True,False

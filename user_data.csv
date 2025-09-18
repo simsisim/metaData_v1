@@ -9,14 +9,38 @@ WEB_tickers_down,FALSE,Download ticker names from web sources (NASDAQ SP500 etc)
 TW_tickers_down,TRUE,Use ticker names from TradingView universe file
 TW_universe_file,tradingview_universe.csv,File name for TradingView universe data
 ,,
-# HISTORICAL DATA COLLECTION,,
+# ENVIRONMENT DETECTION AND PATH CONFIGURATION,,
+# ----------------------------------------------,,
+auto_detect_environment,FALSE,Automatically detect and use appropriate paths (local vs Colab)
+manual_environment_override,local,Manual override: local | colab | (empty for auto detection)
+,,
+# LOCAL ENVIRONMENT PATHS,,
+# ------------------------,,
+YF_daily_data_files_local,../downloadData_v1/data/market_data/daily/,Local: Folder with daily (1d) historical data files
+YF_weekly_data_files_local,../downloadData_v1/data/market_data/weekly/,Local: Folder with weekly (1wk) historical data files
+YF_monthly_data_files_local,../downloadData_v1/data/market_data/monthly/,Local: Folder with monthly (1mo) historical data files
+TW_intraday_folder_local,data/intraday/,Local: Folder for TradingView intraday data
+,,
+# COLAB ENVIRONMENT PATHS,,
+# ------------------------,,
+YF_daily_data_files_colab,/content/drive/MyDrive/_invest2024/run_python/downloadData_v1/data/market_data/daily/,Colab: Folder with daily (1d) historical data files
+YF_weekly_data_files_colab,/content/drive/MyDrive/_invest2024/run_python/downloadData_v1/data/market_data/weekly/,Colab: Folder with weekly (1wk) historical data files
+YF_monthly_data_files_colab,/content/drive/MyDrive/_invest2024/run_python/downloadData_v1/data/market_data/monthly/,Colab: Folder with monthly (1mo) historical data files
+TW_intraday_folder_colab,/content/drive/MyDrive/_invest2024/run_python/metaData_v1/data/intraday/,Colab: Folder for TradingView intraday data
+,,
+# GLOBAL TIMEFRAME ACTIVATION,,
 # ---------------------------,,
-YF_hist_data,TRUE,Download historical OHLCV data via YFinance
-YF_daily_data,TRUE,Download daily (1d) historical data
-YF_weekly_data,FALSE,Download weekly (1wk) historical data  
-YF_monthly_data,FALSE,Download monthly (1mo) historical data
+YF_hist_data,TRUE,Load historical OHLCV data via YFinance
+YF_daily_data,TRUE,Load daily (1d) historical data
+YF_weekly_data,TRUE,Load weekly (1wk) historical data  
+YF_monthly_data,FALSE,Load monthly (1mo) historical data
 TW_intraday_data,FALSE,Process intraday data from TradingView source
 TW_intraday_file,intraday_data.csv,File name for intraday data input
+,,
+# GLOBAL STRUCTURE FLAGS,,
+BASIC,TRUE,Execute data processing and core calculations phase
+SCREENERS,FALSE,Execute screening and analysis phase
+POST_PROCESS,TRUE,Execute post-processing and report generation phase
 ,,
 # FINANCIAL DATA ENRICHMENT,,
 # --------------------------,,
@@ -52,43 +76,287 @@ batch_size,100,Global batch size for data processing and calculations
 # ==============================,,
 # Configuration for the second part of the program: data processing and analysis,,
 ,,
-# INPUT HISTORICAL DATA SOURCES,,
-# ------------------------------,,
-load_daily_data,TRUE,Load daily (1d) historical data from local files
-load_weekly_data,TRUE,Load weekly (1wk) historical data from local files
-load_monthly_data,TRUE,Load monthly (1mo) historical data from local files
-load_intraday_data,FALSE,Load intraday data from TradingView source
-YF_daily_data_files,downloadData_v1/data/market_data/daily/,Folder with daily (1d) historical data files
-YF_weekly_data_files,downloadData_v1/data/market_data/weekly/,Folder with weekly (1wk) historical data files  
-YF_monthly_data_files,downloadData_v1/data/market_data/monthly/,Folder with monthly (1mo) historical data files
-TW_intraday_folder,data/intraday/,Folder for TradingView intraday data
-TW_intraday_file,intraday_data.csv,File name for intraday data
 ,,
-# ENVIRONMENT DETECTION AND PATH CONFIGURATION,,
-# ----------------------------------------------,,
-auto_detect_environment,FALSE,Automatically detect and use appropriate paths (local vs Colab)
-manual_environment_override,local,Manual override: local | colab | (empty for auto detection)
+# RELATIVE STRENGTH (RS) CONFIGURATION - MULTI-BENCHMARK,,
+# ==========================================================,,
+RS_enable_stocks,FALSE,Enable RS calculation for individual stocks
+RS_enable_sectors,FALSE,Enable RS calculation for sectors  
+RS_enable_industries,FALSE,Enable RS calculation for industries
+# MULTI-BENCHMARK CONFIGURATION,,
+RS_benchmark_tickers,QQQ,Benchmark tickers for RS calculations (semicolon separated)
+# COMPOSITE CONFIGURATION,,
+RS_composite_method,market_cap_weighted,Sector/industry composite method (equal_weighted or market_cap_weighted)
+RS_min_group_size,3,Minimum number of stocks required for sector/industry composite
+# PERCENTILE UNIVERSE CONFIGURATION,,
+RS_percentile_universe_stocks,NASDAQ100,Universe for stock percentiles: all | sector | industry | ticker_choice
+RS_percentile_universe_sectors,all; SP500,Universe for sector percentiles: all | ticker_choice  | NASADQ100  
+RS_percentile_universe_industries,ticker_choice; NASDAQ100;SP500,Universe for industry percentiles: all | ticker_choice | SP500
+# TIMEFRAME CONFIGURATION,,
+RS_daily_enable,FALSE,Enable RS calculation for daily timeframe
+RS_weekly_enable,FALSE,Enable RS calculation for weekly timeframe
+RS_monthly_enable,FALSE,Enable RS calculation for monthly timeframe
+# PERIOD CONFIGURATION,,
+# Daily timeframe parameters,,
+daily_daily_periods,1;3;5,Daily data: RS calculation periods (semicolon separated - 1d;3d;5d;10d;15d)
+daily_weekly_periods,7;14,"Daily data: weekly RS periods in trading days (semicolon separated – 1w;2w;4w) 5, 10, 20"
+daily_monthly_periods,22;44,"Daily data: monthly RS periods in trading days (semicolon separated – 1m;2m;3m) 22,44, 66"
+daily_quarterly_periods,66;132,"Daily data: quarterly RS periods in trading days (semicolon separated – 1q;2q) 66,132"
+daily_yearly_periods,252,Daily data: yearly RS periods in trading days 252
+# Weekly timeframe parameters,,
+weekly_weekly_periods,1;3;5;10;15,Weekly data: weekly RS periods in weeks (semicolon separated - 1w;2w;4w)
+weekly_monthly_periods,,Weekly data: monthly RS periods in weeks (semicolon separated - 1m;2m;3m)
+# Monthly timeframe parameters,,
+RS_monthly_periods,1;3;6,Monthly data: monthly RS periods in months (numeric values)
 ,,
-# LOCAL ENVIRONMENT PATHS,,
-# ------------------------,,
-YF_daily_data_files_local,../downloadData_v1/data/market_data/daily/,Local: Folder with daily (1d) historical data files
-YF_weekly_data_files_local,../downloadData_v1/data/market_data/weekly/,Local: Folder with weekly (1wk) historical data files
-YF_monthly_data_files_local,../downloadData_v1/data/market_data/monthly/,Local: Folder with monthly (1mo) historical data files
-TW_intraday_folder_local,data/intraday/,Local: Folder for TradingView intraday data
+# OUTPUT DIRECTORY CONFIGURATION,,
+# ==============================,,
+# Core calculation module output directories,,
+BASIC_CALCULATION_output_dir,results/basic_calculation,Output directory for basic calculations (SMA EMA RSI ATR etc)
+STAGE_ANALYSIS_output_dir,results/stage_analysis,Output directory for stage analysis results
+RS_output_dir,results/rs,Output directory for Relative Strength analysis
+PER_output_dir,results/per,Output directory for Percentile analysis
 ,,
-# COLAB ENVIRONMENT PATHS,,
-# ------------------------,,
-YF_daily_data_files_colab,/content/drive/MyDrive/_invest2024/run_python/downloadData_v1/data/market_data/daily/,Colab: Folder with daily (1d) historical data files
-YF_weekly_data_files_colab,/content/drive/MyDrive/_invest2024/run_python/downloadData_v1/data/market_data/weekly/,Colab: Folder with weekly (1wk) historical data files
-YF_monthly_data_files_colab,/content/drive/MyDrive/_invest2024/run_python/downloadData_v1/data/market_data/monthly/,Colab: Folder with monthly (1mo) historical data files
-TW_intraday_folder_colab,/content/drive/MyDrive/_invest2024/run_python/metaData_v1/data/intraday/,Colab: Folder for TradingView intraday data
+# Screener output directories (for consistency),,
+PVB_TWmodel_output_dir,results/screeners/pvb,Output directory for PVB TWmodel (Price Volume Breakout TradingView Model) screener
+ATR1_output_dir,results/screeners/atr1,Output directory for ATR1 screener results
+DRWISH_output_dir,results/screeners/drwish,Output directory for Dr. Wish screener results
+GIUSTI_output_dir,results/screeners/giusti,Output directory for Giusti momentum screener
+MINERVINI_output_dir,results/screeners/minervini,Output directory for Minervini template screener
+STOCKBEE_output_dir,results/screeners/stockbee,Output directory for Stockbee suite screener
+QULLAMAGGIE_output_dir,results/screeners/qullamaggie,Output directory for Qullamaggie screener
+ADL_SCREENER_output_dir,results/screeners/adl,Output directory for ADL (Accumulation/Distribution) screener
+GUPPY_SCREENER_output_dir,results/screeners/guppy,Output directory for Guppy GMMA screener
+GOLD_LAUNCH_PAD_output_dir,results/screeners/gold_launch_pad,Output directory for Gold Launch Pad screener
+RTI_output_dir,results/screeners/rti,Output directory for Range Tightening Indicator screener
+,,
+# BASIC CALCULATIONS CONFIGURATION,,
+# =================================,,
+# Legacy setting - replaced by BASIC_CALCULATION_output_dir above,,
+Basic_calculation_file,basic_calculations.csv,DEPRECATED: Use BASIC_CALCULATION_output_dir instead
+# TIMEFRAME CONFIGURATION (CPU-intensive calculation control),,
+Basic_calc_daily_enable,TRUE,Enable basic calculations for daily timeframe
+Basic_calc_weekly_enable,FALSE,Enable basic calculations for weekly timeframe  
+Basic_calc_monthly_enable,FALSE,Enable basic calculations for monthly timeframe
+# Daily Period Percent Change Configuration,,
+daily_daily_periods,1;3;5,Daily data: daily percent change periods (semicolon separated - 2d;3d;5d)
+daily_weekly_periods,7;14,Daily data: weekly percent change periods (days back)
+daily_monthly_periods,22;44,Daily data: monthly percent change periods (semicolon separated - 1m;2m)
+daily_quarterly_periods,66;132,Daily data: quarterly percent change periods (semicolon separated - 1q;2q)
+daily_yearly_periods,252,Daily data: yearly percent change periods (days back)
+# Weekly Period Percent Change Configuration,,
+weekly_weekly_periods,2;4,Weekly data: weekly percent change periods (weeks back)
+weekly_monthly_periods,4;8,Weekly data: monthly percent change periods (semicolon separated - 1m;2m)
+# Monthly Period Percent Change Configuration,,
+monthly_monthly_periods,2;3;6,Monthly data: monthly percent change periods (months back)
+,,
+# STAGE ANALYSIS CONFIGURATION,,
+# ==============================,,
+stage_analysis_min_price,1000,stage_analysis_min_price
+stage_analysis_min_vol,10000,stage_analysis_min_vol
+,,
+#stage_analysis_split,TRUE,"instead of 1  calculation for all tickers, spearate pdfs will be generated by grouping tickers by indexes belonging"
+#stage_analysis_split_index,SP500;NASADQ100,
+#stage_analysis_residuals_after_split,FALSE,do you want to show stage analysis for tickers that don’t belong to indexes in #stage_analysis_display_split_index
+,,
+# Daily stage analysis,,
+stage_analysis_daily_enabled,TRUE,Enable daily stage analysis calculations
+stage_daily_ema_fast_period,10,Daily: Fast EMA period for stage analysis
+stage_daily_sma_medium_period,20,Daily: Medium SMA period for stage analysis
+stage_daily_sma_slow_period,50,Daily: Slow SMA period for stage analysis
+stage_daily_atr_period,14,Daily: ATR calculation period for stage analysis
+stage_daily_atr_threshold_low,4,Daily: ATR low volatility threshold percentage
+stage_daily_atr_threshold_high,7,Daily: ATR high volatility threshold percentage
+stage_daily_ma_convergence_threshold,1,Daily: MA convergence threshold for Launch Pad detection (%)
+# Weekly stage analysis,,
+stage_analysis_weekly_enabled,TRUE,Enable weekly stage analysis calculations
+stage_weekly_ema_fast_period,10,Weekly: Fast EMA period for stage analysis
+stage_weekly_sma_medium_period,20,Weekly: Medium SMA period for stage analysis
+stage_weekly_sma_slow_period,50,Weekly: Slow SMA period for stage analysis
+stage_weekly_atr_period,14,Weekly: ATR calculation period for stage analysis
+stage_weekly_atr_threshold_low,4,Weekly: ATR low volatility threshold percentage
+stage_weekly_atr_threshold_high,7,Weekly: ATR high volatility threshold percentage
+stage_weekly_ma_convergence_threshold,1,Weekly: MA convergence threshold for Launch Pad detection (%)
+# Monthly stage analysis,,
+stage_analysis_monthly_enabled,FALSE,Enable monthly stage analysis calculations
+stage_monthly_ema_fast_period,10,Monthly: Fast EMA period for stage analysis
+stage_monthly_sma_medium_period,20,Monthly: Medium SMA period for stage analysis
+stage_monthly_sma_slow_period,50,Monthly: Slow SMA period for stage analysis
+stage_monthly_atr_period,14,Monthly: ATR calculation period for stage analysis
+stage_monthly_atr_threshold_low,4,Monthly: ATR low volatility threshold percentage
+stage_monthly_atr_threshold_high,7,Monthly: ATR high volatility threshold percentage
+stage_monthly_ma_convergence_threshold,1,Monthly: MA convergence threshold for Launch Pad detection (%)
+#,,
+,,
+,,
+,,
+,,
+,,
+#STAGE_ANALYSIS_output_dir,,
+# Legacy compatibility,,
+#stage_analysis_enabled,TRUE,Legacy: Enable stage analysis calculations (deprecated)
+#stage_analysis_min_price,5,Minimum stock price for stage analysis (dollars)
+#stage_analysis_min_vol,100000,Minimum daily volume for stage analysis
+#stage_ema_fast_period,10,Legacy: Fast EMA period for stage analysis (deprecated)
+#stage_sma_medium_period,20,Legacy: Medium SMA period for stage analysis (deprecated)
+#stage_sma_slow_period,50,Legacy: Slow SMA period for stage analysis (deprecated)
+#stage_atr_period,14,Legacy: ATR calculation period for stage analysis (deprecated)
+#stage_atr_threshold_low,4,Legacy: ATR low volatility threshold percentage (deprecated)
+#stage_atr_threshold_high,7,Legacy: ATR high volatility threshold percentage (deprecated)
+#stage_ma_convergence_threshold,1,Legacy: MA convergence threshold for Launch Pad detection (%) (deprecated)
+,,
+# MARKET BREADTH ANALYSIS CONFIGURATION,,
+# =======================================,,
+MARKET_BREADTH_enable,FALSE,Enable comprehensive market breadth analysis (A/D line new H/L MA breadth)
+,,
+# TIMEFRAME CONFIGURATION,,
+MARKET_BREADTH_daily_enable,FALSE,Enable daily market breadth calculations
+MARKET_BREADTH_daily_ma_periods,20;50;200,Daily moving average periods for breadth analysis (semicolon separated)
+MARKET_BREADTH_daily_new_high_lows_periods,252;63;20,Daily new highs/lows periods (semicolon separated: long;medium;short)
+,,
+MARKET_BREADTH_weekly_enable,FALSE,Enable weekly market breadth calculations
+MARKET_BREADTH_weekly_ma_periods,10;20;50,Weekly moving average periods for breadth analysis (semicolon separated)
+MARKET_BREADTH_weekly_new_high_lows_periods,52;13;4,Weekly new highs/lows periods (semicolon separated: long;medium;short)
+,,
+MARKET_BREADTH_monthly_enable,FALSE,Enable monthly market breadth calculations
+MARKET_BREADTH_monthly_ma_periods,3;6;12,Monthly moving average periods for breadth analysis (semicolon separated)
+MARKET_BREADTH_monthly_new_high_lows_periods,12;3;1,Monthly new highs/lows periods (semicolon separated: long;medium;short)
+,,
+MARKET_BREADTH_universe,SP500; NASDAQ100; Russell1000,Default universe for breadth analysis (all | SP500 | NASDAQ100|SP500+NASDAQ100| SP500;NASADQ100 etc)
+,,
+# GENERIC THRESHOLDS (POSITION-BASED - APPLIES TO ALL TIMEFRAMES),,
+# New highs thresholds for long/medium/short periods,,
+MARKET_BREADTH_new_highs_threshold_long,100,Threshold for long-term new highs (1st period in new_high_lows_periods list)
+MARKET_BREADTH_new_highs_threshold_medium,100,Threshold for medium-term new highs (2nd period in new_high_lows_periods list)
+MARKET_BREADTH_new_highs_threshold_short,100,Threshold for short-term new highs (3rd period in new_high_lows_periods list)
+,,
+# Success window percentages (what portion of the period to analyze),,
+MARKET_BREADTH_success_window_pct_long,25,Success window for long period (25% of long period for analysis)
+MARKET_BREADTH_success_window_pct_medium,50,Success window for medium period (50% of medium period for analysis)
+MARKET_BREADTH_success_window_pct_short,50,Success window for short period (50% of short period for analysis)
+,,
+# Success threshold percentages (successful periods needed within window),,
+MARKET_BREADTH_success_threshold_pct_long,30,Success threshold for long period (30% of window periods must meet criteria)
+MARKET_BREADTH_success_threshold_pct_medium,30,Success threshold for medium period (30% of window periods must meet criteria)
+MARKET_BREADTH_success_threshold_pct_short,50,Success threshold for short period (50% of window periods must meet criteria)
+,,
+# ADVANCE/DECLINE RATIO THRESHOLDS (UNIVERSAL),,
+MARKET_BREADTH_strong_ad_ratio_threshold,2,Strong advance/decline ratio threshold (>2.0 = strong)
+MARKET_BREADTH_weak_ad_ratio_threshold,0.5,Weak advance/decline ratio threshold (<0.5 = weak)
+,,
+# ADVANCE PERCENTAGE THRESHOLDS (UNIVERSAL),,
+MARKET_BREADTH_strong_advance_threshold,70,Strong advance percentage threshold (>70% = strong breadth)
+MARKET_BREADTH_weak_advance_threshold,30,Weak advance percentage threshold (<30% = weak breadth)
+,,
+# MOVING AVERAGE BREADTH THRESHOLDS (UNIVERSAL),,
+MARKET_BREADTH_strong_ma_breadth_threshold,80,Strong MA breadth threshold (>80% above MA = strong)
+MARKET_BREADTH_weak_ma_breadth_threshold,20,Weak MA breadth threshold (<20% above MA = weak)
+,,
+# CHART HISTORY DISPLAY CONFIGURATION (all represent 1 year in respective timeframes),,
+MARKET_BREADTH_chart_history_days,63,Daily charts: display last 252 trading days (1 year)
+MARKET_BREADTH_chart_history_weeks,12,Weekly charts: display last 52 weeks (1 year)
+MARKET_BREADTH_chart_history_months,3,Monthly charts: display last 12 months (1 year)
+,,
+# LEGACY SETTINGS (DEPRECATED - USE NEW GENERIC SETTINGS ABOVE),,
+MARKET_BREADTH_lookback_days,252,DEPRECATED: Use timeframe-specific new_high_lows_periods instead
+MARKET_BREADTH_ma_periods,20;50;200,DEPRECATED: Use timeframe-specific ma_periods instead
+MARKET_BREADTH_daily_252day_new_highs_threshold,100,DEPRECATED: Use new_highs_threshold_long instead
+MARKET_BREADTH_ten_day_success_threshold,5,DEPRECATED: Use success_threshold_pct_long instead
+MARKET_BREADTH_daily_20day_new_highs_threshold,100,DEPRECATED: Use new_highs_threshold_short instead
+MARKET_BREADTH_twenty_day_success_threshold,10,DEPRECATED: Use success_threshold_pct_short instead
+MARKET_BREADTH_daily_63day_new_highs_threshold,100,DEPRECATED: Use new_highs_threshold_medium instead
+MARKET_BREADTH_sixty_three_day_success_threshold,30,DEPRECATED: Use success_threshold_pct_medium instead
+,,
+# OUTPUT CONFIGURATION,,
+MARKET_BREADTH_save_detailed_results,TRUE,Save detailed breadth calculations to CSV files
+MARKET_BREADTH_output_dir,results/market_breadth,Output directory for market breadth analysis files
+# Market Breadth Report Configuration (Independent of global REPORT_ settings),,
+MARKET_BREADTH_REPORT_enable,TRUE,Enable market breadth PDF report generation
+MARKET_BREADTH_REPORT_template_type,standard,Market breadth report template type (standard)
+MARKET_BREADTH_force_file,TRUE,Use latest available breadth file even if dates don't match (adds 'forced file' indicator to chart)
+,,
+# MARKET PULSE CONFIGURATION,,
+# ===========================,,GMI+GMI2 only works on daily
+MARKET_PULSE_enable,FALSE,Enable Market Pulse analysis for major indexes (SPY QQQ IWM DJI)
+MARKET_PULSE_gmi_enable,TRUE,Enable GMI (General Market Index) analysis - daily calculation only
+MARKET_PULSE_gmi_threshold,3,GMI score threshold for bullish/bearish signals (0-4 scale)
+MARKET_PULSE_gmi_confirmation_days,2,Number of days required for GMI signal confirmation
+MARKET_PULSE_gmi_index1,SPY,GMI analysis Index1 for R3 (SPY daily analysis)
+MARKET_PULSE_gmi_index2,QQQ,GMI analysis Index2 for R4 and R5 (QQQ daily analysis)
+MARKET_PULSE_gmi_short_term_sma,50,GMI short-term moving average period for P1/P2 components
+MARKET_PULSE_gmi_long_term_sma,150,GMI long-term moving average period for P3 component
+MARKET_PULSE_gmi_MF_index,SPY,GMI Mutual Fund ticker for P7 component
+MARKET_PULSE_gmi_MF_ma_period,50,GMI MF moving average period for P7 component
+MARKET_PULSE_gmi_breath_file_suffix,latest,GMI market breadth file date selector (latest or specific date YYYY-MM-DD)
+MARKET_PULSE_gmi2_enable,TRUE,Enable GMI2 (General Market Index 2) multi-SMA analysis - daily calculation only
+MARKET_PULSE_gmi2_index,SPY;QQQ,GMI2 target indexes for analysis (separated by semicolon)
+MARKET_PULSE_gmi2_sma,10;20;50;150,GMI2 SMA periods - exactly 4 values (separated by semicolon)
+MARKET_PULSE_gmi2_index_stochastic_1_thresholds,20,GMI2 stochastic 1 threshold for momentum calculations
+MARKET_PULSE_gmi2_index_stochastic_1_lookback,10,GMI2 stochastic 1 lookback period
+MARKET_PULSE_gmi2_index_stochastic_1_smoothness,4,GMI2 stochastic 1 smoothness factor
+MARKET_PULSE_gmi2_index_stochastic_2_thresholds,20,GMI2 stochastic 2 threshold for momentum calculations
+MARKET_PULSE_gmi2_index_stochastic_2_lookback,10,GMI2 stochastic 2 lookback period
+MARKET_PULSE_gmi2_index_stochastic_2_smoothness,4,GMI2 stochastic 2 smoothness factor
+MARKET_PULSE_gmi2_index_stochastic_3_thresholds,20,GMI2 stochastic 3 threshold for momentum calculations
+MARKET_PULSE_gmi2_index_stochastic_3_lookback,10,GMI2 stochastic 3 lookback period
+MARKET_PULSE_gmi2_index_stochastic_3_smoothness,1,GMI2 stochastic 3 smoothness factor
+MARKET_PULSE_gmi2_index_stochastic_threshold,20,GMI2 stochastic threshold for momentum calculations
+MARKET_PULSE_gmi2_threshold,5,GMI2 score threshold for bullish/bearish signals (0-9 scale)
+MARKET_PULSE_gmi2_confirmation_days,2,Number of days required for GMI2 signal confirmation
+MARKET_PULSE_GMIGMI2_REPORT_enable,TRUE,
+,,
+MARKET_PULSE_chillax_ma_enable,TRUE,Enable Chillax Moving Averages with Risk Zone coloring
+MARKET_PULSE_chillax_mas_indexes,SPY;QQQ;IWM,Chillax MA analysis indexes (semicolon separated - combinations not possible)
+MARKET_PULSE_chillax_mas_sma,10;20,Chillax MA SMA periods (semicolon separated)
+MARKET_PULSE_chillax_mas_charts,SPY;QQQ,Indexes to create charts for (if empty creates for all chillax_mas_indexes)
+MARKET_PULSE_chillax_mas_charts_timeframe,150,Chart timeframe in trading days (150 daily = ~30 weeks)
+MARKET_PULSE_chillax_display_sma,50;150;200,Aditional moving averages to be displayed on chart
+MARKET_PULSE_chillax_trend_days,5,
+,,
+MARKET_PULSE_ma_cycles_enable,TRUE,Enable Moving Average Cycles analysis for trend cycle identification
+MARKET_PULSE_ma_cycles_indexes,SPY;QQQ;IWM,MA Cycles analysis indexes (semicolon separated)
+MARKET_PULSE_ma_cycles_ma_period,20,Moving average period for cycle analysis
+MARKET_PULSE_ma_cycles_charts,SPY;QQQ,Indexes to create charts for (if empty creates for all ma_cycles_indexes)
+MARKET_PULSE_ma_cycles_charts_timeframe,200,Chart timeframe in trading days for cycle analysis
+MARKET_PULSE_ma_cycles_cycle_mode,Sharp,Cycle detection mode (Sharp or Smoothed)
+MARKET_PULSE_ma_cycles_smoothed_candles,3,Number of candles for smoothed cycle confirmation
+,,
+,,
+#MARKET_PULSE_ftd_dd_enable,FALSE,Enable FTD & DD (Follow-Through Day & Distribution Day) analysis
+#MARKET_PULSE_dd_threshold,0.2,Minimum decline percentage for Distribution Day detection (0.2%)
+#MARKET_PULSE_ftd_threshold,1.5,Minimum gain percentage for Follow-Through Day detection (1.5%)
+#MARKET_PULSE_ftd_optimal_days_min,4,Minimum days from market bottom for optimal FTD (O'Neil methodology)
+#MARKET_PULSE_ftd_optimal_days_max,7,Maximum days from market bottom for optimal FTD (O'Neil methodology)
+#MARKET_PULSE_dd_lookback_period,25,Lookback period for Distribution Day counting and analysis
+#MARKET_PULSE_net_highs_lows_enable,FALSE,Enable Net New Highs/Lows market breadth analysis
+#MARKET_PULSE_breadth_threshold_healthy,2,Net new highs percentage threshold for healthy market breadth (>2%)
+#MARKET_PULSE_breadth_threshold_unhealthy,-2,Net new lows percentage threshold for unhealthy market breadth (>2%)
+,,
+MARKET_PULSE_ftd_dd_enable,TRUE,Enable FTD/DD (Follow Through Day & Distribution Day) analysis
+ftd_dd_indexes,SPY;QQQ;IWM,FTD/DD analysis target indexes (semicolon separated)
+ftd_dd_ftd_price_threshold,1.5,FTD minimum price gain percentage for Follow Through Day detection
+ftd_dd_ftd_volume_threshold,1.25,FTD minimum volume ratio for Follow Through Day detection (1.25 = 25% above 50-day avg)
+ftd_dd_dd_price_threshold,-0.2,DD maximum price decline percentage for Distribution Day detection
+ftd_dd_dd_volume_threshold,1.2,DD minimum volume ratio for Distribution Day detection (1.20 = 20% above 50-day avg)
+ftd_dd_analysis_period,50,Number of days to analyze for FTD/DD identification
+ftd_dd_recent_activity_period,25,Number of days to consider for recent FTD/DD activity assessment
+ftd_dd_optimal_days_min,4,Minimum days from market bottom for optimal FTD (O'Neil methodology)
+ftd_dd_optimal_days_max,7,Maximum days from market bottom for optimal FTD (O'Neil methodology)
+ftd_dd_charts,SPY;QQQ,Indexes to create FTD/DD charts for (if empty creates for all ftd_dd_indexes)
+ftd_dd_charts_timeframe,350,Chart timeframe in trading days for FTD/DD analysis (150 = ~30 weeks)
+#ftd_dd_report_enable,TRUE,
+MARKET_PULSE_ftd_dd_report_enable,TRUE,
+MARKET_PULSE_output_dir,results/market_pulse,Output directory for Market Pulse analysis results
+#MARKET_PULSE_save_detailed_results,FALSE,Save detailed JSON results for all Market Pulse indicators
+#MARKET_PULSE_generate_alerts,FALSE,Generate actionable alerts based on Market Pulse analysis
+#MARKET_PULSE_ftd_target_indexes,,FTD/DD analysis target indexes (comma separated)
+,,
 ,,
 # OVERVIEW FILES,,
 # ---------------,,
 indexes_overview_file,indexes_overview.csv,Name of automatically generated indexes overview file
 ,,
 # INDEX OVERVIEW CONFIGURATION,,
-# -----------------------------,,
+,,
 INDEX_OVERVIEW_enable,TRUE,Enable index overview generation
 INDEX_OVERVIEW_universe_filter,SP500; NASDAQ100,Universe names for filtering (uses ticker_universe files)
 INDEX_OVERVIEW_pctChgRS_sectors," XLF, XLE, XLK, XLV, XLI, XLB, XLRE, XLP, XLY, XLU, XLC",Comma-separated list of sectors/categories to analyze
@@ -138,24 +406,6 @@ pdf_reports_enable,TRUE,Enable automated PDF report generation
 pdf_reports_output_dir,results/reports,Output directory for PDF reports
 pdf_reports_include_charts,TRUE,Include tornado charts in PDF reports
 ,,
-# BASIC CALCULATIONS CONFIGURATION,,
-# =================================,,
-Basic_calculation_file,basic_calculations.csv,Name of automatically generated basic calculations file
-# TIMEFRAME CONFIGURATION (CPU-intensive calculation control),,
-Basic_calc_daily_enable,TRUE,Enable basic calculations for daily timeframe
-Basic_calc_weekly_enable,TRUE,Enable basic calculations for weekly timeframe  
-Basic_calc_monthly_enable,TRUE,Enable basic calculations for monthly timeframe
-# Daily Period Percent Change Configuration,,
-daily_daily_periods,1;3;5,Daily data: daily percent change periods (semicolon separated - 2d;3d;5d)
-daily_weekly_periods,7;14,Daily data: weekly percent change periods (days back)
-daily_monthly_periods,22;44,Daily data: monthly percent change periods (semicolon separated - 1m;2m)
-daily_quarterly_periods,66;132,Daily data: quarterly percent change periods (semicolon separated - 1q;2q)
-daily_yearly_periods,252,Daily data: yearly percent change periods (days back)
-# Weekly Period Percent Change Configuration,,
-weekly_weekly_periods,2;4,Weekly data: weekly percent change periods (weeks back)
-weekly_monthly_periods,4;8,Weekly data: monthly percent change periods (semicolon separated - 1m;2m)
-# Monthly Period Percent Change Configuration,,
-monthly_monthly_periods,2;3;6,Monthly data: monthly percent change periods (months back)
 # SCREENERS,,
 # ----------,,
 screener_output_file,screener_results.csv,Output file for stock screening results
@@ -190,44 +440,6 @@ atr_sma_period,50,Period for SMA baseline in ATRext calculation
 enable_atr_percentile,TRUE,Calculate ATR volatility percentile ranking
 atr_percentile_period,100,Period for ATR percentile calculation (recent periods)
 ,,
-# STAGE ANALYSIS CONFIGURATION,,
-# ==============================,,
-# Daily stage analysis,,
-stage_analysis_daily_enabled,TRUE,Enable daily stage analysis calculations
-stage_daily_ema_fast_period,10,Daily: Fast EMA period for stage analysis
-stage_daily_sma_medium_period,20,Daily: Medium SMA period for stage analysis
-stage_daily_sma_slow_period,50,Daily: Slow SMA period for stage analysis
-stage_daily_atr_period,14,Daily: ATR calculation period for stage analysis
-stage_daily_atr_threshold_low,4,Daily: ATR low volatility threshold percentage
-stage_daily_atr_threshold_high,7,Daily: ATR high volatility threshold percentage
-stage_daily_ma_convergence_threshold,1,Daily: MA convergence threshold for Launch Pad detection (%)
-# Weekly stage analysis,,
-stage_analysis_weekly_enabled,TRUE,Enable weekly stage analysis calculations
-stage_weekly_ema_fast_period,10,Weekly: Fast EMA period for stage analysis
-stage_weekly_sma_medium_period,20,Weekly: Medium SMA period for stage analysis
-stage_weekly_sma_slow_period,50,Weekly: Slow SMA period for stage analysis
-stage_weekly_atr_period,14,Weekly: ATR calculation period for stage analysis
-stage_weekly_atr_threshold_low,4,Weekly: ATR low volatility threshold percentage
-stage_weekly_atr_threshold_high,7,Weekly: ATR high volatility threshold percentage
-stage_weekly_ma_convergence_threshold,1,Weekly: MA convergence threshold for Launch Pad detection (%)
-# Monthly stage analysis,,
-stage_analysis_monthly_enabled,TRUE,Enable monthly stage analysis calculations
-stage_monthly_ema_fast_period,10,Monthly: Fast EMA period for stage analysis
-stage_monthly_sma_medium_period,20,Monthly: Medium SMA period for stage analysis
-stage_monthly_sma_slow_period,50,Monthly: Slow SMA period for stage analysis
-stage_monthly_atr_period,14,Monthly: ATR calculation period for stage analysis
-stage_monthly_atr_threshold_low,4,Monthly: ATR low volatility threshold percentage
-stage_monthly_atr_threshold_high,7,Monthly: ATR high volatility threshold percentage
-stage_monthly_ma_convergence_threshold,1,Monthly: MA convergence threshold for Launch Pad detection (%)
-# Legacy compatibility,,
-stage_analysis_enabled,TRUE,Legacy: Enable stage analysis calculations (deprecated)
-stage_ema_fast_period,10,Legacy: Fast EMA period for stage analysis (deprecated)
-stage_sma_medium_period,20,Legacy: Medium SMA period for stage analysis (deprecated)
-stage_sma_slow_period,50,Legacy: Slow SMA period for stage analysis (deprecated)
-stage_atr_period,14,Legacy: ATR calculation period for stage analysis (deprecated)
-stage_atr_threshold_low,4,Legacy: ATR low volatility threshold percentage (deprecated)
-stage_atr_threshold_high,7,Legacy: ATR high volatility threshold percentage (deprecated)
-stage_ma_convergence_threshold,1,Legacy: MA convergence threshold for Launch Pad detection (%) (deprecated)
 ,,
 # PERCENTAGE MOVERS CONFIGURATION,,
 # --------------------------------,,
@@ -238,21 +450,35 @@ movers_output_dir,results/movers/,Directory for percentage movers output files
 movers_min_volume,10000,Minimum daily volume for mover inclusion
 movers_top_n,50,Number of top movers to highlight in reports
 ,,
-# PRICE VOLUME BREAKOUT (PVB) SCREENER CONFIGURATION,,
-# ===================================================,,
-PVB_enable,TRUE,Enable PVB (Price Volume Breakout) screener
-# Daily timeframe PVB parameters,,
-PVB_daily_price_breakout_period,60,Daily price breakout window in days
-PVB_daily_volume_breakout_period,60,Daily volume breakout window in days
-PVB_daily_trendline_length,50,Daily moving average trend period in days
-PVB_daily_close_threshold,5,Daily days below/above MA to trigger close signal
-PVB_daily_signal_max_age,100,Daily maximum days since signal to include
-# Weekly timeframe PVB parameters,,
-PVB_weekly_price_breakout_period,12,Weekly price breakout window in weeks
-PVB_weekly_volume_breakout_period,12,Weekly volume breakout window in weeks
-PVB_weekly_trendline_length,10,Weekly moving average trend period in weeks
-PVB_weekly_close_threshold,5,Weekly days below/above MA to trigger close signal
-PVB_weekly_signal_max_age,20,Weekly maximum days since signal to include
+# PRICE VOLUME BREAKOUT (PVB) TWMODEL SCREENER CONFIGURATION,,
+# ============================================================,,
+PVB_TWmodel_enable,FALSE,Enable PVB TWmodel (Price Volume Breakout TradingView Model) screener
+# Timeframe enable flags,,
+PVB_TWmodel_daily_enable,FALSE,Enable PVB TWmodel daily timeframe processing
+PVB_TWmodel_weekly_enable,FALSE,Enable PVB TWmodel weekly timeframe processing
+PVB_TWmodel_monthly_enable,FALSE,Enable PVB TWmodel monthly timeframe processing
+# Daily timeframe PVB TWmodel parameters,,
+PVB_TWmodel_daily_price_breakout_period,30,Daily price breakout window in days
+PVB_TWmodel_daily_volume_breakout_period,30,Daily volume breakout window in days
+PVB_TWmodel_daily_trendline_length,50,Daily moving average trend period in days
+PVB_TWmodel_daily_close_threshold,5,Daily days below/above MA to trigger close signal
+PVB_TWmodel_daily_signal_max_age,100,Daily maximum days since signal to include
+# Weekly timeframe PVB TWmodel parameters,,
+PVB_TWmodel_weekly_price_breakout_period,12,Weekly price breakout window in weeks
+PVB_TWmodel_weekly_volume_breakout_period,12,Weekly volume breakout window in weeks
+PVB_TWmodel_weekly_trendline_length,10,Weekly moving average trend period in weeks
+PVB_TWmodel_weekly_close_threshold,5,Weekly days below/above MA to trigger close signal
+PVB_TWmodel_weekly_signal_max_age,20,Weekly maximum days since signal to include
+# Monthly timeframe PVB TWmodel parameters,,
+PVB_TWmodel_monthly_price_breakout_period,6,Monthly price breakout window in months
+PVB_TWmodel_monthly_volume_breakout_period,6,Monthly volume breakout window in months
+PVB_TWmodel_monthly_trendline_length,4,Monthly moving average trend period in months
+PVB_TWmodel_monthly_close_threshold,1,Monthly days below/above MA to trigger close signal
+PVB_TWmodel_monthly_signal_max_age,6,Monthly maximum days since signal to include
+# General PVB TWmodel parameters,,
+PVB_TWmodel_order_direction,Long and Short,Trading direction (Long | Short | Long and Short)
+PVB_TWmodel_min_volume,10000,Minimum volume requirement
+PVB_TWmodel_min_price,1,Minimum price requirement
 ,,
 # GIUSTI MOMENTUM SCREENER CONFIGURATION,,
 # =======================================,,
@@ -278,7 +504,7 @@ MINERVINI_show_all_stocks,TRUE,Show all stocks (TRUE) or only passing stocks (FA
 ,,
 # DR. WISH SUITE SCREENER CONFIGURATION,,
 # ======================================,,
-DRWISH_enable,TRUE,Enable Dr. Wish suite screener (GLB Blue Dot Black Dot)
+DRWISH_enable,FALSE,Enable Dr. Wish suite screener (GLB Blue Dot Black Dot)
 DRWISH_min_price,5,Minimum stock price requirement
 DRWISH_min_volume,100000,Minimum daily volume requirement
 DRWISH_pivot_strength,10,Number of bars on each side to confirm pivot high
@@ -311,7 +537,7 @@ VOLUME_SUITE_hv_absolute,TRUE,Enable HV Absolute maximum volume analysis
 VOLUME_SUITE_hv_stdv,TRUE,Enable HV Standard Deviation statistical analysis
 VOLUME_SUITE_enhanced_anomaly,TRUE,Enable Enhanced Volume Anomaly multi-method detection
 VOLUME_SUITE_volume_indicators,TRUE,Enable Volume Indicators (VROC RVOL ADTV MFI VPT)
-VOLUME_SUITE_pvb_integration,TRUE,Enable PVB integration for price-volume breakouts
+VOLUME_SUITE_pvb_TWmodel_integration,TRUE,Enable PVB TWmodel integration for price-volume breakouts
 ,,
 # STOCKBEE SUITE SCREENER CONFIGURATION,,
 # =====================================,,
@@ -387,111 +613,6 @@ RTI_min_price,5,Minimum stock price requirement for RTI screening
 RTI_min_volume,100000,Minimum average volume requirement for RTI screening
 RTI_save_individual_files,TRUE,Save individual RTI component result files
 ,,
-# MARKET BREADTH ANALYSIS CONFIGURATION,,
-# =======================================,,
-MARKET_BREADTH_enable,TRUE,Enable comprehensive market breadth analysis (A/D line new H/L MA breadth)
-# TIMEFRAME CONFIGURATION,,
-MARKET_BREADTH_daily_enable,TRUE,Enable daily market breadth calculations
-MARKET_BREADTH_weekly_enable,FALSE,Enable weekly market breadth calculations
-MARKET_BREADTH_monthly_enable,FALSE,Enable monthly market breadth calculations
-MARKET_BREADTH_universe,SP500; NASDAQ100,Default universe for breadth analysis (all | SP500 | NASDAQ100|SP500+NASDAQ100| SP500;NASADQ100 etc)
-MARKET_BREADTH_lookback_days,252,Number of trading days for calculations (252 = ~1 year)
-MARKET_BREADTH_ma_periods,20;50;200,Moving average periods for breadth analysis (semicolon separated)
-# 252-DAY THRESHOLD CONFIGURATION,,
-MARKET_BREADTH_daily_252day_new_highs_threshold,100,Daily 252-day new highs threshold for specialized indicators
-MARKET_BREADTH_ten_day_success_threshold,5,Ten-day success threshold (out of 10 days) for 252-day new highs analysis
-# 20-DAY THRESHOLD CONFIGURATION,,
-MARKET_BREADTH_daily_20day_new_highs_threshold,100,Daily 20-day new highs threshold for specialized indicators
-MARKET_BREADTH_twenty_day_success_threshold,10,Twenty-day success threshold (out of 20 days) for 20-day new highs analysis
-# 63-DAY THRESHOLD CONFIGURATION,,
-MARKET_BREADTH_daily_63day_new_highs_threshold,100,Daily 63-day new highs threshold for specialized indicators
-MARKET_BREADTH_sixty_three_day_success_threshold,30,Sixty-three-day success threshold (out of 63 days) for 63-day new highs analysis
-# ADVANCE/DECLINE RATIO THRESHOLDS,,
-MARKET_BREADTH_strong_ad_ratio_threshold,2,Strong advance/decline ratio threshold (>2.0 = strong)
-MARKET_BREADTH_weak_ad_ratio_threshold,0.5,Weak advance/decline ratio threshold (<0.5 = weak)
-# ADVANCE PERCENTAGE THRESHOLDS,,
-MARKET_BREADTH_strong_advance_threshold,70,Strong advance percentage threshold (>70% = strong breadth)
-MARKET_BREADTH_weak_advance_threshold,30,Weak advance percentage threshold (<30% = weak breadth)
-# MOVING AVERAGE BREADTH THRESHOLDS,,
-MARKET_BREADTH_strong_ma_breadth_threshold,80,Strong MA breadth threshold (>80% above MA = strong)
-MARKET_BREADTH_weak_ma_breadth_threshold,20,Weak MA breadth threshold (<20% above MA = weak)
-# OUTPUT CONFIGURATION,,
-MARKET_BREADTH_save_detailed_results,TRUE,Save detailed breadth calculations to CSV files
-MARKET_BREADTH_output_dir,results/market_breadth,Output directory for market breadth analysis files
-,,
-,,
-# MARKET PULSE CONFIGURATION,,
-# ===========================,,
-MARKET_PULSE_enable,TRUE,Enable Market Pulse analysis for major indexes (SPY QQQ IWM DJI)
-MARKET_PULSE_gmi_enable,TRUE,Enable GMI (General Market Index) analysis using Dr. Wish methodology
-MARKET_PULSE_gmi_enable_daily,TRUE,Enable GMI calculation for daily timeframe
-MARKET_PULSE_gmi_enable_weekly,TRUE,Enable GMI calculation for weekly timeframe
-MARKET_PULSE_gmi_enable_monthly,TRUE,Enable GMI calculation for monthly timeframe
-MARKET_PULSE_gmi_threshold,3,GMI score threshold for bullish/bearish signals (0-4 scale)
-MARKET_PULSE_gmi_confirmation_days,2,Number of days required for GMI signal confirmation
-MARKET_PULSE_gmi_index1,SPY,GMI analysis Index1 for R3 (SPY daily analysis)
-MARKET_PULSE_gmi_index2,QQQ,GMI analysis Index2 for R4 and R5 (QQQ daily analysis)
-MARKET_PULSE_gmi_short_term_sma,50,GMI short-term moving average period for P1/P2 components
-MARKET_PULSE_gmi_long_term_sma,150,GMI long-term moving average period for P3 component
-MARKET_PULSE_gmi_MF_index,SPY,GMI Mutual Fund ticker for P7 component
-MARKET_PULSE_gmi_MF_ma_period,50,GMI MF moving average period for P7 component
-MARKET_PULSE_gmi_breath_file_suffix,latest,GMI market breadth file date selector (latest or specific date YYYY-MM-DD)
-MARKET_PULSE_gmi2_enable,TRUE,Enable GMI2 (General Market Index 2) multi-SMA requirements analysis
-MARKET_PULSE_gmi2_enable_daily,TRUE,Enable GMI2 calculation for daily timeframe
-MARKET_PULSE_gmi2_enable_weekly,TRUE,Enable GMI2 calculation for weekly timeframe
-MARKET_PULSE_gmi2_enable_monthly,TRUE,Enable GMI2 calculation for monthly timeframe
-MARKET_PULSE_gmi2_index,SPY;QQQ,GMI2 target indexes for analysis (separated by semicolon)
-MARKET_PULSE_gmi2_sma,10;20;50;150,GMI2 SMA periods - exactly 4 values (separated by semicolon)
-MARKET_PULSE_gmi2_index_stochastic_1_thresholds,20,GMI2 stochastic 1 threshold for momentum calculations
-MARKET_PULSE_gmi2_index_stochastic_1_lookback,10,GMI2 stochastic 1 lookback period
-MARKET_PULSE_gmi2_index_stochastic_1_smoothness,4,GMI2 stochastic 1 smoothness factor
-MARKET_PULSE_gmi2_index_stochastic_2_thresholds,20,GMI2 stochastic 2 threshold for momentum calculations
-MARKET_PULSE_gmi2_index_stochastic_2_lookback,10,GMI2 stochastic 2 lookback period
-MARKET_PULSE_gmi2_index_stochastic_2_smoothness,4,GMI2 stochastic 2 smoothness factor
-MARKET_PULSE_gmi2_index_stochastic_3_thresholds,20,GMI2 stochastic 3 threshold for momentum calculations
-MARKET_PULSE_gmi2_index_stochastic_3_lookback,10,GMI2 stochastic 3 lookback period
-MARKET_PULSE_gmi2_index_stochastic_3_smoothness,1,GMI2 stochastic 3 smoothness factor
-MARKET_PULSE_gmi2_index_stochastic_threshold,20,GMI2 stochastic threshold for momentum calculations
-MARKET_PULSE_gmi2_threshold,5,GMI2 score threshold for bullish/bearish signals (0-9 scale)
-MARKET_PULSE_gmi2_confirmation_days,2,Number of days required for GMI2 signal confirmation
-MARKET_PULSE_ftd_dd_enable,TRUE,Enable FTD & DD (Follow-Through Day & Distribution Day) analysis
-MARKET_PULSE_dd_threshold,0.2,Minimum decline percentage for Distribution Day detection (0.2%)
-MARKET_PULSE_ftd_threshold,1.5,Minimum gain percentage for Follow-Through Day detection (1.5%)
-MARKET_PULSE_ftd_optimal_days_min,4,Minimum days from market bottom for optimal FTD (O'Neil methodology)
-MARKET_PULSE_ftd_optimal_days_max,7,Maximum days from market bottom for optimal FTD (O'Neil methodology)
-MARKET_PULSE_dd_lookback_period,25,Lookback period for Distribution Day counting and analysis
-MARKET_PULSE_net_highs_lows_enable,TRUE,Enable Net New Highs/Lows market breadth analysis
-MARKET_PULSE_breadth_threshold_healthy,2,Net new highs percentage threshold for healthy market breadth (>2%)
-MARKET_PULSE_breadth_threshold_unhealthy,-2,Net new lows percentage threshold for unhealthy market breadth (>2%)
-MARKET_PULSE_chillax_ma_enable,TRUE,Enable Chillax Moving Averages with Risk Zone coloring
-chillax_mas_indexes,SPY;QQQ;IWM,Chillax MA analysis indexes (semicolon separated - combinations not possible)
-chillax_mas_sma,10;20,Chillax MA SMA periods (semicolon separated)
-chillax_mas_charts,SPY;QQQ,Indexes to create charts for (if empty creates for all chillax_mas_indexes)
-chillax_mas_charts_timeframe,150,Chart timeframe in trading days (150 daily = ~30 weeks)
-MARKET_PULSE_chillax_trend_days,5,Number of days to check for moving average trend confirmation
-MARKET_PULSE_ma_cycles_enable,TRUE,Enable Moving Average Cycles analysis for trend cycle identification
-ma_cycles_indexes,SPY;QQQ;IWM,MA Cycles analysis indexes (semicolon separated)
-ma_cycles_ma_period,20;50,Moving average period for cycle analysis
-ma_cycles_charts,SPY;QQQ,Indexes to create charts for (if empty creates for all ma_cycles_indexes)
-ma_cycles_charts_timeframe,200,Chart timeframe in trading days for cycle analysis
-ma_cycles_cycle_mode,Sharp,Cycle detection mode (Sharp or Smoothed)
-ma_cycles_smoothed_candles,3,Number of candles for smoothed cycle confirmation
-MARKET_PULSE_ftd_dd_enable,TRUE,Enable FTD/DD (Follow Through Day & Distribution Day) analysis
-ftd_dd_indexes,SPY;QQQ;IWM,FTD/DD analysis target indexes (semicolon separated)
-ftd_dd_ftd_price_threshold,1.5,FTD minimum price gain percentage for Follow Through Day detection
-ftd_dd_ftd_volume_threshold,1.25,FTD minimum volume ratio for Follow Through Day detection (1.25 = 25% above 50-day avg)
-ftd_dd_dd_price_threshold,-0.2,DD maximum price decline percentage for Distribution Day detection
-ftd_dd_dd_volume_threshold,1.2,DD minimum volume ratio for Distribution Day detection (1.20 = 20% above 50-day avg)
-ftd_dd_analysis_period,50,Number of days to analyze for FTD/DD identification
-ftd_dd_recent_activity_period,25,Number of days to consider for recent FTD/DD activity assessment
-ftd_dd_optimal_days_min,4,Minimum days from market bottom for optimal FTD (O'Neil methodology)
-ftd_dd_optimal_days_max,7,Maximum days from market bottom for optimal FTD (O'Neil methodology)
-ftd_dd_charts,SPY;QQQ,Indexes to create FTD/DD charts for (if empty creates for all ftd_dd_indexes)
-ftd_dd_charts_timeframe,150,Chart timeframe in trading days for FTD/DD analysis (150 = ~30 weeks)
-MARKET_PULSE_output_dir,results/market_pulse,Output directory for Market Pulse analysis results
-MARKET_PULSE_save_detailed_results,TRUE,Save detailed JSON results for all Market Pulse indicators
-MARKET_PULSE_generate_alerts,TRUE,Generate actionable alerts based on Market Pulse analysis
-MARKET_PULSE_ftd_target_indexes,,FTD/DD analysis target indexes (comma separated)
 ,,
 ,,
 # HV Absolute Parameters,,
@@ -515,11 +636,11 @@ VOLUME_SUITE_adtv_6m_threshold,0.5,ADTV: 6-month trend increase threshold
 VOLUME_SUITE_adtv_1y_threshold,2,ADTV: 1-year trend increase threshold
 VOLUME_SUITE_adtv_min_volume,100000,ADTV: minimum volume for trend analysis
 # PVB Integration Parameters,,
-VOLUME_SUITE_pvb_price_period,15,PVB: price breakout window period
-VOLUME_SUITE_pvb_volume_period,15,PVB: volume breakout window period
-VOLUME_SUITE_pvb_trend_length,50,PVB: moving average trend period
-VOLUME_SUITE_pvb_volume_multiplier,1.5,PVB: volume multiplier for breakout confirmation
-VOLUME_SUITE_pvb_direction,Long,PVB: trading direction (Long | Short | Long and Short)
+VOLUME_SUITE_pvb_TWmodel_price_period,15,PVB TWmodel: price breakout window period
+VOLUME_SUITE_pvb_TWmodel_volume_period,15,PVB TWmodel: volume breakout window period
+VOLUME_SUITE_pvb_TWmodel_trend_length,50,PVB TWmodel: moving average trend period
+VOLUME_SUITE_pvb_TWmodel_volume_multiplier,1.5,PVB TWmodel: volume multiplier for breakout confirmation
+VOLUME_SUITE_pvb_TWmodel_direction,Long,PVB TWmodel: trading direction (Long | Short | Long and Short)
 # Output Settings,,
 VOLUME_SUITE_output_dir,results/screeners/volume_suite,Volume Suite: output directory
 ,,
@@ -537,7 +658,7 @@ PVB_min_price,1,Minimum stock price for PVB inclusion
 # AVERAGE TRUE RANGE (ATR) SCREENER CONFIGURATION,,
 # ================================================,,
 # ATR1 Screener (TradingView-validated with RMA smoothing),,
-ATR1_enable,TRUE,Enable ATR1 screener (TradingView-validated)
+ATR1_enable,FALSE,Enable ATR1 screener (TradingView-validated)
 # Daily ATR1 parameters,,
 ATR1_daily_length,20,Daily ATR calculation length for ATR1
 ATR1_daily_factor,3,Daily ATR multiplier factor for vStop
@@ -555,7 +676,7 @@ ATR1_monthly_length2,2,Monthly ATR calculation length2 for vStop2
 ATR1_monthly_factor2,1.5,Monthly ATR multiplier factor2 for vStop2
 ,,
 # ATR2 Screener (Volatility analysis with Wilder smoothing),,
-ATR2_enable,TRUE,Enable ATR2 screener (volatility analysis)
+ATR2_enable,FALSE,Enable ATR2 screener (volatility analysis)
 # Daily ATR2 parameters,,
 ATR2_daily_atr_period,14,Daily ATR period for ATR2 (Wilder method)
 ATR2_daily_sma_period,50,Daily SMA period for ATRext calculation
@@ -576,37 +697,6 @@ cap_history_data,2,Limit historical data processing for ATR1 (0=all 1=yearly 2=t
 # Daily: 252 days (1 trading year),,
 # Weekly: 104 weeks (2 years),,  
 # Monthly: 36 months (3 years),,
-,,
-# RELATIVE STRENGTH (RS) CONFIGURATION - MULTI-BENCHMARK,,
-# ==========================================================,,
-RS_enable_stocks,TRUE,Enable RS calculation for individual stocks
-RS_enable_sectors,TRUE,Enable RS calculation for sectors  
-RS_enable_industries,TRUE,Enable RS calculation for industries
-# MULTI-BENCHMARK CONFIGURATION,,
-RS_benchmark_tickers,QQQ,Benchmark tickers for RS calculations (semicolon separated)
-# COMPOSITE CONFIGURATION,,
-RS_composite_method,market_cap_weighted,Sector/industry composite method (equal_weighted or market_cap_weighted)
-RS_min_group_size,3,Minimum number of stocks required for sector/industry composite
-# PERCENTILE UNIVERSE CONFIGURATION,,
-RS_percentile_universe_stocks,NASDAQ100,Universe for stock percentiles: all | sector | industry | ticker_choice
-RS_percentile_universe_sectors,all; SP500,Universe for sector percentiles: all | ticker_choice  | NASADQ100  
-RS_percentile_universe_industries,ticker_choice; NASDAQ100;SP500,Universe for industry percentiles: all | ticker_choice | SP500
-# TIMEFRAME CONFIGURATION,,
-RS_daily_enable,TRUE,Enable RS calculation for daily timeframe
-RS_weekly_enable,TRUE,Enable RS calculation for weekly timeframe
-RS_monthly_enable,TRUE,Enable RS calculation for monthly timeframe
-# PERIOD CONFIGURATION,,
-# Daily timeframe parameters,,
-daily_daily_periods,1;3;5,Daily data: RS calculation periods (semicolon separated - 1d;3d;5d;10d;15d)
-daily_weekly_periods,7;14,"Daily data: weekly RS periods in trading days (semicolon separated – 1w;2w;4w) 5, 10, 20"
-daily_monthly_periods,22;44,"Daily data: monthly RS periods in trading days (semicolon separated – 1m;2m;3m) 22,44, 66"
-daily_quarterly_periods,66;132,"Daily data: quarterly RS periods in trading days (semicolon separated – 1q;2q) 66,132"
-daily_yearly_periods,252,Daily data: yearly RS periods in trading days 252
-# Weekly timeframe parameters,,
-weekly_weekly_periods,1;3;5;10;15,Weekly data: weekly RS periods in weeks (semicolon separated - 1w;2w;4w)
-weekly_monthly_periods,,Weekly data: monthly RS periods in weeks (semicolon separated - 1m;2m;3m)
-# Monthly timeframe parameters,,
-RS_monthly_periods,1;3;6,Monthly data: monthly RS periods in months (numeric values)
 ,,
 # TECHNICAL INDICATORS CONFIGURATION,,
 # ====================================,,

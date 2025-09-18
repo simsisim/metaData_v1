@@ -1,0 +1,11 @@
+lets discuss what of these threshold are not included in our calculations     ["Threshold Name", "Default Value", "Signal 
+  Type", "Condition & Effect"],
+      ["market_breadth_strong_ma_breadth_threshold", "80", "Breadth Thrust (Bullish)", "Overall breadth score above this triggers a
+   bullish thrust"],
+      ["market_breadth_weak_ma_breadth_threshold", "20", "Breadth Deterioration (Bearish)", "Overall breadth score below this 
+  triggers bearish signal"],
+      ["market_breadth_daily_252day_new_highs_threshold", "100", "New Highs Expansion (Bullish)", "Net 52-week new highs above 
+  threshold triggers bullish signal"],
+      ["market_breadth_strong_ad_ratio_threshold", "2", "Advance/Decline Thrust (Bullish)", "Advance/Decline ratio above threshold 
+  triggers bullish thrust"]
+

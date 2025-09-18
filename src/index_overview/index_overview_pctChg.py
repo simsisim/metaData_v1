@@ -184,7 +184,7 @@ def generate_index_pctchg_display(calc_df, output_path, timeframe, user_config, 
         # Add stage analysis columns if available
         try:
             # Load stage analysis file based on timeframe and date
-            stage_analysis_file = config.directories['RESULTS_DIR'] / 'stage_analysis' / f'stage_analysis_0_{timeframe}_{data_date}.csv'
+            stage_analysis_file = config.directories['STAGE_ANALYSIS_DIR'] / f'stage_analysis_0_{timeframe}_{data_date}.csv'
             
             if stage_analysis_file.exists():
                 stage_df = pd.read_csv(stage_analysis_file)

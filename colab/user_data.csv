@@ -13,8 +13,8 @@ TW_universe_file,tradingview_universe.csv,File name for TradingView universe dat
 # ---------------------------,,
 YF_hist_data,TRUE,Download historical OHLCV data via YFinance
 YF_daily_data,TRUE,Download daily (1d) historical data
-YF_weekly_data,TRUE,Download weekly (1wk) historical data  
-YF_monthly_data,TRUE,Download monthly (1mo) historical data
+YF_weekly_data,FALSE,Download weekly (1wk) historical data  
+YF_monthly_data,FALSE,Download monthly (1mo) historical data
 TW_intraday_data,FALSE,Process intraday data from TradingView source
 TW_intraday_file,intraday_data.csv,File name for intraday data input
 ,,
@@ -31,7 +31,7 @@ write_info_file,TRUE,Write detailed info files during processing
 ticker_info_TW,TRUE,Get ticker info from TradingView universe file
 ticker_info_TW_file,tradingview_universe_info.csv,File name for TradingView ticker info
 ticker_info_YF,FALSE,Download ticker info from YFinance
-ticker_choice,2-5,Ticker combination choice (0-17)
+ticker_choice,1-5,Ticker combination choice (0-17)
 batch_size,256,Global batch size for data processing and calculations
 ,,
 # TICKER GROUP CHOICES (ticker_choice values),,
@@ -138,9 +138,31 @@ pdf_reports_enable,TRUE,Enable automated PDF report generation
 pdf_reports_output_dir,results/reports,Output directory for PDF reports
 pdf_reports_include_charts,TRUE,Include tornado charts in PDF reports
 ,,
+# OUTPUT DIRECTORY CONFIGURATION,,
+# ==============================,,
+# Core calculation module output directories,,
+BASIC_CALCULATION_output_dir,results/basic_calculation,Output directory for basic calculations (SMA EMA RSI ATR etc)
+STAGE_ANALYSIS_output_dir,results/stage_analysis,Output directory for stage analysis results
+RS_output_dir,results/rs,Output directory for Relative Strength analysis
+PER_output_dir,results/per,Output directory for Percentile analysis
+,,
+# Screener output directories (for consistency),,
+PVB_output_dir,results/screeners/pvb,Output directory for PVB (Price Volume Breakout) screener
+ATR1_output_dir,results/screeners/atr1,Output directory for ATR1 screener results
+DRWISH_output_dir,results/screeners/drwish,Output directory for Dr. Wish screener results
+GIUSTI_output_dir,results/screeners/giusti,Output directory for Giusti momentum screener
+MINERVINI_output_dir,results/screeners/minervini,Output directory for Minervini template screener
+STOCKBEE_output_dir,results/screeners/stockbee,Output directory for Stockbee suite screener
+QULLAMAGGIE_output_dir,results/screeners/qullamaggie,Output directory for Qullamaggie screener
+ADL_SCREENER_output_dir,results/screeners/adl,Output directory for ADL (Accumulation/Distribution) screener
+GUPPY_SCREENER_output_dir,results/screeners/guppy,Output directory for Guppy GMMA screener
+GOLD_LAUNCH_PAD_output_dir,results/screeners/gold_launch_pad,Output directory for Gold Launch Pad screener
+RTI_output_dir,results/screeners/rti,Output directory for Range Tightening Indicator screener
+,,
 # BASIC CALCULATIONS CONFIGURATION,,
 # =================================,,
-Basic_calculation_file,basic_calculations.csv,Name of automatically generated basic calculations file
+# Legacy setting - replaced by BASIC_CALCULATION_output_dir above,,
+Basic_calculation_file,basic_calculations.csv,DEPRECATED: Use BASIC_CALCULATION_output_dir instead
 # TIMEFRAME CONFIGURATION (CPU-intensive calculation control),,
 Basic_calc_daily_enable,TRUE,Enable basic calculations for daily timeframe
 Basic_calc_weekly_enable,TRUE,Enable basic calculations for weekly timeframe  

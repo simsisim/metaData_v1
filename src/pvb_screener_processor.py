@@ -226,19 +226,19 @@ class PVBScreenerProcessor:
         results = {}
 
         # Process daily data
-        if daily_data and getattr(self.user_config, 'pvb_daily_enable', True):
+        if daily_data and getattr(self.user_config, 'pvb_TWmodel_daily_enable', True):
             daily_success = self.process_pvb_batch(daily_data, 'daily', ticker_choice)
             if daily_success:
                 results['daily'] = True
 
         # Process weekly data
-        if weekly_data and getattr(self.user_config, 'pvb_weekly_enable', True):
+        if weekly_data and getattr(self.user_config, 'pvb_TWmodel_weekly_enable', True):
             weekly_success = self.process_pvb_batch(weekly_data, 'weekly', ticker_choice)
             if weekly_success:
                 results['weekly'] = True
 
         # Process monthly data
-        if monthly_data and getattr(self.user_config, 'pvb_monthly_enable', True):
+        if monthly_data and getattr(self.user_config, 'pvb_TWmodel_monthly_enable', True):
             monthly_success = self.process_pvb_batch(monthly_data, 'monthly', ticker_choice)
             if monthly_success:
                 results['monthly'] = True
@@ -309,7 +309,7 @@ def run_pvb_screener_processing(config, user_config, daily_data: Dict[str, pd.Da
         Dictionary of timeframe -> output file path mappings
     """
     # Check if PVB screener is enabled
-    if not getattr(user_config, 'pvb_enable', False):
+    if not getattr(user_config, 'pvb_TWmodel_enable', False):
         logger.info("PVB screener disabled")
         return {}
 

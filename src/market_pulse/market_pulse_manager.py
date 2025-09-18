@@ -9,7 +9,7 @@ Manages:
 - GMI Calculator (General Market Index)
 - FTD/DD Analyzer (Follow-Through/Distribution Days)
 - Moving Average Analyzer (Chillax MA & Cycles)
-- Breadth Analyzer (Net Highs/Lows, Universe filtering)
+# Breadth Analyzer removed - now handled directly in market breadth analysis section
 """
 
 import pandas as pd
@@ -24,7 +24,7 @@ from .calculators.gmi2_calculator import GMI2Calculator
 from .indicators.ftd_dd_analyzer import FTDDistributionAnalyzer
 from .indicators.ma_cycles_analyzer import MACyclesAnalyzer
 from .indicators.chillax_mas import ChillaxMAS
-from .indicators.breadth_analyzer import BreadthAnalyzer
+# BreadthAnalyzer removed - now handled directly in market breadth analysis section
 
 logger = logging.getLogger(__name__)
 
@@ -76,17 +76,14 @@ class MarketPulseManager:
             getattr(user_config, 'chillax_mas_indexes', 'SPY;QQQ;IWM')
         )
         
-        # Breadth analyzer targets (market-wide analysis)
-        self.breadth_targets = self._parse_target_indexes(
-            getattr(user_config, 'market_pulse_breadth_indexes', 'SPY;QQQ;IWM')
-        )
+        # Breadth analyzer removed - now handled directly in market breadth analysis section
         
         # Combined target list for overall management
         all_targets = set(self.gmi_targets)
         all_targets.update(self.ftd_targets)
         all_targets.update(self.ma_cycles_targets)
         all_targets.update(self.chillax_targets)
-        all_targets.update(self.breadth_targets)
+        # breadth_targets removed - now handled directly in market breadth analysis section
         self.target_indexes = list(all_targets)
         
         # For output file naming
@@ -191,18 +188,7 @@ class MarketPulseManager:
                 self.chillax_analyzer = None
                 logger.info("Chillax MAS Analyzer disabled")
             
-            # Initialize Breadth analyzer if enabled
-            breadth_enabled = getattr(self.user_config, 'market_breadth_enable', False)
-            if breadth_enabled:
-                self.breadth_analyzer = BreadthAnalyzer(
-                    target_indexes=self.breadth_targets,
-                    config=self.config,
-                    user_config=self.user_config
-                )
-                logger.info("Market Breadth Analyzer initialized")
-            else:
-                self.breadth_analyzer = None
-                logger.info("Market Breadth Analyzer disabled")
+            # Breadth analyzer removed - now handled directly in market breadth analysis section
             
             logger.info(f"Market pulse indicators initialized for {len(self.target_indexes)} indexes")
             
@@ -213,59 +199,45 @@ class MarketPulseManager:
     def _is_gmi_enabled_for_timeframe(self, timeframe: str) -> bool:
         """
         Check if GMI calculation is enabled for the specified timeframe.
-        
+
+        GMI is daily-only by design. Only runs for daily timeframe.
+
         Args:
             timeframe: Data timeframe ('daily', 'weekly', 'monthly')
-            
+
         Returns:
-            bool: True if GMI is enabled for this timeframe
+            bool: True if GMI is enabled and timeframe is daily, False otherwise
         """
-        # Map timeframe to configuration attribute
-        timeframe_config_map = {
-            'daily': 'market_pulse_gmi_enable_daily',
-            'weekly': 'market_pulse_gmi_enable_weekly', 
-            'monthly': 'market_pulse_gmi_enable_monthly'
-        }
-        
-        # Get the configuration attribute name for this timeframe
-        config_attr = timeframe_config_map.get(timeframe.lower())
-        if not config_attr:
-            logger.warning(f"Unknown timeframe '{timeframe}' for GMI enablement check, defaulting to enabled")
-            return True
-        
-        # Check if GMI is enabled for this timeframe
-        is_enabled = getattr(self.user_config, config_attr, True)  # Default to True if not found
-        
-        logger.debug(f"GMI enabled for {timeframe}: {is_enabled}")
+        # GMI only runs on daily timeframe
+        if timeframe.lower() != 'daily':
+            logger.debug(f"GMI skipped for {timeframe}: daily-only by design")
+            return False
+
+        # Check if GMI is globally enabled
+        is_enabled = getattr(self.user_config, 'market_pulse_gmi_enable', False)
+        logger.debug(f"GMI enabled for daily: {is_enabled}")
         return is_enabled
     
     def _is_gmi2_enabled_for_timeframe(self, timeframe: str) -> bool:
         """
         Check if GMI2 calculation is enabled for the specified timeframe.
-        
+
+        GMI2 is daily-only by design. Only runs for daily timeframe.
+
         Args:
             timeframe: Data timeframe ('daily', 'weekly', 'monthly')
-            
+
         Returns:
-            bool: True if GMI2 is enabled for this timeframe
+            bool: True if GMI2 is enabled and timeframe is daily, False otherwise
         """
-        # Map timeframe to configuration attribute
-        timeframe_config_map = {
-            'daily': 'market_pulse_gmi2_enable_daily',
-            'weekly': 'market_pulse_gmi2_enable_weekly', 
-            'monthly': 'market_pulse_gmi2_enable_monthly'
-        }
-        
-        # Get the configuration attribute name for this timeframe
-        config_attr = timeframe_config_map.get(timeframe.lower())
-        if not config_attr:
-            logger.warning(f"Unknown timeframe '{timeframe}' for GMI2 enablement check, defaulting to enabled")
-            return True
-        
-        # Check if GMI2 is enabled for this timeframe
-        is_enabled = getattr(self.user_config, config_attr, True)  # Default to True if not found
-        
-        logger.debug(f"GMI2 enabled for {timeframe}: {is_enabled}")
+        # GMI2 only runs on daily timeframe
+        if timeframe.lower() != 'daily':
+            logger.debug(f"GMI2 skipped for {timeframe}: daily-only by design")
+            return False
+
+        # Check if GMI2 is globally enabled
+        is_enabled = getattr(self.user_config, 'market_pulse_gmi2_enable', False)
+        logger.debug(f"GMI2 enabled for daily: {is_enabled}")
         return is_enabled
     
     def run_complete_analysis(self, timeframe: str = 'daily', data_date: str = None) -> Dict[str, Any]:
@@ -291,17 +263,17 @@ class MarketPulseManager:
                 'timeframe': timeframe,
                 'data_date': data_date,
                 'indexes': {},
-                'market_breadth': {},
+                # 'market_breadth' removed - now handled directly in market breadth analysis section
                 'market_summary': {},
                 'alerts': [],
                 'analysis_metadata': {
                     'indicators_run': (
-                        ['GMI'] + 
+                        ['GMI'] +
                         (['GMI2'] if self.gmi2_calculator else []) +
                         (['FTD_DD'] if self.ftd_dd_analyzer else []) +
                         (['MA_Cycles'] if self.ma_cycles_analyzer else []) +
-                        (['Chillax_MAS'] if self.chillax_analyzer else []) +
-                        (['Market_Breadth'] if self.breadth_analyzer else [])
+                        (['Chillax_MAS'] if self.chillax_analyzer else [])
+                        # ['Market_Breadth'] removed - now handled directly in market breadth analysis section
                     ),
                     'target_indexes': self.target_indexes
                 }
@@ -313,8 +285,7 @@ class MarketPulseManager:
                 index_results = self._analyze_single_index(index, timeframe, data_date)
                 results['indexes'][index] = index_results
             
-            # Market-wide breadth analysis not implemented yet
-            breadth_results = {}
+            # Market breadth analysis removed - now handled directly in market breadth analysis section
             
             # Generate market summary
             results['market_summary'] = {'status': 'GMI analysis only'}
@@ -323,7 +294,13 @@ class MarketPulseManager:
             results['alerts'] = []
             
             logger.info(f"Market pulse analysis completed successfully for {timeframe}")
-            
+
+            # Generate GMI/GMI2 reports if enabled
+            self._generate_gmi_gmi2_reports(timeframe, data_date)
+
+            # Generate comprehensive market pulse reports if enabled
+            self._generate_comprehensive_market_pulse_reports()
+
             return results
             
         except Exception as e:
@@ -335,7 +312,7 @@ class MarketPulseManager:
                 'timeframe': timeframe,
                 'data_date': data_date,
                 'indexes': {},
-                'market_breadth': {},
+                # 'market_breadth' removed - now handled directly in market breadth analysis section
                 'market_summary': {},
                 'alerts': []
             }
@@ -361,7 +338,7 @@ class MarketPulseManager:
             'ftd_dd': {},  # FTD/DD analysis results
             'ma_cycles': {},  # MA Cycles analysis results
             'chillax': {},  # Chillax MAS analysis results
-            'breadth': {},  # Market Breadth analysis results
+            # 'breadth' removed - now handled directly in market breadth analysis section
             'errors': []
         }
         
@@ -546,43 +523,7 @@ class MarketPulseManager:
             else:
                 index_results['chillax'] = {'status': 'disabled_or_not_target'}
             
-            # 6. Market Breadth Analysis (if enabled and index is in breadth_targets)
-            if self.breadth_analyzer and index in self.breadth_targets:
-                try:
-                    # Breadth analyzer runs once for all its configured indexes
-                    if index == self.breadth_targets[0]:  # Run once for all indexes
-                        breadth_results = self.breadth_analyzer.run_analysis(timeframe, data_date)
-                        if breadth_results.get('success'):
-                            # Extract results for this specific index (breadth is market-wide, so assign to primary index)
-                            index_breadth_results = breadth_results.get('breadth_data', {})
-                            index_results['breadth'] = index_breadth_results
-                            # Track saved files
-                            output_file = breadth_results.get('output_file')
-                            if output_file:
-                                self.saved_files.append(output_file)
-                                logger.info(f"Market Breadth file: {output_file}")
-                            chart_files = breadth_results.get('chart_files', {})
-                            # Handle both list and dict formats for chart_files
-                            if isinstance(chart_files, list):
-                                for chart_file in chart_files:
-                                    self.saved_files.append(chart_file)
-                            elif isinstance(chart_files, dict):
-                                for chart_file in chart_files.values():
-                                    self.saved_files.append(chart_file)
-                            else:
-                                logger.warning(f"Unexpected chart_files type: {type(chart_files)}")
-                        else:
-                            index_results['breadth'] = {'error': breadth_results.get('error', 'Unknown error')}
-                    else:
-                        # For other indexes, just reference that Breadth is handled globally
-                        index_results['breadth'] = {'status': 'handled_globally_in_breadth_analyzer'}
-                        
-                except Exception as e:
-                    logger.error(f"Market Breadth analysis failed: {e}")
-                    index_results['errors'].append(f"Market_Breadth: {str(e)}")
-                    index_results['breadth'] = {'error': str(e)}
-            else:
-                index_results['breadth'] = {'status': 'disabled_or_not_target'}
+            # 6. Market Breadth Analysis removed - now handled directly in market breadth analysis section
             
             return index_results
             
@@ -597,7 +538,7 @@ class MarketPulseManager:
                 'ftd_dd': {},
                 'ma_cycles': {},
                 'chillax': {},
-                'breadth': {}
+                # 'breadth' removed - now handled directly in market breadth analysis section
             }
 
     def save_results(self, output_path, timeframe: str, data_date: str = None) -> List[str]:
@@ -615,6 +556,104 @@ class MarketPulseManager:
         """
         return self.saved_files.copy()
 
+
+    def _generate_gmi_gmi2_reports(self, timeframe: str, data_date: str = None):
+        """
+        Generate GMI/GMI2 reports after analysis completion.
+
+        Args:
+            timeframe: Analysis timeframe
+            data_date: Data date for file naming
+        """
+        try:
+            # Check if GMI/GMI2 reporting is enabled
+            gmi_gmi2_report_enabled = getattr(self.user_config, 'market_pulse_gmigmi2_report_enable', False)
+
+            if not gmi_gmi2_report_enabled:
+                logger.debug("GMI/GMI2 reporting disabled")
+                return
+
+            print(f"\n📄 GENERATING GMI/GMI2 REPORTS...")
+
+            # Import the report generator
+            from .reporting.gmi_gmi2_reporting import generate_gmi_gmi2_reports
+
+            # Get output directory from user config
+            output_dir_config = getattr(self.user_config, 'report_output_dir', 'results/reports')
+            output_dir = Path(output_dir_config)
+            if not output_dir.is_absolute():
+                output_dir = self.config.base_dir / output_dir_config
+
+            # Market pulse results directory
+            market_pulse_dir = self.config.directories['RESULTS_DIR'] / 'market_pulse'
+
+            # Generate reports for all available GMI/GMI2 files
+            generated_reports = generate_gmi_gmi2_reports(
+                market_pulse_results_dir=market_pulse_dir,
+                output_dir=output_dir,
+                user_config=self.user_config
+            )
+
+            if generated_reports:
+                print(f"📄 GMI/GMI2 REPORTS COMPLETED: {len(generated_reports)} reports generated")
+                for report in generated_reports:
+                    report_name = Path(report).name
+                    print(f"  ✅ Generated: {report_name}")
+
+                # Track generated files
+                self.saved_files.extend(generated_reports)
+            else:
+                print(f"⚠️  No GMI/GMI2 reports generated (no data files found)")
+
+        except Exception as e:
+            logger.error(f"GMI/GMI2 report generation failed: {e}")
+            print(f"❌ GMI/GMI2 report generation error: {e}")
+
+    def _generate_comprehensive_market_pulse_reports(self):
+        """Generate comprehensive market pulse reports combining all indicators."""
+        try:
+            # Check if comprehensive reporting is enabled
+            if not getattr(self.user_config, 'market_pulse_comprehensive_report_enable', False):
+                logger.debug("Comprehensive market pulse reporting disabled")
+                return
+
+            print(f"\n📄 GENERATING COMPREHENSIVE MARKET PULSE REPORTS...")
+
+            # Import the comprehensive report generator
+            from .reporting.comprehensive_market_pulse_reporting import generate_comprehensive_market_pulse_reports
+
+            # Get output directory from user config
+            output_dir_config = getattr(self.user_config, 'report_output_dir', 'results/reports')
+            output_dir = Path(output_dir_config)
+            if not output_dir.is_absolute():
+                output_dir = self.config.base_dir / output_dir_config
+
+            # Market pulse results directory
+            market_pulse_dir = self.config.base_dir / 'results' / 'market_pulse'
+            reports_dir = output_dir
+
+            # Generate comprehensive reports
+            generated_reports = generate_comprehensive_market_pulse_reports(
+                market_pulse_dir=market_pulse_dir,
+                reports_dir=reports_dir,
+                output_dir=output_dir,
+                user_config=self.user_config
+            )
+
+            if generated_reports:
+                print(f"📄 COMPREHENSIVE MARKET PULSE REPORTS COMPLETED: {len(generated_reports)} reports generated")
+                for report_path in generated_reports:
+                    report_name = Path(report_path).name
+                    print(f"  ✅ Generated: {report_name}")
+
+                # Track generated files
+                self.saved_files.extend(generated_reports)
+            else:
+                print(f"⚠️  No comprehensive market pulse reports generated (no components found)")
+
+        except Exception as e:
+            logger.error(f"Comprehensive market pulse report generation failed: {e}")
+            print(f"❌ Comprehensive market pulse report generation error: {e}")
 
     def get_market_summary(self) -> str:
         """Get a simple market summary for now."""

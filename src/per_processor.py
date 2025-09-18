@@ -452,8 +452,8 @@ class PERProcessor:
         Returns:
             Path to saved file
         """
-        # Create output directory
-        per_dir = self.config.directories['RESULTS_DIR'] / 'per'
+        # Create output directory using user-configurable path
+        per_dir = self.config.directories['PER_DIR']
         per_dir.mkdir(parents=True, exist_ok=True)
         
         # Generate filename using data date from DataFrame

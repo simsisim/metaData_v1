@@ -152,18 +152,12 @@ class BreadthAnalyzer(BaseIndicator):
                 'breadth_files_processed': list(breadth_data.keys())
             }
             
-            # Save historical breadth analysis results to output file(s)
-            output_files = self._save_historical_breadth_analysis(results, timeframe, latest_data_date)
-            if output_files:
-                results['output_files'] = output_files
-                logger.info(f"Historical breadth analysis results saved to {len(output_files)} file(s): {output_files}")
-                
-                # Generate PNG charts for each output file
-                chart_files = self._generate_breadth_charts(output_files, universe_results)
-                if chart_files:
-                    results['chart_files'] = chart_files
-                    logger.info(f"Generated {len(chart_files)} breadth chart(s): {chart_files}")
-            
+            # Generate PNG charts directly from enhanced market_breadth CSV files
+            chart_files = self._generate_breadth_charts_from_enhanced_csv(universe_results, timeframe, latest_data_date)
+            if chart_files:
+                results['chart_files'] = chart_files
+                logger.info(f"Generated {len(chart_files)} breadth chart(s) from enhanced market_breadth CSV: {chart_files}")
+
             return results
             
         except Exception as e:
@@ -259,33 +253,172 @@ class BreadthAnalyzer(BaseIndicator):
         except Exception as e:
             logger.error(f"Error loading breadth data: {e}")
             return {}
-    
+
+    def _generate_breadth_charts_from_enhanced_csv(self, universe_results: Dict, timeframe: str, latest_data_date: str) -> List[str]:
+        """
+        Generate PNG charts directly from enhanced market_breadth CSV files.
+
+        Args:
+            universe_results: Dictionary of universe analysis results (not used - for compatibility)
+            timeframe: Data timeframe
+            latest_data_date: Date for file naming
+
+        Returns:
+            List of generated chart file paths
+        """
+        try:
+            chart_files = []
+
+            # Get ticker choice for file naming
+            if self.user_config:
+                ticker_choice = str(self.user_config.ticker_choice).replace('-', '-')
+            else:
+                ticker_choice = '0-5'
+
+            # Get universe configuration
+            universe_config_obj = getattr(self.user_config, 'market_breadth_universe', {'raw_config': 'all'})
+
+            if isinstance(universe_config_obj, dict):
+                if 'raw_config' in universe_config_obj:
+                    universe_config = universe_config_obj['raw_config']
+                elif 'universes' in universe_config_obj:
+                    universe_config = ';'.join(universe_config_obj['universes'])
+                else:
+                    universe_config = 'all'
+            else:
+                universe_config = str(universe_config_obj) if universe_config_obj else 'all'
+
+            universes = self._parse_universe_config(universe_config)
+
+            # Generate charts for each universe using enhanced market_breadth CSV
+            for universe in universes:
+                try:
+                    # Try case-insensitive file lookup to handle naming inconsistencies
+                    csv_path, is_forced, actual_date = self._find_breadth_csv_file(universe, ticker_choice, timeframe, latest_data_date)
+
+                    if csv_path and csv_path.exists():
+                        # Generate chart directly from enhanced CSV
+                        from .market_breadth_visualizer import generate_breadth_chart_from_csv
+
+                        chart_path = generate_breadth_chart_from_csv(
+                            csv_path=str(csv_path),
+                            config=self.config,
+                            is_forced=is_forced,
+                            forced_date=actual_date if is_forced else None
+                        )
+
+                        if chart_path:
+                            chart_files.append(chart_path)
+                            logger.info(f"Generated chart for {universe}: {chart_path}")
+                        else:
+                            logger.warning(f"Failed to generate chart for {universe}")
+                    else:
+                        logger.warning(f"Enhanced market_breadth CSV not found for universe: {universe}")
+
+                except Exception as e:
+                    logger.error(f"Error generating chart for universe {universe}: {e}")
+
+            return chart_files
+
+        except Exception as e:
+            logger.error(f"Error generating charts from enhanced CSV: {e}")
+            return []
+
+    def _find_breadth_csv_file(self, universe: str, ticker_choice: str, timeframe: str, data_date: str) -> tuple[Optional[Path], bool, Optional[str]]:
+        """
+        Find market breadth CSV file with case-insensitive lookup and force file support.
+
+        Args:
+            universe: Universe name (may have different case than actual file)
+            ticker_choice: Ticker choice string
+            timeframe: Data timeframe
+            data_date: Data date string
+
+        Returns:
+            tuple: (Path to CSV file if found, is_forced_file, actual_date_used)
+        """
+        try:
+            breadth_dir = self.config.directories['RESULTS_DIR'] / 'market_breadth'
+
+            # Try exact case and date match first
+            exact_filename = f"market_breadth_{universe}_{ticker_choice}_{timeframe}_{data_date}.csv"
+            exact_path = breadth_dir / exact_filename
+            if exact_path.exists():
+                logger.debug(f"Found exact match: {exact_filename}")
+                return exact_path, False, data_date
+
+            # Try case-insensitive search with same date
+            pattern = f"market_breadth_*_{ticker_choice}_{timeframe}_{data_date}.csv"
+            for csv_file in breadth_dir.glob(pattern):
+                # Extract universe name from filename and compare case-insensitively
+                filename_parts = csv_file.stem.split('_')
+                if len(filename_parts) >= 3:
+                    file_universe = filename_parts[2]  # market_breadth_UNIVERSE_choice_timeframe_date
+                    if file_universe.lower() == universe.lower():
+                        logger.debug(f"Found case-insensitive match: {csv_file.name} for universe {universe}")
+                        return csv_file, False, data_date
+
+            # Check if force file mode is enabled
+            force_file_enabled = getattr(self.user_config, 'market_breadth_force_file', False)
+            if not force_file_enabled:
+                logger.warning(f"No breadth CSV file found for universe {universe} with date {data_date}")
+                return None, False, None
+
+            # Force file mode: find latest available file for this universe/timeframe (any date)
+            logger.info(f"Force file mode enabled - searching for latest {universe} {timeframe} file")
+
+            # Pattern for any date: market_breadth_UNIVERSE_choice_timeframe_*.csv
+            force_pattern = f"market_breadth_*_{ticker_choice}_{timeframe}_*.csv"
+            matching_files = []
+
+            for csv_file in breadth_dir.glob(force_pattern):
+                filename_parts = csv_file.stem.split('_')
+                if len(filename_parts) >= 5:
+                    file_universe = filename_parts[2]
+                    if file_universe.lower() == universe.lower():
+                        # Extract date from filename for sorting
+                        file_date = filename_parts[4]  # market_breadth_UNIVERSE_choice_timeframe_DATE
+                        matching_files.append((csv_file, file_date))
+
+            if matching_files:
+                # Sort by date (newest first) and take the latest
+                latest_file, actual_date = sorted(matching_files, key=lambda x: x[1], reverse=True)[0]
+                logger.warning(f"Using force file mode: {latest_file.name} (requested: {data_date}, actual: {actual_date})")
+                return latest_file, True, actual_date
+
+            logger.warning(f"No breadth CSV file found for universe {universe} (even with force file mode)")
+            return None, False, None
+
+        except Exception as e:
+            logger.error(f"Error finding breadth CSV file for universe {universe}: {e}")
+            return None, False, None
+
     def _extract_universe_metrics(self, universe_df: pd.DataFrame, universe_name: str, timeframe: str) -> Optional[pd.DataFrame]:
         """
-        Extract historical breadth metrics from pre-calculated universe breadth file.
-        
+        Extract historical breadth metrics from enhanced market_breadth CSV with analysis columns.
+
         Args:
-            universe_df: DataFrame from market_breadth_{universe}_{choice}_{timeframe}_{date}.csv
+            universe_df: DataFrame from enhanced market_breadth_{universe}_{choice}_{timeframe}_{date}.csv
             universe_name: Universe name (ALL, SP500, NASDAQ100, etc.)
             timeframe: Data timeframe for column prefix
-            
+
         Returns:
-            DataFrame with historical universe breadth metrics
+            DataFrame with historical universe breadth metrics including analysis columns
         """
         try:
             # Process entire historical DataFrame instead of latest row only
             if universe_df.empty:
                 logger.warning(f"Empty breadth data for universe {universe_name}")
                 return None
-                
+
             # Extract pre-calculated metrics based on timeframe
             timeframe_prefix = f"{timeframe}_mb_"  # e.g., "daily_mb_"
-            
+
             # Create historical metrics DataFrame
             historical_metrics = pd.DataFrame(index=universe_df.index)
             historical_metrics['date'] = universe_df['date']
             historical_metrics['universe'] = universe_name
-            
+
             # Extract all historical data for key breadth metrics
             historical_metrics['total_members'] = universe_df[f'{timeframe_prefix}total_stocks']
             historical_metrics['advancing_stocks'] = universe_df[f'{timeframe_prefix}advancing_stocks']
@@ -297,23 +430,43 @@ class BreadthAnalyzer(BaseIndicator):
             historical_metrics['pct_above_ma20'] = universe_df[f'{timeframe_prefix}pct_above_ma_20']
             historical_metrics['pct_above_ma50'] = universe_df[f'{timeframe_prefix}pct_above_ma_50']
             historical_metrics['pct_above_ma200'] = universe_df[f'{timeframe_prefix}pct_above_ma_200']
-            historical_metrics['pct_at_20day_high'] = universe_df[f'{timeframe_prefix}20day_new_highs_pct']
-            historical_metrics['pct_at_52week_high'] = universe_df[f'{timeframe_prefix}252day_new_highs_pct']
-            historical_metrics['net_20day_highs'] = universe_df[f'{timeframe_prefix}net_20day_new_highs']
-            historical_metrics['net_52week_highs'] = universe_df[f'{timeframe_prefix}net_252day_new_highs']
+
+            # Updated to use period-agnostic names (medium/long) for cross-timeframe compatibility
+            historical_metrics['pct_at_medium_high'] = universe_df[f'{timeframe_prefix}medium_new_highs_pct']
+            historical_metrics['pct_at_long_high'] = universe_df[f'{timeframe_prefix}long_new_highs_pct']
+            historical_metrics['net_medium_highs'] = universe_df[f'{timeframe_prefix}net_medium_new_highs']
+            historical_metrics['net_long_highs'] = universe_df[f'{timeframe_prefix}net_long_new_highs']
             historical_metrics['net_advances'] = universe_df[f'{timeframe_prefix}net_advances']
-            
-            # Calculate historical breadth momentum for each date
-            historical_metrics['breadth_momentum'] = historical_metrics.apply(
-                lambda row: self._calculate_breadth_momentum(row['pct_above_ma20'], row['pct_above_ma50']), axis=1
-            )
-            
-            # Add new highs/lows data
-            historical_metrics['new_20day_highs'] = universe_df[f'{timeframe_prefix}20day_new_highs']
-            historical_metrics['new_20day_lows'] = universe_df[f'{timeframe_prefix}20day_new_lows']
-            historical_metrics['new_52week_highs'] = universe_df[f'{timeframe_prefix}252day_new_highs']
-            historical_metrics['new_52week_lows'] = universe_df[f'{timeframe_prefix}252day_new_lows']
-            
+
+            # Add new highs/lows data - updated to use period-agnostic names
+            historical_metrics['new_medium_highs'] = universe_df[f'{timeframe_prefix}medium_new_highs']
+            historical_metrics['new_medium_lows'] = universe_df[f'{timeframe_prefix}medium_new_lows']
+            historical_metrics['new_long_highs'] = universe_df[f'{timeframe_prefix}long_new_highs']
+            historical_metrics['new_long_lows'] = universe_df[f'{timeframe_prefix}long_new_lows']
+
+            # Extract pre-calculated analysis columns from enhanced market_breadth CSV
+            analysis_columns = [
+                'bullish_momentum_5d', 'bullish_momentum_10d', 'bullish_momentum_20d',
+                'bearish_momentum_5d', 'bearish_momentum_10d', 'bearish_momentum_20d',
+                'net_momentum_5d', 'net_momentum_10d', 'net_momentum_20d',
+                'breadth_thrust', 'breadth_deterioration', 'ad_thrust',
+                'new_highs_expansion', 'new_lows_expansion',
+                'total_bullish_signals', 'total_bearish_signals', 'net_signal_score',
+                'breadth_rating', 'overall_breadth_score', 'signal_strength',
+                'market_participation', 'consecutive_bullish_days', 'consecutive_bearish_days'
+            ]
+
+            for analysis_col in analysis_columns:
+                full_col_name = f'{timeframe_prefix}{analysis_col}'
+                if full_col_name in universe_df.columns:
+                    historical_metrics[analysis_col] = universe_df[full_col_name]
+                else:
+                    # Fallback: calculate breadth momentum if not in enhanced CSV
+                    if analysis_col == 'breadth_momentum':
+                        historical_metrics['breadth_momentum'] = historical_metrics.apply(
+                            lambda row: self._calculate_breadth_momentum(row['pct_above_ma20'], row['pct_above_ma50']), axis=1
+                        )
+
             # Add threshold indicators if they exist
             threshold_cols = [col for col in universe_df.columns if '_gt_' in col or '_lt_' in col or 'successful' in col]
             for col in threshold_cols:
@@ -515,10 +668,10 @@ class BreadthAnalyzer(BaseIndicator):
             
             # Calculate combined metrics for each date
             for date in all_dates:
-                total_20day_highs = 0
-                total_20day_lows = 0
-                total_52week_highs = 0
-                total_52week_lows = 0
+                total_medium_highs = 0
+                total_medium_lows = 0
+                total_long_highs = 0
+                total_long_lows = 0
                 total_stocks = 0
                 
                 # Aggregate across all universes for this date
@@ -532,24 +685,25 @@ class BreadthAnalyzer(BaseIndicator):
                         
                     date_row = date_data.iloc[0]
                     
-                    total_20day_highs += date_row[f'{timeframe_prefix}20day_new_highs']
-                    total_20day_lows += date_row[f'{timeframe_prefix}20day_new_lows']
-                    total_52week_highs += date_row[f'{timeframe_prefix}252day_new_highs']
-                    total_52week_lows += date_row[f'{timeframe_prefix}252day_new_lows']
+                    # Updated to use period-agnostic names for cross-timeframe compatibility
+                    total_medium_highs += date_row[f'{timeframe_prefix}medium_new_highs']
+                    total_medium_lows += date_row[f'{timeframe_prefix}medium_new_lows']
+                    total_long_highs += date_row[f'{timeframe_prefix}long_new_highs']
+                    total_long_lows += date_row[f'{timeframe_prefix}long_new_lows']
                     total_stocks += date_row[f'{timeframe_prefix}total_stocks']
                 
                 # Store results for this date
                 date_idx = highs_lows_df[highs_lows_df['date'] == date].index[0]
-                highs_lows_df.loc[date_idx, 'new_20day_highs'] = total_20day_highs
-                highs_lows_df.loc[date_idx, 'new_20day_lows'] = total_20day_lows
-                highs_lows_df.loc[date_idx, 'new_52week_highs'] = total_52week_highs
-                highs_lows_df.loc[date_idx, 'new_52week_lows'] = total_52week_lows
-                highs_lows_df.loc[date_idx, 'net_20day_highs'] = total_20day_highs - total_20day_lows
-                highs_lows_df.loc[date_idx, 'net_52week_highs'] = total_52week_highs - total_52week_lows
-                highs_lows_df.loc[date_idx, 'highs_lows_ratio_20d'] = total_20day_highs / max(total_20day_lows, 1)
-                highs_lows_df.loc[date_idx, 'highs_lows_ratio_52w'] = total_52week_highs / max(total_52week_lows, 1)
-                highs_lows_df.loc[date_idx, 'pct_at_20day_highs'] = (total_20day_highs / total_stocks * 100) if total_stocks > 0 else 0
-                highs_lows_df.loc[date_idx, 'pct_at_52week_highs'] = (total_52week_highs / total_stocks * 100) if total_stocks > 0 else 0
+                highs_lows_df.loc[date_idx, 'new_medium_highs'] = total_medium_highs
+                highs_lows_df.loc[date_idx, 'new_medium_lows'] = total_medium_lows
+                highs_lows_df.loc[date_idx, 'new_long_highs'] = total_long_highs
+                highs_lows_df.loc[date_idx, 'new_long_lows'] = total_long_lows
+                highs_lows_df.loc[date_idx, 'net_medium_highs'] = total_medium_highs - total_medium_lows
+                highs_lows_df.loc[date_idx, 'net_long_highs'] = total_long_highs - total_long_lows
+                highs_lows_df.loc[date_idx, 'highs_lows_ratio_medium'] = total_medium_highs / max(total_medium_lows, 1)
+                highs_lows_df.loc[date_idx, 'highs_lows_ratio_long'] = total_long_highs / max(total_long_lows, 1)
+                highs_lows_df.loc[date_idx, 'pct_at_medium_highs'] = (total_medium_highs / total_stocks * 100) if total_stocks > 0 else 0
+                highs_lows_df.loc[date_idx, 'pct_at_long_highs'] = (total_long_highs / total_stocks * 100) if total_stocks > 0 else 0
                 highs_lows_df.loc[date_idx, 'total_stocks_analyzed'] = total_stocks
             
             return highs_lows_df
@@ -644,73 +798,56 @@ class BreadthAnalyzer(BaseIndicator):
             return pd.DataFrame()
     
     def _generate_historical_breadth_signals(self, combined_breadth: pd.DataFrame, highs_lows: pd.DataFrame, advance_decline: pd.DataFrame) -> pd.DataFrame:
-        """Generate historical market breadth signals and alerts using configurable thresholds."""
+        """Extract pre-calculated historical market breadth signals from enhanced market_breadth CSV."""
         try:
             if combined_breadth.empty:
                 return pd.DataFrame()
-            
-            # Create signals DataFrame with same dates as combined_breadth
+
+            # Extract pre-calculated signals from enhanced market_breadth CSV
             signals_df = pd.DataFrame({'date': combined_breadth['date']})
+
+            # Use pre-calculated signal columns if available, otherwise fall back to calculation
+            signal_columns = [
+                'breadth_thrust', 'breadth_deterioration', 'new_highs_expansion',
+                'new_lows_expansion', 'ad_thrust', 'total_bullish_signals',
+                'total_bearish_signals', 'net_signal_score'
+            ]
+
+            for col in signal_columns:
+                if col in combined_breadth.columns:
+                    signals_df[col] = combined_breadth[col]
+                else:
+                    # Initialize with zeros if not found (fallback for older CSVs)
+                    signals_df[col] = 0
             
-            # Initialize signal columns
-            signals_df['breadth_thrust'] = 0
-            signals_df['breadth_deterioration'] = 0
-            signals_df['new_highs_expansion'] = 0
-            signals_df['new_lows_expansion'] = 0
-            signals_df['ad_thrust'] = 0
-            signals_df['total_bullish_signals'] = 0
-            signals_df['total_bearish_signals'] = 0
-            signals_df['net_signal_score'] = 0
-            
-            # Process each date for historical signal generation
-            for idx, date in enumerate(combined_breadth['date']):
-                bullish_count = 0
-                bearish_count = 0
-                
-                # Get data for this date from each DataFrame
-                cb_row = combined_breadth[combined_breadth['date'] == date]
-                hl_row = highs_lows[highs_lows['date'] == date] if not highs_lows.empty else pd.DataFrame()
-                ad_row = advance_decline[advance_decline['date'] == date] if not advance_decline.empty else pd.DataFrame()
-                
-                if cb_row.empty:
-                    continue
-                    
-                cb_data = cb_row.iloc[0]
-                hl_data = hl_row.iloc[0] if not hl_row.empty else {}
-                ad_data = ad_row.iloc[0] if not ad_row.empty else {}
-                
-                # Breadth thrust signal (using configurable threshold)
-                if cb_data.get('overall_breadth_score', 0) > self.breadth_thrust_threshold:
-                    signals_df.loc[signals_df['date'] == date, 'breadth_thrust'] = 1
-                    bullish_count += 1
-                
-                # Breadth deterioration (using configurable threshold)
-                elif cb_data.get('overall_breadth_score', 0) < self.breadth_deterioration_threshold:
-                    signals_df.loc[signals_df['date'] == date, 'breadth_deterioration'] = 1
-                    bearish_count += 1
-                
-                # New highs expansion (using configurable threshold)
-                if hl_data.get('net_52week_highs', 0) > self.new_highs_expansion_threshold:
-                    signals_df.loc[signals_df['date'] == date, 'new_highs_expansion'] = 1
-                    bullish_count += 1
-                
-                # New lows expansion
-                elif hl_data.get('net_52week_highs', 0) < -self.new_highs_expansion_threshold:
-                    signals_df.loc[signals_df['date'] == date, 'new_lows_expansion'] = 1
-                    bearish_count += 1
-                
-                # Advance/Decline thrust (using configurable threshold)
-                if ad_data.get('advance_decline_ratio', 1) > self.ad_thrust_threshold:
-                    signals_df.loc[signals_df['date'] == date, 'ad_thrust'] = 1
-                    bullish_count += 1
-                
-                # Store signal counts for this date
-                signals_df.loc[signals_df['date'] == date, 'total_bullish_signals'] = bullish_count
-                signals_df.loc[signals_df['date'] == date, 'total_bearish_signals'] = bearish_count
-                signals_df.loc[signals_df['date'] == date, 'net_signal_score'] = bullish_count - bearish_count
-            
-            # Add trend analysis - signal momentum over rolling periods
-            self._add_signal_trend_analysis(signals_df)
+            # Extract pre-calculated momentum indicators from enhanced CSV if available
+            momentum_columns = [
+                'bullish_momentum_5d', 'bullish_momentum_10d', 'bullish_momentum_20d',
+                'bearish_momentum_5d', 'bearish_momentum_10d', 'bearish_momentum_20d',
+                'net_momentum_5d', 'net_momentum_10d', 'net_momentum_20d',
+                'consecutive_bullish_days', 'consecutive_bearish_days'
+            ]
+
+            for col in momentum_columns:
+                if col in combined_breadth.columns:
+                    signals_df[col] = combined_breadth[col]
+                else:
+                    # Fallback calculation if not in enhanced CSV
+                    if col == 'consecutive_bullish_days':
+                        bullish_higher = signals_df['total_bullish_signals'] > signals_df['total_bearish_signals']
+                        signals_df[col] = self._calculate_consecutive_signals(bullish_higher)
+                    elif col == 'consecutive_bearish_days':
+                        bearish_higher = signals_df['total_bearish_signals'] > signals_df['total_bullish_signals']
+                        signals_df[col] = self._calculate_consecutive_signals(bearish_higher)
+
+            # Add signal strength classification
+            if 'signal_strength' in combined_breadth.columns:
+                signals_df['signal_strength'] = combined_breadth['signal_strength']
+            else:
+                # Fallback calculation
+                signals_df['signal_strength'] = signals_df.apply(
+                    lambda row: self._classify_signal_strength(row), axis=1
+                )
             
             return signals_df
             
@@ -889,7 +1026,13 @@ class BreadthAnalyzer(BaseIndicator):
             logger.error(f"Error extracting latest data date: {e}")
             return datetime.now().strftime('%Y%m%d')
     
-    def _save_historical_breadth_analysis(self, results: Dict[str, Any], timeframe: str, latest_data_date: str) -> list:
+    # ========================================================================
+    # OBSOLETE METHODS: ba_historical CSV generation removed
+    # All analysis data now available in enhanced market_breadth CSV files
+    # Charts generated directly from market_breadth_*.csv files
+    # ========================================================================
+
+    def _save_historical_breadth_analysis_OBSOLETE(self, results: Dict[str, Any], timeframe: str, latest_data_date: str) -> list:
         """
         Save historical breadth analysis results to CSV file(s).
         
@@ -929,8 +1072,8 @@ class BreadthAnalyzer(BaseIndicator):
             # Get user choice for filename
             user_choice = str(self.user_config.ticker_choice) if self.user_config else '0-5'
             
-            # Ensure results directory exists - use market_pulse for consistency
-            results_dir = self.config.directories['RESULTS_DIR'] / 'market_pulse'
+            # Ensure results directory exists - use market_breadth since this is breadth analysis
+            results_dir = self.config.directories['RESULTS_DIR'] / 'market_breadth'
             results_dir.mkdir(parents=True, exist_ok=True)
             
             # Detect separator type to determine file generation strategy
@@ -948,7 +1091,7 @@ class BreadthAnalyzer(BaseIndicator):
                 
                 for universe in universes_analyzed:
                     # Create individual universe results
-                    individual_results = self._create_individual_universe_results(results, universe)
+                    individual_results = self._create_individual_universe_results_OBSOLETE(results, universe)
                     
                     # Generate filename for individual universe
                     filename = f"ba_historical_{universe}_{user_choice}_{timeframe}_{latest_data_date}.csv"
@@ -985,7 +1128,7 @@ class BreadthAnalyzer(BaseIndicator):
             logger.error(f"Error saving historical breadth analysis results: {e}")
             return []
     
-    def _create_individual_universe_results(self, results: Dict[str, Any], target_universe: str) -> Dict[str, Any]:
+    def _create_individual_universe_results_OBSOLETE(self, results: Dict[str, Any], target_universe: str) -> Dict[str, Any]:
         """
         Create individual universe results for separate file generation.
         
@@ -1024,25 +1167,26 @@ class BreadthAnalyzer(BaseIndicator):
     def _save_breadth_analysis(self, results: Dict[str, Any], timeframe: str, latest_data_date: str) -> str:
         """Save breadth analysis results to CSV file (backwards compatibility)."""
         # Redirect to historical method which handles both formats
-        files = self._save_historical_breadth_analysis(results, timeframe, latest_data_date)
+        files = self._save_historical_breadth_analysis_OBSOLETE(results, timeframe, latest_data_date)
         return files[0] if files else None
     
-    def _generate_breadth_charts(self, csv_files: List[str], universe_results: Dict) -> List[str]:
+    def _generate_breadth_charts_OBSOLETE(self, csv_files: List[str], universe_results: Dict, timeframe: str = 'daily') -> List[str]:
         """
         Generate PNG charts for breadth analysis CSV files.
         
         Args:
             csv_files: List of CSV file paths
             universe_results: Dictionary of universe results for additional context
-            
+            timeframe: Timeframe for chart filtering ('daily', 'weekly', 'monthly')
+
         Returns:
             List of generated PNG chart file paths
         """
         try:
             chart_files = []
             
-            # Create visualizer instance
-            visualizer = MarketBreadthVisualizer(self.config)
+            # Create visualizer instance with user config for chart display periods
+            visualizer = MarketBreadthVisualizer(self.config, self.user_config)
             
             for csv_file in csv_files:
                 try:
@@ -1063,12 +1207,13 @@ class BreadthAnalyzer(BaseIndicator):
                     # Try to load corresponding index price data
                     index_data = self._load_index_price_data(universe_name)
                     
-                    # Generate chart
+                    # Generate chart with timeframe for display filtering
                     chart_path = visualizer.create_breadth_chart(
                         breadth_data=breadth_data,
                         index_data=index_data,
                         output_path=png_path,
-                        universe_name=universe_name
+                        universe_name=universe_name,
+                        timeframe=timeframe
                     )
                     
                     if chart_path:
@@ -1139,7 +1284,7 @@ class BreadthAnalyzer(BaseIndicator):
             logger.error(f"Error loading index price data for {universe_name}: {e}")
             return None
     
-    def _prepare_historical_csv_output(self, results: Dict[str, Any], timeframe: str, latest_data_date: str, universe_str: str, user_choice: str) -> pd.DataFrame:
+    def _prepare_historical_csv_output_OBSOLETE(self, results: Dict[str, Any], timeframe: str, latest_data_date: str, universe_str: str, user_choice: str) -> pd.DataFrame:
         """
         Prepare historical breadth analysis results for CSV output.
         

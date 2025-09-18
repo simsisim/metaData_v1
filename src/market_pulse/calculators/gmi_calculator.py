@@ -327,8 +327,9 @@ class GMICalculator:
         try:
             # Get timeframe from breadth data (should be single row)
             timeframe = breadth_data['timeframe'].iloc[0]
-            target_column = f'{timeframe}_mb_10day_successful_252day_new_highs_gt_100'
-            
+            # Updated to use 'long' instead of '252day' for cross-timeframe compatibility
+            target_column = f'{timeframe}_mb_10day_successful_long_new_highs_gt_100'
+
             if target_column in breadth_data.columns:
                 value = breadth_data[target_column].iloc[0]
                 logger.debug(f"R1: {target_column}={value}")
@@ -352,8 +353,9 @@ class GMICalculator:
             timeframe = breadth_data['timeframe'].iloc[0]
             
             # Try multiple possible column names for R2
+            # Updated to use 'long' instead of '252day' for cross-timeframe compatibility
             target_columns = [
-                f'{timeframe}_mb_252day_new_highs',     # 252-day new highs > 100
+                f'{timeframe}_mb_long_new_highs',       # Long-period new highs > 100
                 f'{timeframe}_mb_net_advances'          # Net advances > 100 (alternative)
             ]
             

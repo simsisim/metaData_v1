@@ -164,8 +164,8 @@ class RSCalculatorBase(ABC):
             # Extract data date from DataFrame instead of using generation date
             date_str = self._extract_data_date_from_dataframe(results_data)
             
-        # Create output directory
-        rs_dir = self.config.directories['RESULTS_DIR'] / 'rs'
+        # Create output directory using user-configurable path
+        rs_dir = self.config.directories['RS_DIR']
         rs_dir.mkdir(parents=True, exist_ok=True)
         
         # Generate filename

@@ -345,6 +345,20 @@ def run_all_stage_analysis_streaming(config: Config, user_config: UserConfigurat
     print(f"📊 Total tickers processed: {total_processed}")
     print(f"🕒 Timeframes processed: {', '.join(results_summary.keys())}")
 
+    # Enrich stage analysis files with business metadata
+    try:
+        print(f"\n🔗 ENRICHING STAGE ANALYSIS FILES WITH BUSINESS METADATA...")
+        from src.stage_analysis_enricher import enrich_stage_analysis_csvs
+
+        enrichment_success = enrich_stage_analysis_csvs()
+        if enrichment_success:
+            print(f"✅ Stage analysis files enriched with sector, industry, index membership, and market cap data")
+        else:
+            print(f"⚠️  Stage analysis enrichment completed with warnings")
+    except Exception as e:
+        print(f"❌ Stage analysis enrichment error: {e}")
+        logger.error(f"Stage analysis enrichment failed: {e}")
+
     return results_summary
 
 
@@ -356,7 +370,7 @@ def run_all_pvb_screener_streaming(config: Config, user_config: UserConfiguratio
     Returns:
         dict: Results summary for all timeframes
     """
-    if not getattr(user_config, 'pvb_enable', False):
+    if not getattr(user_config, 'pvb_TWmodel_enable', False):
         print(f"\n⏭️  PVB screener disabled - skipping PVB processing")
         return {}
 
@@ -373,7 +387,7 @@ def run_all_pvb_screener_streaming(config: Config, user_config: UserConfiguratio
     total_processed = 0
 
     for timeframe in timeframes:
-        pvb_enabled = getattr(user_config, f'pvb_{timeframe}_enable', True)
+        pvb_enabled = getattr(user_config, f'pvb_TWmodel_{timeframe}_enable', True)
         if not pvb_enabled:
             print(f"⏭️  PVB screener disabled for {timeframe} timeframe")
             continue
@@ -711,7 +725,7 @@ def old_legacy_batch_operations(
 
     for timeframe in timeframes:
         # Check if PVB is enabled for this timeframe (if timeframe-specific settings exist)
-        pvb_timeframe_enabled = getattr(user_config, f'pvb_{timeframe}_enable', True)
+        pvb_timeframe_enabled = getattr(user_config, f'pvb_TWmodel_{timeframe}_enable', True)
         if not pvb_timeframe_enabled:
             print(f"⏭️  PVB screener disabled for {timeframe} timeframe")
             continue
@@ -976,6 +990,12 @@ def run_all_market_breadth(config: Config, user_config: UserConfiguration, timef
     total_processed = 0
 
     for timeframe in timeframes:
+        # Check timeframe-specific enable flag (two-level control system)
+        breadth_timeframe_enabled = getattr(user_config, f'market_breadth_{timeframe}_enable', True)
+        if not breadth_timeframe_enabled:
+            print(f"⏭️  Market breadth disabled for {timeframe} timeframe")
+            continue
+
         print(f"\n📊 Processing {timeframe.upper()} timeframe...")
 
         try:
@@ -1005,6 +1025,42 @@ def run_all_market_breadth(config: Config, user_config: UserConfiguration, timef
 
                     results_summary[timeframe] = len(saved_results)
                     total_processed += len(saved_results)
+
+                    # Generate charts immediately after CSV files are saved
+                    try:
+                        print(f"🎨 Generating breadth charts for {timeframe}...")
+                        from src.market_pulse.indicators.breadth_analyzer import BreadthAnalyzer
+
+                        # Use the data date from saved results
+                        data_date = saved_results[0]['data_date'] if saved_results else None
+
+                        if data_date:
+                            # Initialize breadth analyzer for chart generation
+                            target_indexes = ['SPY', 'QQQ', 'IWM']
+                            analyzer = BreadthAnalyzer(
+                                target_indexes=target_indexes,
+                                config=config,
+                                user_config=user_config
+                            )
+
+                            # Generate charts for this timeframe
+                            chart_files = analyzer._generate_breadth_charts_from_enhanced_csv(
+                                {}, timeframe, data_date
+                            )
+
+                            if chart_files:
+                                print(f"✅ Generated {len(chart_files)} charts for {timeframe}")
+                                for chart_file in chart_files:
+                                    print(f"   📊 {Path(chart_file).name}")
+                            else:
+                                print(f"⚠️  No charts generated for {timeframe}")
+                        else:
+                            print(f"⚠️  No data date available for chart generation ({timeframe})")
+
+                    except Exception as chart_error:
+                        print(f"❌ Chart generation error for {timeframe}: {chart_error}")
+                        logger.error(f"Breadth chart generation failed for {timeframe}: {chart_error}")
+
                 else:
                     print(f"⚠️  No market breadth matrices saved for {timeframe}")
 
@@ -1019,6 +1075,65 @@ def run_all_market_breadth(config: Config, user_config: UserConfiguration, timef
     print(f"\n✅ MARKET BREADTH ANALYSIS COMPLETED!")
     print(f"📊 Total matrices processed: {total_processed}")
     print(f"🕒 Timeframes processed: {', '.join(results_summary.keys())}")
+
+    # Generate breadth reports after all breadth analysis is complete
+    if total_processed > 0:
+        try:
+            print(f"\n📄 GENERATING BREADTH REPORTS...")
+            from src.market_pulse.reporting.breadth_reporting import BreadthReportGenerator
+
+            report_generator = BreadthReportGenerator(user_config)
+            breadth_dir = config.directories['RESULTS_DIR'] / 'market_breadth'
+            reports_dir = config.directories['RESULTS_DIR'] / 'reports'
+            reports_dir.mkdir(parents=True, exist_ok=True)
+
+            # Generate reports for each CSV file that has a corresponding PNG
+            csv_files = list(breadth_dir.glob('market_breadth_*.csv'))
+            reports_generated = 0
+
+            for csv_file in csv_files:
+                png_file = csv_file.with_suffix('.png')
+                if png_file.exists():
+                    # Extract info from filename for report naming
+                    filename_parts = csv_file.stem.split('_')
+                    if len(filename_parts) >= 4:
+                        universe = filename_parts[2]
+                        choice = filename_parts[3]
+                        timeframe = filename_parts[4] if len(filename_parts) > 4 else 'daily'
+                        date = filename_parts[-1] if len(filename_parts) > 5 else 'latest'
+
+                        report_name = f"breadth_report_{universe}_{choice}_{timeframe}_{date}.pdf"
+                        report_path = reports_dir / report_name
+
+                        # Generate the report with timeframe-appropriate periods
+                        # latest_days parameter represents periods, not necessarily days
+                        if 'daily' in timeframe:
+                            latest_periods = 5  # 5 days
+                        elif 'weekly' in timeframe:
+                            latest_periods = 5  # 5 weeks
+                        elif 'monthly' in timeframe:
+                            latest_periods = 5  # 5 months
+                        else:
+                            latest_periods = 5  # default to 5 periods
+
+                        success = report_generator.generate_report(
+                            csv_path=csv_file,
+                            png_path=png_file,
+                            output_path=report_path,
+                            latest_days=latest_periods
+                        )
+
+                        if success:
+                            reports_generated += 1
+                            print(f"  ✅ Generated: {report_name}")
+                        else:
+                            print(f"  ❌ Failed: {report_name}")
+
+            print(f"📄 BREADTH REPORTS COMPLETED: {reports_generated} reports generated")
+
+        except Exception as e:
+            print(f"❌ Breadth report generation error: {e}")
+            logger.error(f"Breadth report generation failed: {e}")
 
     return results_summary
 
@@ -1183,18 +1298,18 @@ def main() -> None:
         
         # Define timeframes to process - YF_*_data flags act as master switches
         timeframes_to_process = []
-        if user_config.load_daily_data and getattr(user_config, 'yf_daily_data', True):
+        if getattr(user_config, 'yf_daily_data', True):
             timeframes_to_process.append('daily')
-        if user_config.load_weekly_data and getattr(user_config, 'yf_weekly_data', True):
+        if getattr(user_config, 'yf_weekly_data', True):
             timeframes_to_process.append('weekly')
-        if user_config.load_monthly_data and getattr(user_config, 'yf_monthly_data', True):
+        if getattr(user_config, 'yf_monthly_data', True):
             timeframes_to_process.append('monthly')
-        if user_config.load_intraday_data:
+        if getattr(user_config, 'tw_intraday_data', False):
             timeframes_to_process.append('intraday')
         
         if not timeframes_to_process:
             print("❌ No timeframes enabled for processing!")
-            print("   Please enable at least one: load_daily_data, load_weekly_data, etc.")
+            print("   Please enable at least one: YF_daily_data, YF_weekly_data, etc.")
             return
         
         print(f"📈 Processing timeframes: {', '.join(timeframes_to_process)}")
@@ -1339,23 +1454,89 @@ def main() -> None:
     # =====================================
     # Process calculations grouped by type across all timeframes for better efficiency
 
-    # 1. Basic Calculations - All timeframes, all batches
-    basic_calc_results = run_all_basic_calculations(config, user_config, timeframes_to_process, clean_file)
+    # ==============================
+    # PHASE 1: BASIC CALCULATIONS
+    # ==============================
+    if user_config.BASIC:
+        print(f"\n🔥 EXECUTING BASIC CALCULATIONS PHASE")
+        print("="*60)
 
-    # 2. Market Breadth Analysis - All timeframes (positioned after basic calculations)
-    market_breadth_results = run_all_market_breadth(config, user_config, timeframes_to_process)
+        # 1. Basic Calculations - All timeframes, all batches
+        basic_calc_results = run_all_basic_calculations(config, user_config, timeframes_to_process, clean_file)
 
-    # 3. Stage Analysis - All timeframes, all batches
-    stage_analysis_results = run_all_stage_analysis(config, user_config, timeframes_to_process, clean_file)
+        # 2. Stage Analysis - All timeframes, all batches
+        stage_analysis_results = run_all_stage_analysis(config, user_config, timeframes_to_process, clean_file)
+    else:
+        print(f"\n⏭️  BASIC CALCULATIONS PHASE SKIPPED")
+        basic_calc_results = {}
+        stage_analysis_results = {}
 
-    # 4. PVB Screener - All timeframes, all batches (NEW - individual screener)
-    pvb_screener_results = run_all_pvb_screener(config, user_config, timeframes_to_process, clean_file)
+    # 2.5. Stage Analysis Reports - Generate PDF reports for stage analysis results
+    if sum(stage_analysis_results.values()) > 0:
+        try:
+            print(f"\n📄 GENERATING STAGE ANALYSIS REPORTS...")
+            from src.report_generators.stage_analysis_report_generator import process_stage_analysis_csv
 
-    # 5. ATR1 Screener - All timeframes, all batches (NEW - individual screener)
-    atr1_screener_results = run_all_atr1_screener(config, user_config, timeframes_to_process, clean_file)
+            stage_dir = config.directories['RESULTS_DIR'] / 'stage_analysis'
+            reports_dir = config.directories['RESULTS_DIR'] / 'reports'
+            reports_dir.mkdir(parents=True, exist_ok=True)
 
-    # 6. DRWISH Screener - All timeframes, all batches (NEW - individual screener)
-    drwish_screener_results = run_all_drwish_screener(config, user_config, timeframes_to_process, clean_file)
+            # Generate reports for each stage analysis CSV file
+            csv_files = list(stage_dir.glob('stage_analysis_*.csv'))
+            reports_generated = 0
+
+            for csv_file in csv_files:
+                try:
+                    print(f"  🎯 Processing: {csv_file.name}")
+                    png_path, pdf_path = process_stage_analysis_csv(str(csv_file))
+
+                    if Path(pdf_path).exists():
+                        reports_generated += 1
+                        pdf_size = Path(pdf_path).stat().st_size / 1024
+                        print(f"  ✅ Generated: {Path(pdf_path).name} ({pdf_size:.1f} KB)")
+                    else:
+                        print(f"  ❌ Failed: {csv_file.name}")
+
+                except Exception as e:
+                    print(f"  ❌ Error processing {csv_file.name}: {e}")
+                    logger.error(f"Stage analysis report generation failed for {csv_file}: {e}")
+                    continue
+
+            print(f"📄 STAGE ANALYSIS REPORTS COMPLETED: {reports_generated} reports generated")
+
+        except Exception as e:
+            print(f"❌ Stage analysis report generation error: {e}")
+            logger.error(f"Stage analysis report generation failed: {e}")
+
+        # 3. Market Breadth Analysis - All timeframes (positioned after stage analysis)
+        market_breadth_results = run_all_market_breadth(config, user_config, timeframes_to_process)
+
+        print(f"✅ BASIC CALCULATIONS PHASE COMPLETED")
+    else:
+        market_breadth_results = {}
+
+    # ============================
+    # PHASE 2: SCREENERS
+    # ============================
+    if user_config.SCREENERS:
+        print(f"\n📊 EXECUTING SCREENERS PHASE")
+        print("="*60)
+
+        # 4. PVB Screener - All timeframes, all batches (NEW - individual screener)
+        pvb_screener_results = run_all_pvb_screener(config, user_config, timeframes_to_process, clean_file)
+
+        # 5. ATR1 Screener - All timeframes, all batches (NEW - individual screener)
+        atr1_screener_results = run_all_atr1_screener(config, user_config, timeframes_to_process, clean_file)
+
+        # 6. DRWISH Screener - All timeframes, all batches (NEW - individual screener)
+        drwish_screener_results = run_all_drwish_screener(config, user_config, timeframes_to_process, clean_file)
+
+        print(f"✅ SCREENERS PHASE COMPLETED")
+    else:
+        print(f"\n⏭️  SCREENERS PHASE SKIPPED")
+        pvb_screener_results = {}
+        atr1_screener_results = {}
+        drwish_screener_results = {}
 
     # 7. Screeners - All timeframes, all batches (OLD - remaining mixed screeners)
     # COMMENTED OUT - Using individual screener implementations instead
@@ -1414,13 +1595,26 @@ def main() -> None:
                 'output_file': 'multiple_files_generated'
             }
     
-    # 🟢 MARKET PULSE ANALYSIS - NEW PIPELINE POSITION
-    # Now runs after all calculation phases are completed for better efficiency
-    if user_config.market_pulse_enable:
+    # ===============================
+    # PHASE 3: POST-PROCESS
+    # ===============================
+    if user_config.POST_PROCESS:
+        print(f"\n📈 EXECUTING POST-PROCESSING PHASE")
+        print("="*60)
+
+        # 🟢 MARKET PULSE ANALYSIS - NEW PIPELINE POSITION
+        # Now runs after all calculation phases are completed for better efficiency
         print(f"\n" + "="*60)
         print("MARKET PULSE ANALYSIS")
         print("="*60)
-        
+
+    if user_config.market_pulse_enable:
+        print("📊 Market Pulse Configuration:")
+        print("   • GMI: Daily calculation only")
+        print("   • GMI2: Daily calculation only")
+        print("   • Other components: Per timeframe settings")
+        print()
+
         from src.market_pulse import MarketPulseManager
         
         for timeframe in timeframes_to_process:
@@ -1473,7 +1667,8 @@ def main() -> None:
                 error_msg = pulse_results.get('error', 'Unknown error')
                 print(f"❌ Market pulse analysis failed for {timeframe}: {error_msg}")
     else:
-        print(f"\n⏭️  Market pulse analysis disabled in user configuration")
+        print("📊 MARKET_PULSE_enable=FALSE - Market Pulse analysis disabled")
+        print("⏭️  Skipping market pulse processing for all timeframes")
     
     # INDEX OVERVIEW GENERATION (after RS analysis, before dashboard)
     if user_config.index_overview_enable:
@@ -1592,6 +1787,20 @@ def main() -> None:
             print(f"  ❌ Report generation error: {e}")
             logger.warning(f"Report generation failed: {e}")
     
+        # ================================
+        # ADVANCED POST-PROCESSING SECTION
+        # ================================
+        # Future implementation: Advanced post-processing capabilities
+        # - Custom stage analysis filtering and reporting
+        # - Sector/industry specific analysis
+        # - Technical pattern screening from CSV data
+        # - Custom universe generation from existing results
+        print(f"\n📋 Advanced post-processing capabilities available for future implementation")
+
+        print(f"✅ POST-PROCESSING PHASE COMPLETED")
+    else:
+        print(f"\n⏭️  POST-PROCESSING PHASE SKIPPED")
+
     print("\n🎯 Next steps:")
     print("  • Review results in the results/ directory")
     if getattr(user_config, 'report_enable', False):
@@ -1603,7 +1812,7 @@ def main() -> None:
     print("  • Check percentage movers reports for significant movements")
     print("  • Implement specific calculation modules in src/")
     print("  • Customize screeners and models as needed")
-    
+
     print("\nFinished.")
 
 if __name__ == "__main__":

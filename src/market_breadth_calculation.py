@@ -49,7 +49,59 @@ class MarketBreadthCalculator:
         
         # Column naming conventions following basic_calculations pattern
         self.column_prefix = "market_breadth"
-        
+
+    def _get_timeframe_periods(self, timeframe: str, user_config) -> dict:
+        """
+        Get timeframe-specific periods configuration.
+
+        Args:
+            timeframe: Data timeframe ('daily', 'weekly', 'monthly')
+            user_config: User configuration object
+
+        Returns:
+            Dictionary with ma_periods and new_high_lows_periods for the timeframe
+        """
+        # Get timeframe-specific MA periods
+        ma_periods_attr = f'market_breadth_{timeframe}_ma_periods'
+        ma_periods_str = getattr(user_config, ma_periods_attr, None)
+
+        # Get timeframe-specific new high/lows periods
+        hl_periods_attr = f'market_breadth_{timeframe}_new_high_lows_periods'
+        hl_periods_str = getattr(user_config, hl_periods_attr, None)
+
+        # Fallback to legacy settings if new ones not available
+        if ma_periods_str is None:
+            ma_periods_str = getattr(user_config, 'market_breadth_ma_periods', '20;50;200')
+        if hl_periods_str is None:
+            hl_periods_str = '252;63;20' if timeframe == 'daily' else '52;13;4' if timeframe == 'weekly' else '12;3;1'
+
+        # Parse periods (handle both string and list formats)
+        try:
+            # If it's already a list (parsed by _parse_period_string), use it directly
+            if isinstance(ma_periods_str, list):
+                ma_periods = [int(x) for x in ma_periods_str]
+            elif ma_periods_str:
+                ma_periods = [int(x.strip()) for x in ma_periods_str.split(';')]
+            else:
+                ma_periods = [20, 50, 200]
+
+            if isinstance(hl_periods_str, list):
+                hl_periods = [int(x) for x in hl_periods_str]
+            elif hl_periods_str:
+                hl_periods = [int(x.strip()) for x in hl_periods_str.split(';')]
+            else:
+                hl_periods = [252, 63, 20]
+        except (ValueError, AttributeError, TypeError) as e:
+            logger.warning(f"Error parsing {timeframe} periods, using defaults: {e}")
+            ma_periods = [20, 50, 200] if timeframe == 'daily' else [10, 20, 50] if timeframe == 'weekly' else [3, 6, 12]
+            hl_periods = [252, 63, 20] if timeframe == 'daily' else [52, 13, 4] if timeframe == 'weekly' else [12, 3, 1]
+
+        return {
+            'ma_periods': ma_periods,
+            'new_high_lows_periods': hl_periods,
+            'timeframe': timeframe
+        }
+
     def calculate_universe_breadth_matrix(self, timeframe: str, user_config) -> dict:
         """
         Calculate market breadth indicators for single or multiple universes and accumulate results.
@@ -69,7 +121,8 @@ class MarketBreadthCalculator:
             universe_config = getattr(user_config, 'market_breadth_universe', {
                 'type': 'single', 'universes': ['all'], 'display_name': 'all'
             })
-            lookback_days = getattr(user_config, 'market_breadth_lookback_days', 252)
+            # Get timeframe-specific periods instead of fixed lookback_days
+            periods_config = self._get_timeframe_periods(timeframe, user_config)
             
             logger.info(f"Calculating market breadth matrix for {timeframe} - type: {universe_config['type']}, universes: {universe_config['universes']}")
             
@@ -87,7 +140,8 @@ class MarketBreadthCalculator:
                     logger.info(f"Processing separate universe: {universe}")
                     breadth_results = self.calculate_all_breadth_indicators(
                         universe_name=universe,
-                        lookback_days=lookback_days,
+                        timeframe=timeframe,
+                        periods_config=periods_config,
                         user_config=user_config
                     )
                     
@@ -104,7 +158,7 @@ class MarketBreadthCalculator:
                 combined_data = self._load_combined_universe_data(universe_config['universes'])
                 
                 if not combined_data.empty:
-                    breadth_results = self._calculate_breadth_from_combined_data(combined_data, lookback_days, user_config)
+                    breadth_results = self._calculate_breadth_from_combined_data(combined_data, timeframe, periods_config, user_config)
                     if not breadth_results.empty:
                         display_name = universe_config['display_name']
                         results[display_name] = breadth_results
@@ -120,7 +174,8 @@ class MarketBreadthCalculator:
                 logger.info(f"Processing single universe: {universe}")
                 breadth_results = self.calculate_all_breadth_indicators(
                     universe_name=universe,
-                    lookback_days=lookback_days,
+                    timeframe=timeframe,
+                    periods_config=periods_config,
                     user_config=user_config
                 )
                 
@@ -140,14 +195,15 @@ class MarketBreadthCalculator:
             logger.error(f"Error calculating market breadth matrix for {timeframe}: {e}")
             return {}
         
-    def calculate_all_breadth_indicators(self, universe_name: str = "all", 
-                                       lookback_days: int = 252, user_config=None) -> pd.DataFrame:
+    def calculate_all_breadth_indicators(self, universe_name: str = "all",
+                                       timeframe: str = "daily", periods_config=None, user_config=None) -> pd.DataFrame:
         """
         Calculate all market breadth indicators for the specified universe.
-        
+
         Args:
             universe_name: Name of the ticker universe to analyze
-            lookback_days: Number of trading days for calculations (default: 252 = ~1 year)
+            timeframe: Data timeframe ('daily', 'weekly', 'monthly')
+            periods_config: Dictionary with timeframe-specific periods configuration
             
         Returns:
             DataFrame with all breadth calculations indexed by date
@@ -170,20 +226,25 @@ class MarketBreadthCalculator:
             ad_results = self._calculate_advance_decline_indicators(market_data, results_df.index)
             results_df = pd.concat([results_df, ad_results], axis=1)
             
-            # Calculate 252-day new highs/lows indicators
-            hl_results = self._calculate_252day_new_highs_lows_indicators(market_data, results_df.index)
-            results_df = pd.concat([results_df, hl_results], axis=1)
-            
-            # Calculate 20-day new highs/lows indicators
-            hl_20day_results = self._calculate_20day_new_highs_lows_indicators(market_data, results_df.index)
-            results_df = pd.concat([results_df, hl_20day_results], axis=1)
-            
-            # Calculate 63-day new highs/lows indicators
-            hl_63day_results = self._calculate_63day_new_highs_lows_indicators(market_data, results_df.index)
-            results_df = pd.concat([results_df, hl_63day_results], axis=1)
-            
-            # Calculate moving average breadth indicators
-            ma_results = self._calculate_moving_average_breadth(market_data, results_df.index)
+            # Get periods from configuration or fallback to defaults
+            if periods_config is None:
+                periods_config = self._get_timeframe_periods(timeframe, user_config)
+
+            hl_periods = periods_config['new_high_lows_periods']
+            ma_periods = periods_config['ma_periods']
+
+            # Calculate new highs/lows indicators using dynamic periods (long, medium, short)
+            for i, period in enumerate(hl_periods):
+                period_name = ['long', 'medium', 'short'][i] if i < 3 else f'period_{i+1}'
+                hl_results = self._calculate_new_highs_lows_indicators(
+                    market_data, results_df.index, period, period_name
+                )
+                results_df = pd.concat([results_df, hl_results], axis=1)
+
+            # Calculate moving average breadth indicators using dynamic periods
+            ma_results = self._calculate_moving_average_breadth(
+                market_data, results_df.index, ma_periods
+            )
             results_df = pd.concat([results_df, ma_results], axis=1)
             
             # Calculate specialized breadth thresholds
@@ -191,12 +252,20 @@ class MarketBreadthCalculator:
             results_df = pd.concat([results_df, threshold_results], axis=1)
             
             # Add metadata columns
+            results_df[f'{self.column_prefix}_timeframe'] = timeframe
             results_df[f'{self.column_prefix}_universe'] = universe_name
             results_df[f'{self.column_prefix}_calculation_date'] = datetime.now().strftime('%Y-%m-%d')
-            results_df[f'{self.column_prefix}_lookback_days'] = lookback_days
+            results_df[f'{self.column_prefix}_hl_periods'] = ';'.join(map(str, hl_periods))
+            results_df[f'{self.column_prefix}_ma_periods'] = ';'.join(map(str, ma_periods))
             
             logger.info(f"Calculated {len(results_df.columns)} breadth indicators for {len(results_df)} trading days")
-            
+
+            # Add advanced analysis columns (signal strength, threshold classification, etc.)
+            analysis_results = self._add_analysis_columns(results_df)
+            results_df = pd.concat([results_df, analysis_results], axis=1)
+
+            logger.info(f"Enhanced with {len(analysis_results.columns)} analysis columns. Total: {len(results_df.columns)} columns")
+
             return results_df
             
         except Exception as e:
@@ -369,8 +438,86 @@ class MarketBreadthCalculator:
             logger.error(f"Error calculating advance/decline indicators: {e}")
         
         return results
-    
-    def _calculate_252day_new_highs_lows_indicators(self, market_data: pd.DataFrame, 
+
+    def _calculate_new_highs_lows_indicators(self, market_data: pd.DataFrame,
+                                           date_index: pd.DatetimeIndex, period: int,
+                                           period_name: str) -> pd.DataFrame:
+        """
+        Calculate new highs/lows indicators for any specified period.
+
+        Args:
+            market_data: DataFrame with OHLCV data
+            date_index: DatetimeIndex for results alignment
+            period: Number of periods for lookback (e.g., 252, 63, 20)
+            period_name: Name for the period ('long', 'medium', 'short')
+
+        Returns:
+            DataFrame with new highs/lows indicators
+        """
+        results = pd.DataFrame(index=date_index)
+
+        try:
+            logger.debug(f"Calculating {period}-period new highs/lows indicators ({period_name})")
+
+            # Calculate rolling highs and lows for the specified period
+            market_data = market_data.sort_values(['ticker', 'date'])
+            market_data[f'{period}d_high'] = market_data.groupby('ticker')['high'].rolling(
+                window=period, min_periods=max(1, period//4)
+            ).max().reset_index(0, drop=True)
+
+            market_data[f'{period}d_low'] = market_data.groupby('ticker')['low'].rolling(
+                window=period, min_periods=max(1, period//4)
+            ).min().reset_index(0, drop=True)
+
+            # Identify new highs and lows
+            market_data[f'is_{period}d_new_high'] = (market_data['high'] >= market_data[f'{period}d_high'])
+            market_data[f'is_{period}d_new_low'] = (market_data['low'] <= market_data[f'{period}d_low'])
+
+            # Aggregate by date
+            daily_hl = market_data.groupby('date').agg({
+                f'is_{period}d_new_high': 'sum',
+                f'is_{period}d_new_low': 'sum',
+                'ticker': 'count'
+            }).reindex(date_index).fillna(0)
+
+            daily_hl.columns = [f'{period_name}_new_highs', f'{period_name}_new_lows', f'total_stocks_hl_{period_name}']
+
+            # Add to results with proper column prefixes
+            results[f'{self.column_prefix}_{period_name}_new_highs'] = daily_hl[f'{period_name}_new_highs']
+            results[f'{self.column_prefix}_{period_name}_new_lows'] = daily_hl[f'{period_name}_new_lows']
+            results[f'{self.column_prefix}_total_stocks_hl_{period_name}'] = daily_hl[f'total_stocks_hl_{period_name}']
+
+            # Calculate derived metrics
+            results[f'{self.column_prefix}_net_{period_name}_new_highs'] = (
+                results[f'{self.column_prefix}_{period_name}_new_highs'] -
+                results[f'{self.column_prefix}_{period_name}_new_lows']
+            )
+
+            results[f'{self.column_prefix}_hl_ratio_{period_name}'] = (
+                results[f'{self.column_prefix}_{period_name}_new_highs'] /
+                results[f'{self.column_prefix}_{period_name}_new_lows'].replace(0, np.nan)
+            ).round(2)
+
+            results[f'{self.column_prefix}_{period_name}_new_highs_pct'] = (
+                (results[f'{self.column_prefix}_{period_name}_new_highs'] /
+                 results[f'{self.column_prefix}_total_stocks_hl_{period_name}'].replace(0, np.nan)) * 100
+            ).round(2)
+
+            results[f'{self.column_prefix}_{period_name}_new_lows_pct'] = (
+                (results[f'{self.column_prefix}_{period_name}_new_lows'] /
+                 results[f'{self.column_prefix}_total_stocks_hl_{period_name}'].replace(0, np.nan)) * 100
+            ).round(2)
+
+            results[f'{self.column_prefix}_net_hl_line_{period_name}'] = results[f'{self.column_prefix}_net_{period_name}_new_highs'].cumsum()
+
+            logger.debug(f"Calculated {len([c for c in results.columns if period_name in c])} {period}-{period_name} new highs/lows indicators")
+
+        except Exception as e:
+            logger.error(f"Error calculating {period}-{period_name} new highs/lows indicators: {e}")
+
+        return results
+
+    def _calculate_252day_new_highs_lows_indicators(self, market_data: pd.DataFrame,
                                                   date_index: pd.DatetimeIndex) -> pd.DataFrame:
         """
         Calculate 252-day new highs/lows indicators with 252-day lookback period.
@@ -616,25 +763,27 @@ class MarketBreadthCalculator:
         
         return results
     
-    def _calculate_moving_average_breadth(self, market_data: pd.DataFrame, 
-                                        date_index: pd.DatetimeIndex) -> pd.DataFrame:
+    def _calculate_moving_average_breadth(self, market_data: pd.DataFrame,
+                                        date_index: pd.DatetimeIndex, ma_periods: list = None) -> pd.DataFrame:
         """
-        Calculate moving average breadth indicators.
-        
+        Calculate moving average breadth indicators using dynamic periods.
+
         Args:
             market_data: Combined market data for all tickers
             date_index: Date index for results
-            
+            ma_periods: List of MA periods to calculate (defaults to [20, 50, 200])
+
         Returns:
             DataFrame with moving average breadth indicators
         """
         results = pd.DataFrame(index=date_index)
-        
+
         try:
-            logger.debug("Calculating moving average breadth indicators")
-            
-            # Moving average periods to analyze
-            ma_periods = [20, 50, 200]
+            # Use provided periods or defaults
+            if ma_periods is None:
+                ma_periods = [20, 50, 200]
+
+            logger.debug(f"Calculating moving average breadth indicators for periods: {ma_periods}")
             
             for period in ma_periods:
                 # Calculate moving averages for each ticker
@@ -676,79 +825,83 @@ class MarketBreadthCalculator:
     
     def _calculate_breadth_thresholds(self, results_df: pd.DataFrame, user_config=None) -> pd.DataFrame:
         """
-        Calculate specialized breadth threshold indicators.
-        
+        Calculate specialized breadth threshold indicators using generic position-based configuration.
+
         Args:
             results_df: DataFrame with previously calculated indicators
             user_config: User configuration object with threshold settings
-            
+
         Returns:
             DataFrame with threshold-based indicators
         """
         threshold_results = pd.DataFrame(index=results_df.index)
-        
+
         try:
             logger.debug("Calculating breadth threshold indicators")
-            
-            # Get configuration thresholds with defaults
-            daily_252day_threshold = getattr(user_config, 'market_breadth_daily_252day_new_highs_threshold', 100)
-            ten_day_threshold = getattr(user_config, 'market_breadth_ten_day_success_threshold', 5)
-            daily_20day_threshold = getattr(user_config, 'market_breadth_daily_20day_new_highs_threshold', 100)
-            twenty_day_threshold = getattr(user_config, 'market_breadth_twenty_day_success_threshold', 10)
-            daily_63day_threshold = getattr(user_config, 'market_breadth_daily_63day_new_highs_threshold', 100)
-            sixty_three_day_threshold = getattr(user_config, 'market_breadth_sixty_three_day_success_threshold', 30)
+
+            # Get generic threshold configuration
+            new_highs_thresholds = {
+                'long': getattr(user_config, 'market_breadth_new_highs_threshold_long', 100),
+                'medium': getattr(user_config, 'market_breadth_new_highs_threshold_medium', 100),
+                'short': getattr(user_config, 'market_breadth_new_highs_threshold_short', 100)
+            }
+
+            success_window_pcts = {
+                'long': getattr(user_config, 'market_breadth_success_window_pct_long', 25),
+                'medium': getattr(user_config, 'market_breadth_success_window_pct_medium', 50),
+                'short': getattr(user_config, 'market_breadth_success_window_pct_short', 50)
+            }
+
+            success_threshold_pcts = {
+                'long': getattr(user_config, 'market_breadth_success_threshold_pct_long', 30),
+                'medium': getattr(user_config, 'market_breadth_success_threshold_pct_medium', 30),
+                'short': getattr(user_config, 'market_breadth_success_threshold_pct_short', 50)
+            }
+
+            # Universal thresholds (same across timeframes)
             strong_ad_ratio = getattr(user_config, 'market_breadth_strong_ad_ratio_threshold', 2.0)
             weak_ad_ratio = getattr(user_config, 'market_breadth_weak_ad_ratio_threshold', 0.5)
             strong_advance = getattr(user_config, 'market_breadth_strong_advance_threshold', 70.0)
             weak_advance = getattr(user_config, 'market_breadth_weak_advance_threshold', 30.0)
             strong_ma_breadth = getattr(user_config, 'market_breadth_strong_ma_breadth_threshold', 80.0)
             weak_ma_breadth = getattr(user_config, 'market_breadth_weak_ma_breadth_threshold', 20.0)
-            
-            logger.debug(f"Using thresholds: 252d={daily_252day_threshold}, 10d={ten_day_threshold}, 20d={daily_20day_threshold}, 20d_success={twenty_day_threshold}, 63d={daily_63day_threshold}, 63d_success={sixty_three_day_threshold}")
-            
-            # Calculate "Daily 252-Day New Highs > threshold" condition
-            daily_252day_new_highs_gt_threshold = (
-                results_df[f'{self.column_prefix}_252day_new_highs'] > daily_252day_threshold
-            ).astype(int)
-            threshold_results[f'{self.column_prefix}_daily_252day_new_highs_gt_{daily_252day_threshold}'] = daily_252day_new_highs_gt_threshold
-            
-            # Calculate "10-Day Successful 252-Day New Highs > threshold" condition
-            if len(results_df) >= 10:
-                ten_day_success = daily_252day_new_highs_gt_threshold.rolling(window=10, min_periods=5).sum()
-                ten_day_successful_252day_new_highs_gt_threshold = (ten_day_success >= ten_day_threshold).astype(int)
-                threshold_results[f'{self.column_prefix}_10day_successful_252day_new_highs_gt_{daily_252day_threshold}'] = ten_day_successful_252day_new_highs_gt_threshold
-            else:
-                threshold_results[f'{self.column_prefix}_10day_successful_252day_new_highs_gt_{daily_252day_threshold}'] = 0
-            
-            # Calculate 20-day equivalent thresholds
-            if f'{self.column_prefix}_20day_new_highs' in results_df.columns:
-                daily_20day_new_highs_gt_threshold = (
-                    results_df[f'{self.column_prefix}_20day_new_highs'] > daily_20day_threshold
-                ).astype(int)
-                threshold_results[f'{self.column_prefix}_daily_20day_new_highs_gt_{daily_20day_threshold}'] = daily_20day_new_highs_gt_threshold
-                
-                # Calculate "20-Day Successful 20-Day New Highs > threshold" condition
-                if len(results_df) >= 20:
-                    twenty_day_success = daily_20day_new_highs_gt_threshold.rolling(window=20, min_periods=10).sum()
-                    twenty_day_successful_20day_new_highs_gt_threshold = (twenty_day_success >= twenty_day_threshold).astype(int)
-                    threshold_results[f'{self.column_prefix}_20day_successful_20day_new_highs_gt_{daily_20day_threshold}'] = twenty_day_successful_20day_new_highs_gt_threshold
-                else:
-                    threshold_results[f'{self.column_prefix}_20day_successful_20day_new_highs_gt_{daily_20day_threshold}'] = 0
-            
-            # Calculate 63-day equivalent thresholds
-            if f'{self.column_prefix}_63day_new_highs' in results_df.columns:
-                daily_63day_new_highs_gt_threshold = (
-                    results_df[f'{self.column_prefix}_63day_new_highs'] > daily_63day_threshold
-                ).astype(int)
-                threshold_results[f'{self.column_prefix}_daily_63day_new_highs_gt_{daily_63day_threshold}'] = daily_63day_new_highs_gt_threshold
-                
-                # Calculate "63-Day Successful 63-Day New Highs > threshold" condition
-                if len(results_df) >= 63:
-                    sixty_three_day_success = daily_63day_new_highs_gt_threshold.rolling(window=63, min_periods=30).sum()
-                    sixty_three_day_successful_63day_new_highs_gt_threshold = (sixty_three_day_success >= sixty_three_day_threshold).astype(int)
-                    threshold_results[f'{self.column_prefix}_63day_successful_63day_new_highs_gt_{daily_63day_threshold}'] = sixty_three_day_successful_63day_new_highs_gt_threshold
-                else:
-                    threshold_results[f'{self.column_prefix}_63day_successful_63day_new_highs_gt_{daily_63day_threshold}'] = 0
+
+            logger.debug(f"Using generic thresholds - long: {new_highs_thresholds['long']}, medium: {new_highs_thresholds['medium']}, short: {new_highs_thresholds['short']}")
+
+            # Calculate new highs threshold conditions for each period (long, medium, short)
+            for period_name in ['long', 'medium', 'short']:
+                nh_col = f'{self.column_prefix}_{period_name}_new_highs'
+
+                if nh_col in results_df.columns:
+                    threshold = new_highs_thresholds[period_name]
+
+                    # Basic threshold condition
+                    nh_gt_threshold = (results_df[nh_col] > threshold).astype(int)
+                    threshold_results[f'{self.column_prefix}_{period_name}_new_highs_gt_{threshold}'] = nh_gt_threshold
+
+                    # Calculate success window for this period
+                    # Get period length from actual column data if available
+                    hl_periods_col = f'{self.column_prefix}_hl_periods'
+                    if hl_periods_col in results_df.columns:
+                        # Extract period from metadata
+                        periods_str = results_df[hl_periods_col].iloc[0] if not results_df.empty else '252;63;20'
+                        periods = [int(p) for p in periods_str.split(';')]
+                        period_lengths = {'long': periods[0], 'medium': periods[1] if len(periods) > 1 else 63, 'short': periods[2] if len(periods) > 2 else 20}
+                    else:
+                        # Default fallback
+                        period_lengths = {'long': 252, 'medium': 63, 'short': 20}
+
+                    period_length = period_lengths.get(period_name, 252)
+                    window_size = max(1, int(period_length * success_window_pcts[period_name] / 100))
+                    success_threshold = max(1, int(window_size * success_threshold_pcts[period_name] / 100))
+
+                    # Calculate success condition if we have enough data
+                    if len(results_df) >= window_size:
+                        success_count = nh_gt_threshold.rolling(window=window_size, min_periods=max(1, window_size//2)).sum()
+                        success_condition = (success_count >= success_threshold).astype(int)
+                        threshold_results[f'{self.column_prefix}_{period_name}_success_condition'] = success_condition
+                    else:
+                        threshold_results[f'{self.column_prefix}_{period_name}_success_condition'] = 0
             
             # Calculate advance/decline ratio thresholds
             if f'{self.column_prefix}_ad_ratio' in results_df.columns:
@@ -766,14 +919,23 @@ class MarketBreadthCalculator:
                 weak_breadth = (results_df[f'{self.column_prefix}_advance_pct'] < weak_advance).astype(int)
                 threshold_results[f'{self.column_prefix}_weak_advance_breadth'] = weak_breadth
             
-            # Calculate moving average breadth thresholds
-            for period in [20, 50, 200]:
+            # Calculate moving average breadth thresholds using dynamic MA periods
+            ma_periods_col = f'{self.column_prefix}_ma_periods'
+            if ma_periods_col in results_df.columns:
+                # Extract MA periods from metadata
+                ma_periods_str = results_df[ma_periods_col].iloc[0] if not results_df.empty else '20;50;200'
+                ma_periods = [int(p) for p in ma_periods_str.split(';')]
+            else:
+                # Default fallback
+                ma_periods = [20, 50, 200]
+
+            for period in ma_periods:
                 pct_col = f'{self.column_prefix}_pct_above_ma_{period}'
                 if pct_col in results_df.columns:
                     # Strong MA breadth (above threshold% above MA)
                     strong_ma_col = f'{self.column_prefix}_strong_ma_breadth_{period}'
                     threshold_results[strong_ma_col] = (results_df[pct_col] > strong_ma_breadth).astype(int)
-                    
+
                     # Weak MA breadth (below threshold% above MA)
                     weak_ma_col = f'{self.column_prefix}_weak_ma_breadth_{period}'
                     threshold_results[weak_ma_col] = (results_df[pct_col] < weak_ma_breadth).astype(int)
@@ -876,14 +1038,16 @@ class MarketBreadthCalculator:
             logger.error(f"Error loading combined universe data: {e}")
             return pd.DataFrame()
     
-    def _calculate_breadth_from_combined_data(self, combined_data: pd.DataFrame, lookback_days: int = 252, user_config=None) -> pd.DataFrame:
+    def _calculate_breadth_from_combined_data(self, combined_data: pd.DataFrame, timeframe: str = "daily", periods_config=None, user_config=None) -> pd.DataFrame:
         """
         Calculate market breadth indicators from pre-combined universe data.
-        
+
         Args:
             combined_data: Combined market data from multiple universes
-            lookback_days: Number of trading days for calculations
-            
+            timeframe: Data timeframe (daily, weekly, monthly)
+            periods_config: Configuration for new highs/lows and MA periods
+            user_config: User configuration for thresholds
+
         Returns:
             DataFrame with breadth calculations indexed by date
         """
@@ -902,20 +1066,25 @@ class MarketBreadthCalculator:
             ad_results = self._calculate_advance_decline_indicators(combined_data, results_df.index)
             results_df = pd.concat([results_df, ad_results], axis=1)
             
-            # Calculate 252-day new highs/lows indicators
-            hl_results = self._calculate_252day_new_highs_lows_indicators(combined_data, results_df.index)
-            results_df = pd.concat([results_df, hl_results], axis=1)
-            
-            # Calculate 20-day new highs/lows indicators
-            hl_20day_results = self._calculate_20day_new_highs_lows_indicators(combined_data, results_df.index)
-            results_df = pd.concat([results_df, hl_20day_results], axis=1)
-            
-            # Calculate 63-day new highs/lows indicators
-            hl_63day_results = self._calculate_63day_new_highs_lows_indicators(combined_data, results_df.index)
-            results_df = pd.concat([results_df, hl_63day_results], axis=1)
-            
-            # Calculate moving average breadth indicators
-            ma_results = self._calculate_moving_average_breadth(combined_data, results_df.index)
+            # Get periods from configuration or fallback to defaults
+            if periods_config is None:
+                periods_config = self._get_timeframe_periods(timeframe, user_config)
+
+            hl_periods = periods_config['new_high_lows_periods']
+            ma_periods = periods_config['ma_periods']
+
+            # Calculate new highs/lows indicators using dynamic periods (long, medium, short)
+            for i, period in enumerate(hl_periods):
+                period_name = ['long', 'medium', 'short'][i] if i < 3 else f'period_{i+1}'
+                hl_results = self._calculate_new_highs_lows_indicators(
+                    combined_data, results_df.index, period, period_name
+                )
+                results_df = pd.concat([results_df, hl_results], axis=1)
+
+            # Calculate moving average breadth indicators using dynamic periods
+            ma_results = self._calculate_moving_average_breadth(
+                combined_data, results_df.index, ma_periods
+            )
             results_df = pd.concat([results_df, ma_results], axis=1)
             
             # Calculate specialized breadth thresholds
@@ -926,16 +1095,341 @@ class MarketBreadthCalculator:
             combined_universe_name = "+".join([name for name in combined_data['ticker'].unique()[:5]]) + "..." if combined_data['ticker'].nunique() > 5 else "combined"
             results_df[f'{self.column_prefix}_universe'] = "combined"
             results_df[f'{self.column_prefix}_calculation_date'] = datetime.now().strftime('%Y-%m-%d')
-            results_df[f'{self.column_prefix}_lookback_days'] = lookback_days
+            results_df[f'{self.column_prefix}_hl_periods'] = ';'.join(map(str, hl_periods))
+            results_df[f'{self.column_prefix}_ma_periods'] = ';'.join(map(str, ma_periods))
             
             logger.info(f"Calculated {len([c for c in results_df.columns if self.column_prefix in c])} breadth indicators for combined universe")
             
+            # Add advanced analysis columns
+            analysis_results = self._add_analysis_columns(results_df)
+            results_df = pd.concat([results_df, analysis_results], axis=1)
+
             return results_df
-            
+
         except Exception as e:
             logger.error(f"Error calculating breadth from combined data: {e}")
             return pd.DataFrame()
-    
+
+    def _add_analysis_columns(self, results_df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Add advanced analysis columns including momentum, signals, and ratings.
+
+        Args:
+            results_df: DataFrame with basic breadth calculations
+
+        Returns:
+            DataFrame with additional analysis columns
+        """
+        try:
+            if results_df.empty:
+                return pd.DataFrame()
+
+            analysis_df = pd.DataFrame(index=results_df.index)
+
+            # Calculate momentum indicators
+            momentum_results = self._calculate_momentum_indicators(results_df)
+            analysis_df = pd.concat([analysis_df, momentum_results], axis=1)
+
+            # Calculate breadth signals
+            signal_results = self._calculate_breadth_signals(results_df)
+            analysis_df = pd.concat([analysis_df, signal_results], axis=1)
+
+            # Calculate breadth ratings and scores
+            rating_results = self._calculate_breadth_ratings(results_df)
+            analysis_df = pd.concat([analysis_df, rating_results], axis=1)
+
+            # Calculate consecutive day tracking
+            consecutive_results = self._calculate_consecutive_indicators(signal_results)
+            analysis_df = pd.concat([analysis_df, consecutive_results], axis=1)
+
+            logger.debug(f"Added {len(analysis_df.columns)} analysis columns to breadth data")
+            return analysis_df
+
+        except Exception as e:
+            logger.error(f"Error adding analysis columns: {e}")
+            return pd.DataFrame()
+
+    def _calculate_momentum_indicators(self, results_df: pd.DataFrame) -> pd.DataFrame:
+        """Calculate momentum indicators with configurable windows."""
+        try:
+            momentum_df = pd.DataFrame(index=results_df.index)
+
+            # Get key breadth metrics for momentum calculation
+            total_bullish_base = (
+                results_df.get(f'{self.column_prefix}_strong_advance_breadth', 0) +
+                results_df.get(f'{self.column_prefix}_strong_ma_breadth_20', 0) +
+                results_df.get(f'{self.column_prefix}_strong_ma_breadth_50', 0) +
+                results_df.get(f'{self.column_prefix}_strong_ma_breadth_200', 0) +
+                results_df.get(f'{self.column_prefix}_long_success_condition', 0) +
+                results_df.get(f'{self.column_prefix}_medium_success_condition', 0)
+            )
+
+            total_bearish_base = (
+                results_df.get(f'{self.column_prefix}_weak_advance_breadth', 0) +
+                results_df.get(f'{self.column_prefix}_weak_ma_breadth_20', 0) +
+                results_df.get(f'{self.column_prefix}_weak_ma_breadth_50', 0) +
+                results_df.get(f'{self.column_prefix}_weak_ma_breadth_200', 0)
+            )
+
+            # Calculate momentum for different windows
+            for window in [5, 10, 20]:
+                # Bullish momentum
+                momentum_df[f'{self.column_prefix}_bullish_momentum_{window}d'] = total_bullish_base.rolling(
+                    window=window, min_periods=window//2
+                ).mean().round(2)
+
+                # Bearish momentum
+                momentum_df[f'{self.column_prefix}_bearish_momentum_{window}d'] = total_bearish_base.rolling(
+                    window=window, min_periods=window//2
+                ).mean().round(2)
+
+                # Net momentum
+                net_momentum = (total_bullish_base - total_bearish_base).rolling(
+                    window=window, min_periods=window//2
+                ).mean().round(2)
+                momentum_df[f'{self.column_prefix}_net_momentum_{window}d'] = net_momentum
+
+            return momentum_df
+
+        except Exception as e:
+            logger.error(f"Error calculating momentum indicators: {e}")
+            return pd.DataFrame()
+
+    def _calculate_breadth_signals(self, results_df: pd.DataFrame) -> pd.DataFrame:
+        """Calculate breadth thrust, deterioration, and signal scores."""
+        try:
+            signals_df = pd.DataFrame(index=results_df.index)
+
+            # Configurable thresholds (using defaults if not configured)
+            thrust_threshold = 80
+            deterioration_threshold = 20
+            new_highs_threshold = 50
+            ad_thrust_threshold = 2.0
+
+            # Breadth thrust (strong MA breadth across timeframes)
+            avg_ma_breadth = (
+                results_df.get(f'{self.column_prefix}_pct_above_ma_20', 0) +
+                results_df.get(f'{self.column_prefix}_pct_above_ma_50', 0) +
+                results_df.get(f'{self.column_prefix}_pct_above_ma_200', 0)
+            ) / 3
+            signals_df[f'{self.column_prefix}_breadth_thrust'] = (avg_ma_breadth > thrust_threshold).astype(int)
+
+            # Breadth deterioration
+            signals_df[f'{self.column_prefix}_breadth_deterioration'] = (avg_ma_breadth < deterioration_threshold).astype(int)
+
+            # A/D thrust
+            signals_df[f'{self.column_prefix}_ad_thrust'] = (results_df.get(f'{self.column_prefix}_ad_ratio', 0) > ad_thrust_threshold).astype(int)
+
+            # New highs expansion (using long period)
+            signals_df[f'{self.column_prefix}_new_highs_expansion'] = (
+                results_df.get(f'{self.column_prefix}_long_new_highs', 0) > new_highs_threshold
+            ).astype(int)
+
+            # New lows expansion
+            signals_df[f'{self.column_prefix}_new_lows_expansion'] = (
+                results_df.get(f'{self.column_prefix}_long_new_lows', 0) > new_highs_threshold
+            ).astype(int)
+
+            # Total bullish signals
+            bullish_signals = (
+                signals_df[f'{self.column_prefix}_breadth_thrust'] +
+                signals_df[f'{self.column_prefix}_ad_thrust'] +
+                signals_df[f'{self.column_prefix}_new_highs_expansion'] +
+                results_df.get(f'{self.column_prefix}_strong_advance_breadth', 0) +
+                results_df.get(f'{self.column_prefix}_long_success_condition', 0) +
+                results_df.get(f'{self.column_prefix}_medium_success_condition', 0)
+            )
+            signals_df[f'{self.column_prefix}_total_bullish_signals'] = bullish_signals
+
+            # Total bearish signals
+            bearish_signals = (
+                signals_df[f'{self.column_prefix}_breadth_deterioration'] +
+                signals_df[f'{self.column_prefix}_new_lows_expansion'] +
+                results_df.get(f'{self.column_prefix}_weak_advance_breadth', 0) +
+                results_df.get(f'{self.column_prefix}_weak_ma_breadth_20', 0) +
+                results_df.get(f'{self.column_prefix}_weak_ma_breadth_50', 0) +
+                results_df.get(f'{self.column_prefix}_weak_ma_breadth_200', 0)
+            )
+            signals_df[f'{self.column_prefix}_total_bearish_signals'] = bearish_signals
+
+            # Net signal score
+            signals_df[f'{self.column_prefix}_net_signal_score'] = bullish_signals - bearish_signals
+
+            return signals_df
+
+        except Exception as e:
+            logger.error(f"Error calculating breadth signals: {e}")
+            return pd.DataFrame()
+
+    def _calculate_breadth_ratings(self, results_df: pd.DataFrame) -> pd.DataFrame:
+        """Calculate breadth ratings and overall scores."""
+        try:
+            ratings_df = pd.DataFrame(index=results_df.index)
+
+            # Overall breadth score (0-100 scale)
+            ma20_pct = results_df.get(f'{self.column_prefix}_pct_above_ma_20', 0)
+            ma50_pct = results_df.get(f'{self.column_prefix}_pct_above_ma_50', 0)
+            ma200_pct = results_df.get(f'{self.column_prefix}_pct_above_ma_200', 0)
+            advance_pct = results_df.get(f'{self.column_prefix}_advance_pct', 0)
+
+            overall_score = (ma20_pct * 0.3 + ma50_pct * 0.25 + ma200_pct * 0.25 + advance_pct * 0.2)
+            ratings_df[f'{self.column_prefix}_overall_breadth_score'] = overall_score.round(2)
+
+            # Breadth rating categories
+            def categorize_breadth(score):
+                if score >= 80:
+                    return 'Excellent'
+                elif score >= 60:
+                    return 'Good'
+                elif score >= 40:
+                    return 'Fair'
+                elif score >= 20:
+                    return 'Poor'
+                else:
+                    return 'Very Poor'
+
+            ratings_df[f'{self.column_prefix}_breadth_rating'] = overall_score.apply(categorize_breadth)
+
+            # Signal strength classification
+            def classify_signal_strength(bullish_signals, bearish_signals):
+                net_signals = bullish_signals - bearish_signals
+                if net_signals >= 3:
+                    return 'Strong Bullish'
+                elif net_signals >= 1:
+                    return 'Moderate Bullish'
+                elif net_signals <= -3:
+                    return 'Strong Bearish'
+                elif net_signals <= -1:
+                    return 'Moderate Bearish'
+                else:
+                    return 'Neutral'
+
+            # Calculate signal strength from boolean threshold columns
+            def calculate_signal_strength_from_booleans(row):
+                # Count bullish signals from boolean columns
+                bullish_signals = sum([
+                    row.get(f'{self.column_prefix}_strong_ma_breadth_20', 0),
+                    row.get(f'{self.column_prefix}_strong_ma_breadth_50', 0),
+                    row.get(f'{self.column_prefix}_strong_ma_breadth_200', 0),
+                    row.get(f'{self.column_prefix}_ad_ratio_gt_2_0', 0),
+                    row.get(f'{self.column_prefix}_long_new_highs_gt_100', 0)
+                ])
+
+                # Count bearish signals from boolean columns
+                bearish_signals = sum([
+                    row.get(f'{self.column_prefix}_weak_ma_breadth_20', 0),
+                    row.get(f'{self.column_prefix}_weak_ma_breadth_50', 0),
+                    row.get(f'{self.column_prefix}_weak_ma_breadth_200', 0),
+                    row.get(f'{self.column_prefix}_ad_ratio_lt_0_5', 0)
+                ])
+
+                net_score = bullish_signals - bearish_signals
+
+                # Apply signal strength classification matching your table
+                if bullish_signals >= 3 and net_score >= 2:
+                    return 'Strong Bullish'
+                elif bearish_signals >= 3 and net_score <= -2:
+                    return 'Strong Bearish'
+                elif bullish_signals >= 2 and net_score >= 1:
+                    return 'Moderate Bullish'
+                elif bearish_signals >= 2 and net_score <= -1:
+                    return 'Moderate Bearish'
+                elif bullish_signals > 0 or bearish_signals > 0:
+                    return 'Weak Signal (Bullish)' if net_score > 0 else 'Weak Signal (Bearish)'
+                else:
+                    return 'Neutral'
+
+            # Apply signal strength calculation to each row
+            ratings_df[f'{self.column_prefix}_signal_strength'] = results_df.apply(
+                calculate_signal_strength_from_booleans, axis=1
+            )
+
+            # Calculate threshold classification from boolean columns
+            def calculate_threshold_classification(row):
+                """Map active boolean signals to threshold table classifications."""
+                active_classifications = []
+
+                if any([row.get(f'{self.column_prefix}_strong_ma_breadth_20', 0),
+                        row.get(f'{self.column_prefix}_strong_ma_breadth_50', 0),
+                        row.get(f'{self.column_prefix}_strong_ma_breadth_200', 0)]):
+                    active_classifications.append("Breadth Thrust (Bullish)")
+
+                if row.get(f'{self.column_prefix}_ad_ratio_gt_2_0', 0):
+                    active_classifications.append("Advance/Decline Thrust (Bullish)")
+
+                if row.get(f'{self.column_prefix}_long_new_highs_gt_100', 0):
+                    active_classifications.append("New Highs Expansion (Bullish)")
+
+                if any([row.get(f'{self.column_prefix}_weak_ma_breadth_20', 0),
+                        row.get(f'{self.column_prefix}_weak_ma_breadth_50', 0),
+                        row.get(f'{self.column_prefix}_weak_ma_breadth_200', 0)]):
+                    active_classifications.append("Breadth Deterioration (Bearish)")
+
+                if not active_classifications:
+                    return "Neutral"
+                elif len(active_classifications) == 1:
+                    return active_classifications[0]
+                else:
+                    return "; ".join(active_classifications)
+
+            # Apply threshold classification to each row
+            ratings_df[f'{self.column_prefix}_threshold_classification'] = results_df.apply(
+                calculate_threshold_classification, axis=1
+            )
+
+            # Market participation (percentage of advancing stocks)
+            market_participation = results_df.get(f'{self.column_prefix}_advance_pct', 0)
+            ratings_df[f'{self.column_prefix}_market_participation'] = market_participation
+
+            return ratings_df
+
+        except Exception as e:
+            logger.error(f"Error calculating breadth ratings: {e}")
+            return pd.DataFrame()
+
+    def _calculate_consecutive_indicators(self, signals_df: pd.DataFrame) -> pd.DataFrame:
+        """Calculate consecutive bullish/bearish day counts."""
+        try:
+            consecutive_df = pd.DataFrame(index=signals_df.index)
+
+            if f'{self.column_prefix}_total_bullish_signals' in signals_df.columns:
+                bullish_higher = (
+                    signals_df[f'{self.column_prefix}_total_bullish_signals'] >
+                    signals_df[f'{self.column_prefix}_total_bearish_signals']
+                )
+                bearish_higher = (
+                    signals_df[f'{self.column_prefix}_total_bearish_signals'] >
+                    signals_df[f'{self.column_prefix}_total_bullish_signals']
+                )
+
+                consecutive_df[f'{self.column_prefix}_consecutive_bullish_days'] = self._calculate_consecutive_signals(bullish_higher)
+                consecutive_df[f'{self.column_prefix}_consecutive_bearish_days'] = self._calculate_consecutive_signals(bearish_higher)
+
+            return consecutive_df
+
+        except Exception as e:
+            logger.error(f"Error calculating consecutive indicators: {e}")
+            return pd.DataFrame()
+
+    def _calculate_consecutive_signals(self, condition_series: pd.Series) -> pd.Series:
+        """Calculate consecutive days where condition is True."""
+        try:
+            consecutive = pd.Series(index=condition_series.index, dtype=int)
+            count = 0
+
+            for i, value in enumerate(condition_series):
+                if value:
+                    count += 1
+                else:
+                    count = 0
+                consecutive.iloc[i] = count
+
+            return consecutive
+
+        except Exception as e:
+            logger.error(f"Error calculating consecutive signals: {e}")
+            return pd.Series(index=condition_series.index, dtype=int)
+
     def get_breadth_summary(self, results_df: pd.DataFrame) -> Dict:
         """
         Generate a summary of market breadth calculations.

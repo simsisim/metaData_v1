@@ -1,0 +1,5 @@
+level,detection_date,detection_bar,confirmation_date,confirmation_bar,breakout_date,breakout_bar,is_confirmed,is_broken
+91.95515467676086,2024-10-07,192,2024-10-07,-1,2024-11-11,217.0,True,True
+95.57636936137472,2024-11-22,226,2024-11-22,-1,,,True,False
+94.05487859834152,2025-03-26,308,2025-03-26,-1,,,True,False
+89.44000244140625,2025-07-11,381,2025-07-11,-1,2025-08-28,415.0,True,True

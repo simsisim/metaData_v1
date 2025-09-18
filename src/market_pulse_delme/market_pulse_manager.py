@@ -213,59 +213,45 @@ class MarketPulseManager:
     def _is_gmi_enabled_for_timeframe(self, timeframe: str) -> bool:
         """
         Check if GMI calculation is enabled for the specified timeframe.
-        
+
+        GMI is daily-only by design. Only runs for daily timeframe.
+
         Args:
             timeframe: Data timeframe ('daily', 'weekly', 'monthly')
-            
+
         Returns:
-            bool: True if GMI is enabled for this timeframe
+            bool: True if GMI is enabled and timeframe is daily, False otherwise
         """
-        # Map timeframe to configuration attribute
-        timeframe_config_map = {
-            'daily': 'market_pulse_gmi_enable_daily',
-            'weekly': 'market_pulse_gmi_enable_weekly', 
-            'monthly': 'market_pulse_gmi_enable_monthly'
-        }
-        
-        # Get the configuration attribute name for this timeframe
-        config_attr = timeframe_config_map.get(timeframe.lower())
-        if not config_attr:
-            logger.warning(f"Unknown timeframe '{timeframe}' for GMI enablement check, defaulting to enabled")
-            return True
-        
-        # Check if GMI is enabled for this timeframe
-        is_enabled = getattr(self.user_config, config_attr, True)  # Default to True if not found
-        
-        logger.debug(f"GMI enabled for {timeframe}: {is_enabled}")
+        # GMI only runs on daily timeframe
+        if timeframe.lower() != 'daily':
+            logger.debug(f"GMI skipped for {timeframe}: daily-only by design")
+            return False
+
+        # Check if GMI is globally enabled
+        is_enabled = getattr(self.user_config, 'market_pulse_gmi_enable', False)
+        logger.debug(f"GMI enabled for daily: {is_enabled}")
         return is_enabled
     
     def _is_gmi2_enabled_for_timeframe(self, timeframe: str) -> bool:
         """
         Check if GMI2 calculation is enabled for the specified timeframe.
-        
+
+        GMI2 is daily-only by design. Only runs for daily timeframe.
+
         Args:
             timeframe: Data timeframe ('daily', 'weekly', 'monthly')
-            
+
         Returns:
-            bool: True if GMI2 is enabled for this timeframe
+            bool: True if GMI2 is enabled and timeframe is daily, False otherwise
         """
-        # Map timeframe to configuration attribute
-        timeframe_config_map = {
-            'daily': 'market_pulse_gmi2_enable_daily',
-            'weekly': 'market_pulse_gmi2_enable_weekly', 
-            'monthly': 'market_pulse_gmi2_enable_monthly'
-        }
-        
-        # Get the configuration attribute name for this timeframe
-        config_attr = timeframe_config_map.get(timeframe.lower())
-        if not config_attr:
-            logger.warning(f"Unknown timeframe '{timeframe}' for GMI2 enablement check, defaulting to enabled")
-            return True
-        
-        # Check if GMI2 is enabled for this timeframe
-        is_enabled = getattr(self.user_config, config_attr, True)  # Default to True if not found
-        
-        logger.debug(f"GMI2 enabled for {timeframe}: {is_enabled}")
+        # GMI2 only runs on daily timeframe
+        if timeframe.lower() != 'daily':
+            logger.debug(f"GMI2 skipped for {timeframe}: daily-only by design")
+            return False
+
+        # Check if GMI2 is globally enabled
+        is_enabled = getattr(self.user_config, 'market_pulse_gmi2_enable', False)
+        logger.debug(f"GMI2 enabled for daily: {is_enabled}")
         return is_enabled
     
     def run_complete_analysis(self, timeframe: str = 'daily', data_date: str = None) -> Dict[str, Any]:

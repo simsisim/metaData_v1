@@ -82,6 +82,11 @@ class ChillaxMAS(BaseIndicator):
         
         self.chart_timeframe = int(getattr(user_config, 'chillax_mas_charts_timeframe', 150))
         self.trend_days = int(getattr(user_config, 'market_pulse_chillax_trend_days', 5))
+
+        # Parse display SMAs for chart overlay
+        self.display_sma_periods = self._parse_display_sma_periods(
+            getattr(user_config, 'market_pulse_chillax_display_sma', '50;150;200')
+        )
         
         # Ensure we have exactly 2 SMA periods
         if len(self.sma_periods) != 2:
@@ -91,7 +96,7 @@ class ChillaxMAS(BaseIndicator):
         self.fast_sma = min(self.sma_periods)
         self.slow_sma = max(self.sma_periods)
         
-        logger.info(f"ChillaxMAS initialized: indexes={self.chillax_indexes}, SMAs=[{self.fast_sma}, {self.slow_sma}], chart_timeframe={self.chart_timeframe}")
+        logger.info(f"ChillaxMAS initialized: indexes={self.chillax_indexes}, analysis_SMAs=[{self.fast_sma}, {self.slow_sma}], display_SMAs={self.display_sma_periods}, chart_timeframe={self.chart_timeframe}")
     
     def _parse_chillax_indexes(self, indexes_str: str) -> List[str]:
         """Parse chillax_mas_indexes configuration string."""
@@ -114,6 +119,17 @@ class ChillaxMAS(BaseIndicator):
         if not charts_str:
             return all_indexes  # Create charts for all indexes if not specified
         return [idx.strip().upper() for idx in charts_str.split(';') if idx.strip()]
+
+    def _parse_display_sma_periods(self, sma_str: str) -> List[int]:
+        """Parse chillax_display_sma configuration string."""
+        if not sma_str:
+            return [50, 150, 200]
+        try:
+            periods = [int(period.strip()) for period in sma_str.split(';') if period.strip()]
+            return sorted(periods)  # Sort for consistent display order
+        except ValueError as e:
+            logger.error(f"Error parsing display SMA periods '{sma_str}': {e}")
+            return [50, 150, 200]
     
     def run_analysis(self, timeframe: str = 'daily', data_date: str = None) -> Dict[str, Any]:
         """
@@ -248,6 +264,165 @@ class ChillaxMAS(BaseIndicator):
                 continue
         
         return market_data
+
+    def _load_full_market_data_for_display(self, index: str) -> pd.DataFrame:
+        """
+        Load full market data for display SMA calculations (not restricted by chart timeframe).
+        Need sufficient data for longest SMA period.
+        """
+        try:
+            file_path = self.config.get_market_data_dir('daily') / f"{index}.csv"
+
+            if not file_path.exists():
+                logger.warning(f"Market data file not found: {file_path}")
+                return None
+
+            df = pd.read_csv(file_path, index_col='Date', parse_dates=False)
+
+            # Clean and standardize date index
+            df.index = df.index.str.split(' ').str[0]
+            df.index = pd.to_datetime(df.index)
+            df = df.sort_index()
+
+            # Ensure required columns exist
+            required_columns = ['Open', 'High', 'Low', 'Close']
+            missing_columns = [col for col in required_columns if col not in df.columns]
+            if missing_columns:
+                logger.warning(f"Missing columns in {index}: {missing_columns}")
+                return None
+
+            # Calculate minimum required data length for display SMAs
+            max_sma_period = max(self.display_sma_periods) if self.display_sma_periods else 200
+            required_length = max_sma_period + self.chart_timeframe  # Extra buffer
+
+            # Only take what we need (optimize memory)
+            if len(df) > required_length:
+                df = df.tail(required_length)
+
+            logger.debug(f"Loaded {len(df)} records for display SMA calculation of {index} (max_sma={max_sma_period})")
+            return df
+
+        except Exception as e:
+            logger.error(f"Error loading full market data for {index}: {e}")
+            return None
+
+    def _load_display_smas(self, index: str, market_data: pd.DataFrame) -> Dict[int, pd.Series]:
+        """
+        Load display SMAs using hybrid approach: basic_calculation + calculated.
+
+        Args:
+            index: Index symbol (e.g., 'SPY')
+            market_data: Raw market data DataFrame with OHLC columns
+
+        Returns:
+            Dictionary mapping SMA period -> pd.Series of SMA values
+        """
+        display_smas = {}
+
+        try:
+            # Try to load from basic_calculation first
+            basic_calc_smas = self._load_from_basic_calculation(index)
+
+            # Check which periods are available vs missing
+            available_periods = []
+            missing_periods = []
+
+            for period in self.display_sma_periods:
+                if period in basic_calc_smas:
+                    available_periods.append(period)
+                    display_smas[period] = basic_calc_smas[period]
+                else:
+                    missing_periods.append(period)
+
+            # Calculate missing SMAs from market data
+            if missing_periods:
+                calculated_smas = self._calculate_missing_smas(market_data, missing_periods)
+                display_smas.update(calculated_smas)
+
+            # Align all SMAs to same date index (market_data dates)
+            aligned_smas = self._align_sma_data(display_smas, market_data.index)
+
+            logger.info(f"Display SMAs loaded for {index}: available from basic_calc={available_periods}, calculated={missing_periods}")
+            return aligned_smas
+
+        except Exception as e:
+            logger.error(f"Error loading display SMAs for {index}: {e}")
+            # Fallback: calculate all SMAs from market data
+            return self._calculate_missing_smas(market_data, self.display_sma_periods)
+
+    def _load_from_basic_calculation(self, index: str) -> Dict[int, pd.Series]:
+        """Load available SMAs from basic_calculation files."""
+        try:
+            from src.basic_calculations import find_latest_basic_calculation_file
+
+            # Find latest basic calculation file
+            user_choice = str(self.user_config.ticker_choice) if self.user_config else '0-5'
+            basic_calc_file = find_latest_basic_calculation_file(self.config, 'daily', user_choice)
+
+            if not basic_calc_file or not basic_calc_file.exists():
+                logger.info(f"No basic_calculation file found for {index}")
+                return {}
+
+            # Load basic calculation data
+            df = pd.read_csv(basic_calc_file)
+
+            # Filter for this index
+            index_data = df[df['ticker'] == index].copy()
+            if index_data.empty:
+                logger.info(f"No data found for {index} in basic_calculation file")
+                return {}
+
+            # Convert date column to datetime index
+            index_data['date'] = pd.to_datetime(index_data['date'])
+            index_data.set_index('date', inplace=True)
+            index_data.sort_index(inplace=True)
+
+            # Extract available SMA columns
+            available_smas = {}
+            for period in self.display_sma_periods:
+                sma_col = f'daily_sma{period}'
+                if sma_col in index_data.columns:
+                    available_smas[period] = index_data[sma_col].dropna()
+
+            return available_smas
+
+        except Exception as e:
+            logger.error(f"Error loading from basic_calculation for {index}: {e}")
+            return {}
+
+    def _calculate_missing_smas(self, market_data: pd.DataFrame, periods: List[int]) -> Dict[int, pd.Series]:
+        """Calculate SMAs from market data for missing periods."""
+        calculated_smas = {}
+
+        try:
+            for period in periods:
+                if len(market_data) >= period:
+                    sma_values = market_data['Close'].rolling(window=period, min_periods=period).mean()
+                    calculated_smas[period] = sma_values.dropna()
+                else:
+                    logger.warning(f"Not enough data to calculate SMA{period} (need {period}, have {len(market_data)})")
+
+            return calculated_smas
+
+        except Exception as e:
+            logger.error(f"Error calculating SMAs: {e}")
+            return {}
+
+    def _align_sma_data(self, sma_dict: Dict[int, pd.Series], target_index: pd.DatetimeIndex) -> Dict[int, pd.Series]:
+        """Align all SMA series to target date index."""
+        aligned_smas = {}
+
+        try:
+            for period, sma_series in sma_dict.items():
+                # Reindex to target dates, forward fill missing values
+                aligned_series = sma_series.reindex(target_index, method='ffill')
+                aligned_smas[period] = aligned_series
+
+            return aligned_smas
+
+        except Exception as e:
+            logger.error(f"Error aligning SMA data: {e}")
+            return sma_dict  # Return original if alignment fails
     
     def _analyze_index(self, data: pd.DataFrame, index: str) -> Dict[str, Any]:
         """
@@ -419,27 +594,80 @@ class ChillaxMAS(BaseIndicator):
                                alpha=0.8 if close_price >= open_price else 0.6)
                 ax.add_patch(body)
             
-            # Add moving averages with dynamic coloring based on overall trend
+            # Add analysis moving averages with dynamic coloring based on overall trend
             fast_ma_values = df[f'SMA_{self.fast_sma}']
             slow_ma_values = df[f'SMA_{self.slow_sma}']
-            
+
             # Color MAs based on current state
             current_state = df.iloc[-1]['risk_zone'] if len(df) > 0 else 'YELLOW'
             ma_color_map = {
                 'DARK_GREEN': '#006400',
-                'LIGHT_GREEN': '#32CD32', 
+                'LIGHT_GREEN': '#32CD32',
                 'YELLOW': '#FFA500',
                 'LIGHT_RED': '#FF6347',
                 'DARK_RED': '#DC143C'
             }
-            
+
             ma_color = ma_color_map.get(current_state, '#FFA500')
-            
-            # Plot moving averages
-            ax.plot(range(len(df)), fast_ma_values, color=ma_color, linewidth=2.5, 
-                   label=f'SMA {self.fast_sma}', alpha=0.9)
-            ax.plot(range(len(df)), slow_ma_values, color=ma_color, linewidth=2, 
-                   label=f'SMA {self.slow_sma}', alpha=0.7, linestyle='--')
+
+            # Plot analysis moving averages (main SMAs for conditions)
+            ax.plot(range(len(df)), fast_ma_values, color=ma_color, linewidth=2.5,
+                   label=f'SMA {self.fast_sma} (Analysis)', alpha=0.9)
+            ax.plot(range(len(df)), slow_ma_values, color=ma_color, linewidth=2,
+                   label=f'SMA {self.slow_sma} (Analysis)', alpha=0.7, linestyle='--')
+
+            # Add display moving averages (visual reference only)
+            if self.display_sma_periods:
+                # Load full market data for display SMA calculation (need more data than chart timeframe)
+                full_market_data = self._load_full_market_data_for_display(index)
+                if full_market_data is not None:
+                    display_smas = self._load_display_smas(index, full_market_data)
+                else:
+                    # Fallback to chart data if full data unavailable
+                    display_smas = self._load_display_smas(index, data)
+
+                # Plot display SMAs with distinct colors and styles for better visibility
+                display_config = {
+                    50: {'color': '#FF6B6B', 'style': ':', 'alpha': 0.7},    # Red dotted - short-term
+                    150: {'color': '#4ECDC4', 'style': '--', 'alpha': 0.8},  # Teal dashed - medium-term
+                    200: {'color': '#45B7D1', 'style': '-.', 'alpha': 0.9}   # Blue dash-dot - long-term
+                }
+
+                for period in sorted(self.display_sma_periods):
+                    if period in display_smas:
+                        sma_data = display_smas[period]
+                        if not sma_data.empty and len(sma_data) > 0:
+                            # Align display SMA data to chart timeframe (same date range as df)
+                            chart_start_date = df.index[0]
+                            chart_end_date = df.index[-1]
+
+                            # Filter SMA data to chart date range
+                            aligned_sma = sma_data[(sma_data.index >= chart_start_date) &
+                                                  (sma_data.index <= chart_end_date)]
+
+                            # Reindex to match chart dates exactly
+                            aligned_sma = aligned_sma.reindex(df.index, method='ffill')
+
+                            if not aligned_sma.empty and len(aligned_sma) > 0:
+                                # Get color and style for this period
+                                config = display_config.get(period, {
+                                    'color': '#808080', 'style': ':', 'alpha': 0.6
+                                })
+
+                                # Get current value for label
+                                current_value = aligned_sma.iloc[-1] if len(aligned_sma) > 0 else 0
+
+                                # Only plot if we have valid data
+                                if not pd.isna(current_value):
+                                    ax.plot(range(len(aligned_sma)), aligned_sma,
+                                           color=config['color'], linewidth=1.8,
+                                           alpha=config['alpha'], linestyle=config['style'],
+                                           label=f'SMA {period} (${current_value:.0f})')
+                                    logger.debug(f"Plotted display SMA{period} for {index} with {len(aligned_sma)} points, value=${current_value:.2f}")
+                                else:
+                                    logger.warning(f"No valid data for display SMA{period} for {index}")
+                            else:
+                                logger.warning(f"Empty aligned SMA{period} data for {index} in chart timeframe")
             
             # Formatting
             ax.set_title(f'{index} - Qullamaggie Moving Average Coloring System', 
@@ -466,17 +694,35 @@ class ChillaxMAS(BaseIndicator):
                 plt.Rectangle((0, 0), 1, 1, facecolor='#8B0000', alpha=0.8, label='Dark Red (Strong Bear)')
             ]
             
-            # Add MA lines to legend
+            # Add analysis MA lines to legend
             legend_elements.extend([
-                plt.Line2D([0], [0], color=ma_color, linewidth=2.5, label=f'SMA {self.fast_sma}'),
-                plt.Line2D([0], [0], color=ma_color, linewidth=2, linestyle='--', label=f'SMA {self.slow_sma}')
+                plt.Line2D([0], [0], color=ma_color, linewidth=2.5, label=f'SMA {self.fast_sma} (Analysis)'),
+                plt.Line2D([0], [0], color=ma_color, linewidth=2, linestyle='--', label=f'SMA {self.slow_sma} (Analysis)')
             ])
+
+            # Add display MA lines to legend with distinct styling
+            if self.display_sma_periods:
+                display_config = {
+                    50: {'color': '#FF6B6B', 'style': ':', 'alpha': 0.7},
+                    150: {'color': '#4ECDC4', 'style': '--', 'alpha': 0.8},
+                    200: {'color': '#45B7D1', 'style': '-.', 'alpha': 0.9}
+                }
+
+                for period in sorted(self.display_sma_periods):
+                    config = display_config.get(period, {
+                        'color': '#808080', 'style': ':', 'alpha': 0.6
+                    })
+                    legend_elements.append(
+                        plt.Line2D([0], [0], color=config['color'], linewidth=1.8,
+                                  linestyle=config['style'], alpha=config['alpha'],
+                                  label=f'SMA {period}')
+                    )
             
             ax.legend(handles=legend_elements, loc='upper left', bbox_to_anchor=(0, 1), fontsize=9)
             
             # Create output filename
             user_choice = str(self.user_config.ticker_choice) if self.user_config else '0-5'
-            chart_filename = f"chillax_mas_{index.lower()}_{user_choice}_{timeframe}_{latest_date}.png"
+            chart_filename = f"chillax_mas_{index}_{user_choice}_{timeframe}_{latest_date}.png"
             
             # Ensure output directory exists
             output_dir = self.config.directories['RESULTS_DIR'] / 'market_pulse'
@@ -550,7 +796,7 @@ class ChillaxMAS(BaseIndicator):
             df_output = pd.DataFrame(output_rows)
             
             # Create output filename
-            indexes_str = '+'.join([idx.lower() for idx in sorted(analysis_results.keys())])
+            indexes_str = '+'.join([idx for idx in sorted(analysis_results.keys())])
             user_choice = str(self.user_config.ticker_choice) if self.user_config else '0-5'
             output_filename = f"chillax_mas_{indexes_str}_{user_choice}_{timeframe}_{latest_date}.csv"
             

@@ -41,8 +41,8 @@ class StageAnalysisStreamingProcessor(StreamingCalculationBase):
         """
         super().__init__(config, user_config)
 
-        # Create stage analysis output directory
-        self.stage_dir = config.directories['RESULTS_DIR'] / 'stage_analysis'
+        # Create stage analysis output directory using user-configurable path
+        self.stage_dir = config.directories['STAGE_ANALYSIS_DIR']
         self.stage_dir.mkdir(parents=True, exist_ok=True)
 
         # Initialize analyzers for each timeframe
@@ -141,6 +141,54 @@ class StageAnalysisStreamingProcessor(StreamingCalculationBase):
 
         return config
 
+    def apply_stage_analysis_filters(self, df: pd.DataFrame, ticker: str) -> bool:
+        """
+        Apply minimum price and volume filters before stage analysis calculations.
+
+        Args:
+            df: Ticker OHLCV data
+            ticker: Ticker symbol
+
+        Returns:
+            bool: True if ticker passes filters, False if should be excluded
+        """
+        try:
+            if df is None or df.empty:
+                logger.debug(f"Filter: Skipping {ticker} - No data")
+                return False
+
+            # Get latest data point for filtering
+            latest = df.iloc[-1]
+
+            # Price filter - use Close
+            min_price = getattr(self.user_config, 'stage_analysis_min_price', 5.0)
+            if 'Close' not in df.columns:
+                logger.debug(f"Filter: Skipping {ticker} - No Close column")
+                return False
+
+            current_price = latest['Close']
+            if pd.isna(current_price) or current_price < min_price:
+                logger.debug(f"Filter: Excluding {ticker} - Price ${current_price:.2f} < ${min_price:.2f}")
+                return False
+
+            # Volume filter - use Volume
+            min_volume = getattr(self.user_config, 'stage_analysis_min_vol', 100000)
+            if 'Volume' not in df.columns:
+                logger.debug(f"Filter: Skipping {ticker} - No Volume column")
+                return False
+
+            current_volume = latest['Volume']
+            if pd.isna(current_volume) or current_volume < min_volume:
+                logger.debug(f"Filter: Excluding {ticker} - Volume {current_volume:,} < {min_volume:,}")
+                return False
+
+            logger.debug(f"Filter: {ticker} passed - Price: ${current_price:.2f}, Volume: {current_volume:,}")
+            return True
+
+        except Exception as e:
+            logger.debug(f"Filter: Error checking {ticker}: {e}")
+            return False
+
     def calculate_single_ticker(self, df: pd.DataFrame, ticker: str, timeframe: str) -> Dict[str, Any]:
         """
         Calculate stage analysis for a single ticker.
@@ -156,6 +204,11 @@ class StageAnalysisStreamingProcessor(StreamingCalculationBase):
         try:
             if df is None or df.empty:
                 logger.debug(f"Skipping {ticker}: No data")
+                return None
+
+            # Apply minimum price and volume filters BEFORE expensive calculations
+            if not self.apply_stage_analysis_filters(df, ticker):
+                logger.debug(f"Filtered out {ticker} - does not meet min price/volume requirements")
                 return None
 
             # Get analyzer for this timeframe

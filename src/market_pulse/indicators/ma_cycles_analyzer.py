@@ -75,7 +75,11 @@ class MACyclesAnalyzer(BaseIndicator):
             getattr(user_config, 'ma_cycles_indexes', 'SPY;QQQ;IWM')
         )
         
-        self.ma_period = int(getattr(user_config, 'ma_cycles_ma_period', 50))
+        # Parse MA periods configuration
+        ma_periods_str = getattr(user_config, 'market_pulse_ma_cycles_ma_period', '20;50')
+        self.ma_periods = self._parse_ma_periods(ma_periods_str)
+        # Use first period as primary for backward compatibility
+        self.ma_period = self.ma_periods[0] if self.ma_periods else 50
         
         self.chart_indexes = self._parse_chart_indexes(
             getattr(user_config, 'ma_cycles_charts', ''),
@@ -93,6 +97,17 @@ class MACyclesAnalyzer(BaseIndicator):
         if not indexes_str:
             return ['SPY', 'QQQ', 'IWM']
         return [idx.strip().upper() for idx in indexes_str.split(';') if idx.strip()]
+
+    def _parse_ma_periods(self, ma_str: str) -> List[int]:
+        """Parse ma_cycles_ma_period configuration string."""
+        if not ma_str:
+            return [20, 50]
+        try:
+            periods = [int(period.strip()) for period in ma_str.split(';') if period.strip()]
+            return sorted(periods) if periods else [20, 50]
+        except ValueError as e:
+            logger.error(f"Error parsing MA periods '{ma_str}': {e}")
+            return [20, 50]
     
     def _parse_chart_indexes(self, charts_str: str, all_indexes: List[str]) -> List[str]:
         """Parse ma_cycles_charts configuration string."""
@@ -525,22 +540,31 @@ class MACyclesAnalyzer(BaseIndicator):
                 logger.warning(f"No valid data for charting {index}")
                 return None
             
-            # Create figure with subplots
-            fig = plt.figure(figsize=(16, 12))
-            gs = gridspec.GridSpec(3, 1, height_ratios=[2, 1, 0.3], hspace=0.3)
+            # Create figure with subplots - increase table space
+            fig = plt.figure(figsize=(16, 14))
+            gs = gridspec.GridSpec(3, 1, height_ratios=[2.5, 1.2, 0.8], hspace=0.4)
             
             # Upper panel: Price chart with MA
             ax1 = fig.add_subplot(gs[0])
             
+            # Create date-based x-axis
+            dates_numeric = range(len(df_chart))
+            date_labels = df_chart.index
+
             # Plot candlesticks manually (simplified)
             for i, (date, row) in enumerate(df_chart.iterrows()):
                 color = 'green' if row['Close'] > row['Open'] else 'red'
                 ax1.plot([i, i], [row['Low'], row['High']], color='black', linewidth=0.5)
                 ax1.plot([i, i], [row['Open'], row['Close']], color=color, linewidth=2)
-            
+
             # Plot MA
-            ax1.plot(range(len(df_chart)), df_chart[f'MA_{self.ma_period}'], 
+            ax1.plot(dates_numeric, df_chart[f'MA_{self.ma_period}'],
                     color='blue', linewidth=2, label=f'MA {self.ma_period}')
+
+            # Set x-axis with proper date labels
+            step = max(1, len(date_labels) // 10)  # Show ~10 date labels
+            ax1.set_xticks(dates_numeric[::step])
+            ax1.set_xticklabels([d.strftime('%Y-%m-%d') for d in date_labels[::step]], rotation=45, ha='right')
             
             ax1.set_title(f'{index} - Moving Average Cycles Analysis (MA {self.ma_period})', fontsize=14, fontweight='bold')
             ax1.set_ylabel('Price', fontsize=12)
@@ -563,16 +587,20 @@ class MACyclesAnalyzer(BaseIndicator):
                 max_dists.append(max_dist)
                 colors.append('green' if row['cycle_type'] == 'bull' else 'red')
             
-            # Plot cycle candles as bars
-            bars = ax2.bar(range(len(cycle_candles)), cycle_candles, color=colors, alpha=0.7, width=1.0)
-            
+            # Plot cycle candles as bars with date alignment
+            bars = ax2.bar(dates_numeric, cycle_candles, color=colors, alpha=0.7, width=1.0)
+
             # Plot max distance as line
             ax2_twin = ax2.twinx()
-            ax2_twin.plot(range(len(max_dists)), max_dists, color='white', linewidth=1, alpha=0.8)
-            
+            ax2_twin.plot(dates_numeric, max_dists, color='white', linewidth=1, alpha=0.8)
+
+            # Set x-axis labels for histogram panel
+            ax2.set_xticks(dates_numeric[::step])
+            ax2.set_xticklabels([d.strftime('%Y-%m-%d') for d in date_labels[::step]], rotation=45, ha='right')
+
             ax2.set_ylabel('Cycle Candles', fontsize=12)
             ax2_twin.set_ylabel('Max % Distance', fontsize=12)
-            ax2.set_xlabel('Time', fontsize=12)
+            ax2.set_xlabel('Trading Days', fontsize=12)
             ax2.grid(True, alpha=0.3)
             
             # Add current value reference lines
@@ -591,7 +619,7 @@ class MACyclesAnalyzer(BaseIndicator):
             
             # Create output filename
             user_choice = str(self.user_config.ticker_choice) if self.user_config else '0-5'
-            chart_filename = f"ma_cycles_{index.lower()}_{user_choice}_{timeframe}_{latest_date}.png"
+            chart_filename = f"ma_cycles_{index}_{user_choice}_{timeframe}_{latest_date}.png"
             
             # Ensure output directory exists
             output_dir = self.config.directories['RESULTS_DIR'] / 'market_pulse'
@@ -625,45 +653,61 @@ class MACyclesAnalyzer(BaseIndicator):
             ax_table = fig.add_subplot(gs_pos)
             ax_table.axis('off')
             
-            # Prepare table data
+            # Prepare table data in column format for better space utilization
             current_cycle = metrics['current_cycle_type']
             current_color = 'green' if current_cycle == 'bull' else 'red'
-            
+
+            # Organize data in columns: Current, Bull Stats, Bear Stats
+            headers = ['Metric', 'Current', 'Bull Max', 'Bull Avg', 'Bear Max', 'Bear Avg']
+
             table_data = [
-                ['Current Candles', f"{metrics['current_candles']}", current_color],
-                ['Current Max % Dist', f"{metrics['current_max_dist']:.1f}%", current_color],
-                ['Max Bull Candles', f"{metrics['max_bull_candles']}", 'green'],
-                ['Max Bull % Dist', f"{metrics['max_bull_dist']:.1f}%", 'green'],
-                ['Avg Bull Candles', f"{metrics['avg_bull_candles']:.1f}", 'lightgreen'],
-                ['Avg Bull % Dist', f"{metrics['avg_bull_dist']:.1f}%", 'lightgreen'],
-                ['Max Bear Candles', f"{metrics['max_bear_candles']}", 'red'],
-                ['Max Bear % Dist', f"{metrics['max_bear_dist']:.1f}%", 'red'],
-                ['Avg Bear Candles', f"{metrics['avg_bear_candles']:.1f}", 'lightcoral'],
-                ['Avg Bear % Dist', f"{metrics['avg_bear_dist']:.1f}%", 'lightcoral']
+                headers,
+                ['Candles', f"{metrics['current_candles']}",
+                 f"{metrics['max_bull_candles']}", f"{metrics['avg_bull_candles']:.1f}",
+                 f"{metrics['max_bear_candles']}", f"{metrics['avg_bear_candles']:.1f}"],
+                ['Max % Dist', f"{metrics['current_max_dist']:.1f}%",
+                 f"{metrics['max_bull_dist']:.1f}%", f"{metrics['avg_bull_dist']:.1f}%",
+                 f"{metrics['max_bear_dist']:.1f}%", f"{metrics['avg_bear_dist']:.1f}%"]
             ]
-            
-            # Create table
+
+            # Create table with column-based layout
             table = ax_table.table(
-                cellText=[[row[0], row[1]] for row in table_data],
-                cellLoc='left',
+                cellText=table_data,
+                cellLoc='center',
                 loc='center',
                 bbox=[0, 0, 1, 1]
             )
-            
-            # Style table
+
+            # Style table with improved readability
             table.auto_set_font_size(False)
-            table.set_fontsize(9)
-            table.scale(1, 1.5)
-            
-            # Color cells
-            for i, (label, value, color) in enumerate(table_data):
-                table[(i, 0)].set_facecolor('black')
-                table[(i, 0)].set_text_props(weight='bold', color='white')
-                table[(i, 1)].set_facecolor('black')
-                table[(i, 1)].set_text_props(weight='bold', color=color)
-                
-                # Set border
-                for j in range(2):
+            table.set_fontsize(11)
+            table.scale(1, 2.5)  # Increase row height significantly
+
+            # Style header row
+            for j in range(len(headers)):
+                table[(0, j)].set_facecolor('darkgray')
+                table[(0, j)].set_text_props(weight='bold', color='white')
+                table[(0, j)].set_edgecolor('white')
+                table[(0, j)].set_linewidth(2)
+
+            # Style data rows
+            for i in range(1, len(table_data)):
+                for j in range(len(headers)):
+                    if j == 0:  # Metric names
+                        table[(i, j)].set_facecolor('lightgray')
+                        table[(i, j)].set_text_props(weight='bold', color='black')
+                    elif j == 1:  # Current values
+                        table[(i, j)].set_facecolor('black')
+                        table[(i, j)].set_text_props(weight='bold', color=current_color)
+                    elif j in [2, 3]:  # Bull stats
+                        color = 'lightgreen' if j == 3 else 'green'
+                        table[(i, j)].set_facecolor('black')
+                        table[(i, j)].set_text_props(weight='bold', color=color)
+                    else:  # Bear stats
+                        color = 'lightcoral' if j == 5 else 'red'
+                        table[(i, j)].set_facecolor('black')
+                        table[(i, j)].set_text_props(weight='bold', color=color)
+
                     table[(i, j)].set_edgecolor('gray')
                     table[(i, j)].set_linewidth(1)
             

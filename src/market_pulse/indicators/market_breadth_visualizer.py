@@ -119,18 +119,20 @@ class MarketBreadthVisualizer:
     Creates comprehensive market breadth visualizations with TradingView-style layout.
     """
     
-    def __init__(self, config=None):
+    def __init__(self, config=None, user_config=None):
         """
         Initialize the market breadth visualizer.
-        
+
         Args:
             config: Configuration object with directory paths
+            user_config: User configuration with chart display settings
         """
         self.config = config
+        self.user_config = user_config
         
         # Chart styling parameters
         self.style_config = {
-            'figure_size': (16, 12),  # Wide format like TradingView
+            'figure_size': (18, 15),  # Larger format for better spacing
             'dpi': 150,
             'background_color': '#ffffff',  # White theme
             'grid_color': '#cccccc',
@@ -155,24 +157,79 @@ class MarketBreadthVisualizer:
                 'net_highs': '#ff9800'      # Orange
             }
         }
-    
-    def create_breadth_chart(self, breadth_data: pd.DataFrame, index_data: pd.DataFrame = None, 
-                           output_path: str = None, universe_name: str = 'Market') -> str:
+
+    def _get_chart_display_period(self, timeframe: str) -> int:
+        """
+        Get appropriate chart display period for timeframe.
+
+        Args:
+            timeframe: 'daily', 'weekly', or 'monthly'
+
+        Returns:
+            Number of periods to display (252 days, 52 weeks, or 12 months)
+        """
+        if not self.user_config:
+            # Default values if no user config
+            defaults = {'daily': 252, 'weekly': 52, 'monthly': 12}
+            return defaults.get(timeframe, 252)
+
+        periods = {
+            'daily': getattr(self.user_config, 'market_breadth_chart_history_days', 252),
+            'weekly': getattr(self.user_config, 'market_breadth_chart_history_weeks', 52),
+            'monthly': getattr(self.user_config, 'market_breadth_chart_history_months', 12)
+        }
+        return periods.get(timeframe, 252)
+
+    def _filter_data_for_display(self, df: pd.DataFrame, timeframe: str) -> pd.DataFrame:
+        """
+        Filter DataFrame to show only the configured display period.
+
+        Args:
+            df: DataFrame with date column
+            timeframe: 'daily', 'weekly', or 'monthly'
+
+        Returns:
+            Filtered DataFrame with last N periods
+        """
+        if df.empty:
+            return df
+
+        display_periods = self._get_chart_display_period(timeframe)
+
+        # Sort by date and take last N periods - handle both 'date' and 'Date' columns
+        if 'date' in df.columns:
+            df_sorted = df.sort_values('date')
+        elif 'Date' in df.columns:
+            df_sorted = df.sort_values('Date')
+        else:
+            df_sorted = df.sort_index()
+        return df_sorted.tail(display_periods)
+
+    def create_breadth_chart(self, breadth_data: pd.DataFrame, index_data: pd.DataFrame = None,
+                           output_path: str = None, universe_name: str = 'Market', timeframe: str = 'daily',
+                           is_forced: bool = False, forced_date: str = None) -> str:
         """
         Create comprehensive market breadth chart with 3 stacked subplots.
-        
+
         Args:
             breadth_data: DataFrame with historical market breadth data
             index_data: Optional DataFrame with index price data (OHLCV)
             output_path: Path to save the PNG chart
             universe_name: Universe name for chart title
-            
+            timeframe: Timeframe for chart filtering ('daily', 'weekly', 'monthly')
+            is_forced: Whether this chart uses force file mode
+            forced_date: Actual date of the file when force mode is used
+
         Returns:
             Path to saved chart file
         """
         try:
+            # Filter data for display based on timeframe configuration
+            filtered_breadth_data = self._filter_data_for_display(breadth_data, timeframe)
+            filtered_index_data = self._filter_data_for_display(index_data, timeframe) if index_data is not None else None
+
             # Prepare data
-            chart_data = self._prepare_chart_data(breadth_data, index_data)
+            chart_data = self._prepare_chart_data(filtered_breadth_data, filtered_index_data)
             
             if chart_data is None or chart_data.empty:
                 logger.warning("No data available for chart generation")
@@ -187,7 +244,7 @@ class MarketBreadthVisualizer:
             self._create_highs_lows_subplot(fig, chart_data, universe_name)
             
             # Apply final styling and save
-            self._finalize_chart(fig, universe_name)
+            self._finalize_chart(fig, universe_name, chart_data, is_forced, forced_date)
             
             # Save the chart
             if output_path:
@@ -249,6 +306,9 @@ class MarketBreadthVisualizer:
             if 'close' not in chart_data.columns or chart_data['close'].isna().all():
                 logger.info("No index price data available, creating synthetic price based on breadth score")
                 chart_data = self._create_synthetic_price_data(chart_data)
+
+            # Map market breadth columns to chart-expected column names
+            chart_data = self._map_breadth_columns_for_chart(chart_data)
             
             # Sort by date
             chart_data = chart_data.sort_index()
@@ -260,6 +320,166 @@ class MarketBreadthVisualizer:
         except Exception as e:
             logger.error(f"Error preparing chart data: {e}")
             return None
+
+    def _map_breadth_columns_for_chart(self, chart_data: pd.DataFrame) -> pd.DataFrame:
+        """
+        Map enhanced market_breadth columns to chart-expected column names.
+        Enhanced market_breadth CSV files have consistent {timeframe}_mb_ format.
+
+        Args:
+            chart_data: DataFrame with enhanced market breadth data
+
+        Returns:
+            DataFrame with mapped column names for charting
+        """
+        try:
+            # Detect timeframe prefix from enhanced market breadth CSV
+            timeframe_prefix = None
+            for prefix in ['daily_mb_', 'weekly_mb_', 'monthly_mb_']:
+                if any(col.startswith(prefix) for col in chart_data.columns):
+                    timeframe_prefix = prefix
+                    break
+
+            if not timeframe_prefix:
+                # Fallback: check for legacy ba_historical format (no prefix)
+                if any(col in chart_data.columns for col in ['new_long_highs', 'new_medium_highs']):
+                    logger.info("Detected legacy ba_historical format, using direct column mapping")
+                    return self._map_legacy_historical_columns(chart_data)
+                else:
+                    logger.warning("No recognized column format found in enhanced market breadth data")
+                    return chart_data
+
+            # Simplified mapping for enhanced market_breadth format
+            # Enhanced CSV has consistent {timeframe}_mb_ prefix for all columns
+
+            # Map long period columns to chart expected names
+            long_highs = f'{timeframe_prefix}long_new_highs'
+            long_lows = f'{timeframe_prefix}long_new_lows'
+            net_long = f'{timeframe_prefix}net_long_new_highs'
+
+            if long_highs in chart_data.columns:
+                chart_data['new_52week_highs'] = chart_data[long_highs]
+            if long_lows in chart_data.columns:
+                chart_data['new_52week_lows'] = chart_data[long_lows]
+            if net_long in chart_data.columns:
+                chart_data['net_52week_highs'] = chart_data[net_long]
+
+            # Map medium and short periods for additional chart capabilities
+            medium_highs = f'{timeframe_prefix}medium_new_highs'
+            medium_lows = f'{timeframe_prefix}medium_new_lows'
+            short_highs = f'{timeframe_prefix}short_new_highs'
+            short_lows = f'{timeframe_prefix}short_new_lows'
+
+            if medium_highs in chart_data.columns:
+                chart_data['new_medium_highs'] = chart_data[medium_highs]
+            if medium_lows in chart_data.columns:
+                chart_data['new_medium_lows'] = chart_data[medium_lows]
+            if short_highs in chart_data.columns:
+                chart_data['new_short_highs'] = chart_data[short_highs]
+            if short_lows in chart_data.columns:
+                chart_data['new_short_lows'] = chart_data[short_lows]
+
+            # Map MA breadth columns to "combined_" format for single universe charts
+            ma_mapping = {
+                f'{timeframe_prefix}pct_above_ma_20': 'combined_pct_above_ma20',
+                f'{timeframe_prefix}pct_above_ma_50': 'combined_pct_above_ma50',
+                f'{timeframe_prefix}pct_above_ma_200': 'combined_pct_above_ma200'
+            }
+
+            for source_col, target_col in ma_mapping.items():
+                if source_col in chart_data.columns:
+                    chart_data[target_col] = chart_data[source_col]
+
+            # Map additional enhanced analysis columns for chart features
+            analysis_mapping = {
+                f'{timeframe_prefix}breadth_rating': 'breadth_rating',
+                f'{timeframe_prefix}overall_breadth_score': 'overall_breadth_score',
+                f'{timeframe_prefix}signal_strength': 'signal_strength',
+                f'{timeframe_prefix}total_bullish_signals': 'total_bullish_signals',
+                f'{timeframe_prefix}total_bearish_signals': 'total_bearish_signals'
+            }
+
+            for source_col, target_col in analysis_mapping.items():
+                if source_col in chart_data.columns:
+                    chart_data[target_col] = chart_data[source_col]
+
+            logger.debug(f"Mapped enhanced market_breadth columns: {long_highs} -> new_52week_highs, MA columns -> combined_*")
+            return chart_data
+
+        except Exception as e:
+            logger.error(f"Error mapping breadth columns: {e}")
+            return chart_data
+
+    def _map_legacy_historical_columns(self, chart_data: pd.DataFrame) -> pd.DataFrame:
+        """
+        Map legacy ba_historical column format to chart-expected names.
+        Used for backward compatibility with existing ba_historical_*.csv files.
+
+        Args:
+            chart_data: DataFrame with ba_historical format data
+
+        Returns:
+            DataFrame with mapped column names
+        """
+        try:
+            # Direct mapping for ba_historical format (no timeframe prefix)
+            legacy_mapping = {
+                'new_long_highs': 'new_52week_highs',
+                'new_long_lows': 'new_52week_lows',
+                'net_long_highs': 'net_52week_highs',
+                'new_medium_highs': 'new_medium_highs',
+                'new_medium_lows': 'new_medium_lows',
+                # Map MA breadth columns for legacy compatibility
+                'pct_above_ma20': 'combined_pct_above_ma20',
+                'pct_above_ma50': 'combined_pct_above_ma50',
+                'pct_above_ma200': 'combined_pct_above_ma200'
+            }
+
+            for source_col, target_col in legacy_mapping.items():
+                if source_col in chart_data.columns:
+                    chart_data[target_col] = chart_data[source_col]
+
+            logger.debug("Mapped legacy ba_historical columns for chart compatibility")
+            return chart_data
+
+        except Exception as e:
+            logger.error(f"Error mapping legacy historical columns: {e}")
+            return chart_data
+
+    def _get_period_description(self) -> str:
+        """
+        Get period description based on user configuration.
+
+        Returns:
+            String describing the long-term period (e.g., "252-Day", "52-Week", "12-Month")
+        """
+        if not self.user_config:
+            return "Long-Term"
+
+        try:
+            # Get the configured periods for different timeframes
+            daily_periods = getattr(self.user_config, 'market_breadth_daily_new_high_lows_periods', [252, 63, 20])
+            weekly_periods = getattr(self.user_config, 'market_breadth_weekly_new_high_lows_periods', [52, 13, 4])
+            monthly_periods = getattr(self.user_config, 'market_breadth_monthly_new_high_lows_periods', [12, 3, 1])
+
+            # Convert to list if it's a string
+            if isinstance(daily_periods, str):
+                daily_periods = [int(x.strip()) for x in daily_periods.split(';')]
+            if isinstance(weekly_periods, str):
+                weekly_periods = [int(x.strip()) for x in weekly_periods.split(';')]
+            if isinstance(monthly_periods, str):
+                monthly_periods = [int(x.strip()) for x in monthly_periods.split(';')]
+
+            # Return description based on first (long) period
+            long_daily = daily_periods[0] if daily_periods else 252
+            long_weekly = weekly_periods[0] if weekly_periods else 52
+            long_monthly = monthly_periods[0] if monthly_periods else 12
+
+            return f"{long_daily}D/{long_weekly}W/{long_monthly}M"
+
+        except Exception as e:
+            logger.debug(f"Error getting period description: {e}")
+            return "Long-Term"
     
     def _create_synthetic_price_data(self, breadth_data: pd.DataFrame) -> pd.DataFrame:
         """
@@ -313,7 +533,7 @@ class MarketBreadthVisualizer:
         fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=self.style_config['figure_size'],
                                            dpi=self.style_config['dpi'],
                                            gridspec_kw={'height_ratios': [3, 1.5, 1],  # 60%, 25%, 15%
-                                                       'hspace': 0.1})
+                                                       'hspace': 0.3})
         
         # Store axes in figure for later access
         fig.ax1 = ax1  # Candlestick chart
@@ -341,31 +561,32 @@ class MarketBreadthVisualizer:
         ax = fig.ax1
         
         try:
-            # Prepare OHLC data
+            # Prepare OHLC data - use index positions for no weekend gaps
             dates = chart_data.index
+            x_positions = range(len(dates))  # Use index positions instead of dates
             opens = chart_data['open']
             highs = chart_data['high']
             lows = chart_data['low']
             closes = chart_data['close']
             volumes = chart_data.get('volume', pd.Series([0] * len(chart_data)))
             
-            # Create candlestick chart
-            for i, (date, o, h, l, c) in enumerate(zip(dates, opens, highs, lows, closes)):
+            # Create candlestick chart using index positions
+            for i, (x_pos, o, h, l, c) in enumerate(zip(x_positions, opens, highs, lows, closes)):
                 if pd.isna(o) or pd.isna(h) or pd.isna(l) or pd.isna(c):
                     continue
                 
                 # Determine color
                 color = self.style_config['bullish_color'] if c >= o else self.style_config['bearish_color']
                 
-                # Draw high-low line
-                ax.plot([date, date], [l, h], color=color, linewidth=0.8, alpha=0.8)
+                # Draw high-low line using index position
+                ax.plot([x_pos, x_pos], [l, h], color=color, linewidth=0.8, alpha=0.8)
                 
                 # Draw body rectangle
                 body_height = abs(c - o)
                 body_bottom = min(o, c)
                 
                 if body_height > 0:
-                    rect = Rectangle((mdates.date2num(date) - 0.3, body_bottom), 0.6, body_height,
+                    rect = Rectangle((x_pos - 0.3, body_bottom), 0.6, body_height,
                                    facecolor=color, edgecolor=color, alpha=0.8)
                     ax.add_patch(rect)
             
@@ -386,6 +607,8 @@ class MarketBreadthVisualizer:
             ax.grid(True, alpha=0.3, color=self.style_config['grid_color'])
             ax.set_ylabel('Price', color=self.style_config['text_color'])
             
+            # X-axis limits will be set after sharing in _finalize_chart
+
             # Remove x-axis labels (will be shared with bottom subplot)
             ax.set_xticklabels([])
             
@@ -405,7 +628,8 @@ class MarketBreadthVisualizer:
         
         try:
             dates = chart_data.index
-            
+            x_positions = range(len(dates))  # Use index positions for no weekend gaps
+
             # Plot MA breadth percentages
             ma_columns = {
                 'combined_pct_above_ma20': ('Above MA20', self.style_config['breadth_colors']['above_ma20']),
@@ -415,14 +639,14 @@ class MarketBreadthVisualizer:
             
             for col, (label, color) in ma_columns.items():
                 if col in chart_data.columns:
-                    ax.plot(dates, chart_data[col], color=color, linewidth=2, label=label, alpha=0.8)
-                    
+                    ax.plot(x_positions, chart_data[col], color=color, linewidth=2, label=label, alpha=0.8)
+
                     # Add area fill
-                    ax.fill_between(dates, chart_data[col], alpha=0.2, color=color)
+                    ax.fill_between(x_positions, chart_data[col], alpha=0.2, color=color)
             
             # Plot overall breadth score
             if 'overall_breadth_score' in chart_data.columns:
-                ax.plot(dates, chart_data['overall_breadth_score'], 
+                ax.plot(x_positions, chart_data['overall_breadth_score'], 
                        color=self.style_config['breadth_colors']['breadth_score'], 
                        linewidth=3, label='Breadth Score', alpha=0.9)
             
@@ -438,7 +662,9 @@ class MarketBreadthVisualizer:
             ax.grid(True, alpha=0.3, color=self.style_config['grid_color'])
             ax.legend(loc='upper left', framealpha=0.8)
             ax.set_ylim(0, 100)
-            
+
+            # X-axis limits will be set after sharing in _finalize_chart
+
             # Remove x-axis labels (shared with bottom subplot)
             ax.set_xticklabels([])
             
@@ -458,7 +684,8 @@ class MarketBreadthVisualizer:
         
         try:
             dates = chart_data.index
-            
+            x_positions = range(len(dates))  # Use index positions for no weekend gaps
+
             # Plot new highs and lows as histograms
             if 'new_52week_highs' in chart_data.columns and 'new_52week_lows' in chart_data.columns:
                 new_highs = chart_data['new_52week_highs']
@@ -466,62 +693,110 @@ class MarketBreadthVisualizer:
                 
                 # Create histogram bars
                 width = 0.8
-                ax.bar(dates, new_highs, width=width, color=self.style_config['highs_lows_colors']['new_highs'], 
-                      alpha=0.7, label='New 52W Highs')
-                ax.bar(dates, -new_lows, width=width, color=self.style_config['highs_lows_colors']['new_lows'], 
-                      alpha=0.7, label='New 52W Lows')
+                ax.bar(x_positions, new_highs, width=width, color=self.style_config['highs_lows_colors']['new_highs'],
+                      alpha=0.7, label='New Long-Term Highs')
+                ax.bar(x_positions, -new_lows, width=width, color=self.style_config['highs_lows_colors']['new_lows'],
+                      alpha=0.7, label='New Long-Term Lows')
             
             # Plot net new highs as line
             if 'net_52week_highs' in chart_data.columns:
-                ax.plot(dates, chart_data['net_52week_highs'], 
+                ax.plot(x_positions, chart_data['net_52week_highs'], 
                        color=self.style_config['highs_lows_colors']['net_highs'], 
                        linewidth=2, label='Net New Highs', alpha=0.9)
             
             # Add zero line
             ax.axhline(y=0, color='white', linestyle='-', alpha=0.8, linewidth=1)
             
-            # Styling
-            ax.set_title('New Highs vs New Lows (52-Week)', 
+            # Styling - use configurable period description
+            period_desc = self._get_period_description()
+            ax.set_title(f'New Highs vs New Lows ({period_desc})',
                         color=self.style_config['text_color'], fontsize=12)
             ax.set_ylabel('Count', color=self.style_config['text_color'])
             ax.set_xlabel('Date', color=self.style_config['text_color'])
             ax.grid(True, alpha=0.3, color=self.style_config['grid_color'])
             ax.legend(loc='upper left', framealpha=0.8)
             
-            # Format x-axis dates
-            # Convert date objects back to datetime for proper formatting
-            if hasattr(dates, 'to_list') and len(dates) > 0:
-                import datetime as dt
-                if isinstance(dates.to_list()[0], dt.date):
-                    # Convert date objects to datetime for matplotlib
-                    datetime_dates = pd.to_datetime(dates)
-                    ax.set_xlim(datetime_dates.min(), datetime_dates.max())
-            
-            ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m'))
-            ax.xaxis.set_major_locator(mdates.MonthLocator(interval=3))
-            plt.setp(ax.xaxis.get_majorticklabels(), rotation=45, ha='right')
+            # Format x-axis for trading days (no weekend gaps)
+            # xlim and ticks will be set in _finalize_chart after sharing
             
         except Exception as e:
             logger.error(f"Error creating highs/lows subplot: {e}")
     
-    def _finalize_chart(self, fig: plt.Figure, universe_name: str):
+    def _finalize_chart(self, fig: plt.Figure, universe_name: str, chart_data: pd.DataFrame,
+                       is_forced: bool = False, forced_date: str = None):
         """
         Apply final styling and formatting to the chart.
-        
+
         Args:
             fig: Matplotlib figure
             universe_name: Universe name for title
+            chart_data: Chart data for setting x-axis limits
+            is_forced: Whether this chart uses force file mode
+            forced_date: Actual date of the file when force mode is used
         """
-        # Set overall title
-        fig.suptitle(f'Market Breadth Analysis - {universe_name}', 
+        # Set overall title with force indicator if applicable
+        main_title = f'Market Breadth Analysis - {universe_name}'
+        if is_forced and forced_date:
+            main_title += f' [FORCED FILE: {forced_date}]'
+
+        fig.suptitle(main_title,
                     color=self.style_config['text_color'], fontsize=16, fontweight='bold')
-        
-        # Align all x-axes
+
+        # Align all x-axes (sharing will propagate xlim settings)
         fig.ax1.sharex(fig.ax3)
         fig.ax2.sharex(fig.ax3)
-        
+
+        # Set x-axis limits and formatting for TRADING DAYS (no weekend gaps)
+        dates = chart_data.index
+        if len(dates) > 0:
+            num_days = len(dates)
+
+            # Set xlim to index positions (0 to num_days-1) instead of dates
+            fig.ax3.set_xlim(0, num_days - 1)
+
+            # Create custom tick positions every 11 days + first and last
+            tick_interval = 11
+            tick_positions = list(range(0, num_days, tick_interval))
+
+            # Always include first day (0) and last day
+            if 0 not in tick_positions:
+                tick_positions.insert(0, 0)
+            if num_days - 1 not in tick_positions:
+                tick_positions.append(num_days - 1)
+
+            # Sort positions
+            tick_positions = sorted(set(tick_positions))
+
+            # Create custom tick labels: YYYY-MM-DD for first/last, MM-DD for middle
+            tick_labels = []
+            for i, pos in enumerate(tick_positions):
+                if pos < len(dates):
+                    date = dates[pos]
+
+                    # First and last labels get full format (YYYY-MM-DD)
+                    if i == 0 or i == len(tick_positions) - 1:
+                        if hasattr(date, 'strftime'):
+                            tick_labels.append(date.strftime('%Y-%m-%d'))
+                        else:
+                            tick_labels.append(f"{date.year}-{date.month:02d}-{date.day:02d}")
+                    else:
+                        # Middle labels get short format (MM-DD)
+                        if hasattr(date, 'strftime'):
+                            tick_labels.append(date.strftime('%m-%d'))
+                        else:
+                            tick_labels.append(f"{date.month:02d}-{date.day:02d}")
+
+            # Apply custom ticks (no more mdates - use simple tick positioning)
+            fig.ax3.set_xticks(tick_positions)
+            fig.ax3.set_xticklabels(tick_labels, rotation=45, ha='right')
+
+            # Set tight margins on all axes
+            fig.ax1.margins(x=0)
+            fig.ax2.margins(x=0)
+            fig.ax3.margins(x=0)
+
         # Use subplots_adjust instead of tight_layout to avoid warnings
-        plt.subplots_adjust(left=0.08, right=0.95, top=0.92, bottom=0.12, hspace=0.15)
+        plt.subplots_adjust(left=0.08, right=0.95, top=0.92, bottom=0.12, hspace=0.25)
     
     def _save_chart(self, fig: plt.Figure, output_path: str) -> str:
         """
@@ -553,35 +828,45 @@ class MarketBreadthVisualizer:
             return None
 
 
-def generate_breadth_chart_from_csv(csv_path: str, config=None, index_symbol: str = None) -> str:
+def generate_breadth_chart_from_csv(csv_path: str, config=None, index_symbol: str = None, is_forced: bool = False, forced_date: str = None) -> str:
     """
-    Convenience function to generate breadth chart directly from CSV file.
-    
+    Convenience function to generate breadth chart directly from enhanced market_breadth CSV file.
+
     Args:
-        csv_path: Path to breadth analysis CSV file
+        csv_path: Path to enhanced market_breadth CSV file
         config: Configuration object
         index_symbol: Index symbol for price data (optional, auto-detected from universe if None)
-        
+        is_forced: Whether this chart uses force file mode (latest available file)
+        forced_date: Actual date of the file when force mode is used
+
     Returns:
         Path to generated PNG chart
     """
     try:
-        # Load breadth data
+        # Load enhanced market breadth data
         breadth_data = pd.read_csv(csv_path)
-        
+
         # Create output path (same name as CSV but with .png extension)
         csv_path = Path(csv_path)
         png_path = csv_path.with_suffix('.png')
-        
+
         # Extract universe name from filename
         filename_parts = csv_path.stem.split('_')
         if len(filename_parts) >= 3:
-            universe_name = filename_parts[2]  # Extract universe from ba_historical_SP500_...
+            # Handle both formats: market_breadth_SP500_... and ba_historical_SP500_...
+            if filename_parts[0] == 'market' and filename_parts[1] == 'breadth':
+                universe_name = filename_parts[2]  # market_breadth_SP500_...
+            elif filename_parts[0] == 'ba' and filename_parts[1] == 'historical':
+                universe_name = filename_parts[2]  # ba_historical_SP500_... (legacy)
+            else:
+                universe_name = filename_parts[2]  # Fallback
         else:
             universe_name = 'Market'
         
-        # Create visualizer and generate chart
-        visualizer = MarketBreadthVisualizer(config)
+        # Create visualizer and generate chart - with user_config for 63-day filtering
+        from src.user_defined_data import read_user_data
+        user_config = read_user_data()
+        visualizer = MarketBreadthVisualizer(config, user_config)
         
         # Determine index symbol from mapping or use provided one
         if index_symbol is None:
@@ -591,14 +876,32 @@ def generate_breadth_chart_from_csv(csv_path: str, config=None, index_symbol: st
         index_data = None
         if config and index_symbol:
             try:
+                # Try primary data directory first
                 daily_data_dir = config.directories.get('DAILY_DATA_DIR')
+                index_file = None
+
                 if daily_data_dir:
                     index_file = Path(daily_data_dir) / f"{index_symbol}.csv"
                     if index_file.exists():
                         index_data = pd.read_csv(index_file)
-                        logger.debug(f"Loaded index data for {universe_name} -> {index_symbol}")
+                        logger.debug(f"Loaded index data for {universe_name} -> {index_symbol} from {index_file}")
+
+                # Fallback: try downloadData_v1 directory
+                if index_data is None:
+                    fallback_dir = Path(config.base_dir).parent / "downloadData_v1" / "data" / "market_data" / "daily"
+                    if fallback_dir.exists():
+                        fallback_file = fallback_dir / f"{index_symbol}.csv"
+                        if fallback_file.exists():
+                            index_data = pd.read_csv(fallback_file)
+                            logger.debug(f"Loaded index data for {universe_name} -> {index_symbol} from fallback: {fallback_file}")
+                        else:
+                            logger.debug(f"Index file not found in fallback: {fallback_file}")
                     else:
-                        logger.debug(f"Index file not found: {index_file}")
+                        logger.debug(f"Fallback directory not found: {fallback_dir}")
+
+                if index_data is None:
+                    logger.debug(f"No index data found for {index_symbol} in any location")
+
             except Exception as e:
                 logger.debug(f"Could not load index data for {index_symbol}: {e}")
         
@@ -607,7 +910,9 @@ def generate_breadth_chart_from_csv(csv_path: str, config=None, index_symbol: st
             breadth_data=breadth_data,
             index_data=index_data,
             output_path=png_path,
-            universe_name=universe_name
+            universe_name=universe_name,
+            is_forced=is_forced,
+            forced_date=forced_date
         )
         
         return chart_path

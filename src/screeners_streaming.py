@@ -42,8 +42,8 @@ class PVBScreenerStreamingProcessor(StreamingCalculationBase):
         """
         super().__init__(config, user_config)
 
-        # Create PVB screener output directory
-        self.pvb_dir = config.directories['RESULTS_DIR'] / 'screeners' / 'pvb'
+        # Create PVB screener output directory using user-configurable path
+        self.pvb_dir = config.directories['PVB_SCREENER_DIR']
         self.pvb_dir.mkdir(parents=True, exist_ok=True)
 
         logger.info(f"PVB screener streaming processor initialized, output dir: {self.pvb_dir}")
@@ -162,8 +162,8 @@ class ATR1ScreenerStreamingProcessor(StreamingCalculationBase):
         """
         super().__init__(config, user_config)
 
-        # Create ATR1 screener output directory
-        self.atr1_dir = config.directories['RESULTS_DIR'] / 'screeners' / 'atr1'
+        # Create ATR1 screener output directory using user-configurable path
+        self.atr1_dir = config.directories['ATR1_SCREENER_DIR']
         self.atr1_dir.mkdir(parents=True, exist_ok=True)
 
         logger.info(f"ATR1 screener streaming processor initialized, output dir: {self.atr1_dir}")
@@ -281,8 +281,8 @@ class DRWISHScreenerStreamingProcessor(StreamingCalculationBase):
         """
         super().__init__(config, user_config)
 
-        # Create DRWISH screener output directory
-        self.drwish_dir = config.directories['RESULTS_DIR'] / 'screeners' / 'drwish'
+        # Create DRWISH screener output directory using user-configurable path
+        self.drwish_dir = config.directories['DRWISH_SCREENER_DIR']
         self.drwish_dir.mkdir(parents=True, exist_ok=True)
 
         logger.info(f"DRWISH screener streaming processor initialized, output dir: {self.drwish_dir}")
@@ -401,7 +401,7 @@ def run_pvb_screener_streaming(config, user_config, daily_data: Dict[str, pd.Dat
         Dictionary of timeframe -> output file path mappings
     """
     # Check if PVB screener is enabled
-    if not getattr(user_config, 'pvb_enable', False):
+    if not getattr(user_config, 'pvb_TWmodel_enable', False):
         logger.info("PVB screener disabled")
         return {}
 
@@ -417,7 +417,7 @@ def run_pvb_screener_streaming(config, user_config, daily_data: Dict[str, pd.Dat
 
     for timeframe, data in timeframe_data.items():
         # Check if this timeframe is enabled
-        timeframe_enabled = getattr(user_config, f'pvb_{timeframe}_enable', True)
+        timeframe_enabled = getattr(user_config, f'pvb_TWmodel_{timeframe}_enable', True)
         if not timeframe_enabled:
             logger.info(f"PVB screener disabled for {timeframe} timeframe")
             continue

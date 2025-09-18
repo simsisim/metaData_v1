@@ -40,7 +40,7 @@ def has_any_screeners_enabled(user_config):
         'basic_momentum_enable',
         'basic_breakout_enable', 
         'basic_value_momentum_enable',
-        'pvb_enable',
+        'pvb_TWmodel_enable',
         'atr1_enable',
         'atr2_enable',
         'giusti_enable',
@@ -129,7 +129,7 @@ def run_screeners(batch_data, output_path, timeframe, user_config=None, data_rea
     
     # Run PVB screener (if enabled)
     pvb_results = []
-    if user_config and hasattr(user_config, 'pvb_enable') and user_config.pvb_enable:
+    if user_config and hasattr(user_config, 'pvb_TWmodel_enable') and user_config.pvb_TWmodel_enable:
         print("🔍 Running PVB (Price Volume Breakout) screener...")
         pvb_params = get_pvb_params_for_timeframe(user_config, timeframe)
         pvb_results = pvb_screener(batch_data, pvb_params)
@@ -298,7 +298,7 @@ def run_screeners(batch_data, output_path, timeframe, user_config=None, data_rea
         enabled_screeners.append(f"Value-Momentum hits: {screener_summary['value_momentum_hits']}")
     
     # Only show advanced screeners if enabled
-    if user_config and hasattr(user_config, 'pvb_enable') and user_config.pvb_enable:
+    if user_config and hasattr(user_config, 'pvb_TWmodel_enable') and user_config.pvb_TWmodel_enable:
         enabled_screeners.append(f"PVB hits: {screener_summary['pvb_hits']}")
     if user_config and hasattr(user_config, 'atr1_enable') and user_config.atr1_enable:
         enabled_screeners.append(f"ATR1 hits: {screener_summary['atr1_hits']}")

@@ -302,8 +302,8 @@ class GMI2Calculator:
                         if target_row is not None and not target_row.empty:
                             # Log available variables for GMI2 R1
                             required_vars = {
-                                'r1_10day_success': f'{timeframe}_mb_10day_successful_252day_new_highs_gt_100',
-                                'r1_new_highs': f'{timeframe}_mb_252day_new_highs',
+                                'r1_10day_success': f'{timeframe}_mb_10day_successful_long_new_highs_gt_100',
+                                'r1_new_highs': f'{timeframe}_mb_long_new_highs',
                                 'r1_net_advances': f'{timeframe}_mb_net_advances'
                             }
                             

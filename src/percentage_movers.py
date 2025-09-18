@@ -440,12 +440,12 @@ class PercentageMoversAnalyzer:
             # Submit tasks for both daily and weekly moves
             future_to_ticker_timeframe = {}
             
-            if self.user_config.load_daily_data:
+            if getattr(self.user_config, 'yf_daily_data', True):
                 for ticker in tickers_list:
                     future = executor.submit(self._process_ticker_all_moves, ticker, 'daily')
                     future_to_ticker_timeframe[future] = (ticker, 'daily')
             
-            if self.user_config.load_weekly_data:
+            if getattr(self.user_config, 'yf_weekly_data', True):
                 for ticker in tickers_list:
                     future = executor.submit(self._process_ticker_all_moves, ticker, 'weekly')
                     future_to_ticker_timeframe[future] = (ticker, 'weekly')
@@ -514,13 +514,13 @@ class PercentageMoversAnalyzer:
         
         # Calculate daily movers if enabled
         daily_movers = []
-        if self.user_config.load_daily_data:
+        if getattr(self.user_config, 'yf_daily_data', True):
             daily_movers = self.calculate_daily_movers(tickers_list)
             self.daily_movers = daily_movers
         
         # Calculate weekly movers if enabled
         weekly_movers = []
-        if self.user_config.load_weekly_data:
+        if getattr(self.user_config, 'yf_weekly_data', True):
             weekly_movers = self.calculate_weekly_movers(tickers_list)
             self.weekly_movers = weekly_movers
         

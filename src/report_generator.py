@@ -168,31 +168,51 @@ class ReportGenerator:
             return f"{date_str[:4]}-{date_str[4:6]}-{date_str[6:8]}"
         return date_str
     
+    def _find_file_with_naming_variants(self, directory: Path, base_pattern: str, timeframe: str, data_date: str) -> Optional[Path]:
+        """Find file trying both hyphen and underscore naming conventions."""
+        original_choice = str(self.user_config.ticker_choice)
+
+        # Try both naming conventions
+        for choice_variant in [original_choice, original_choice.replace('-', '_')]:
+            file_path = directory / base_pattern.format(
+                choice=choice_variant,
+                timeframe=timeframe,
+                data_date=data_date
+            )
+            if file_path.exists():
+                return file_path
+        return None
+
     def _load_data_for_timeframe(self, timeframe: str, data_date: str) -> Dict[str, pd.DataFrame]:
         """Load all relevant data files for a timeframe."""
         data = {}
-        
+
         try:
             results_dir = self.config.directories['RESULTS_DIR']
             overview_dir = results_dir / 'overview'
-            
-            # Load counts analysis
-            safe_user_choice = str(self.user_config.ticker_choice).replace('-', '_')
-            counts_file = overview_dir / f'index_counts_{safe_user_choice}_{timeframe}_{data_date}.csv'
-            if counts_file.exists():
+
+            # Load counts analysis (try both naming conventions)
+            counts_file = self._find_file_with_naming_variants(
+                overview_dir, 'index_counts_{choice}_{timeframe}_{data_date}.csv', timeframe, data_date
+            )
+            if counts_file and counts_file.exists():
                 data['counts'] = pd.read_csv(counts_file)
             
-            # Load percentage change analysis - sectors and indexes
-            pctchg_sectors_file = overview_dir / f'pctChgRS_pctChg_sectors_{safe_user_choice}_{timeframe}_{data_date}.csv'
-            pctchg_indexes_file = overview_dir / f'pctChgRS_pctChg_indexes_{safe_user_choice}_{timeframe}_{data_date}.csv'
-            
+            # Load percentage change analysis - sectors and indexes (try both naming conventions)
+            pctchg_sectors_file = self._find_file_with_naming_variants(
+                overview_dir, 'pctChgRS_pctChg_sectors_{choice}_{timeframe}_{data_date}.csv', timeframe, data_date
+            )
+            pctchg_indexes_file = self._find_file_with_naming_variants(
+                overview_dir, 'pctChgRS_pctChg_indexes_{choice}_{timeframe}_{data_date}.csv', timeframe, data_date
+            )
+
             # Combine sectors and indexes for legacy compatibility, or load separately
             pctchg_data_list = []
-            if pctchg_sectors_file.exists():
+            if pctchg_sectors_file and pctchg_sectors_file.exists():
                 sectors_data = pd.read_csv(pctchg_sectors_file)
                 sectors_data['analysis_type'] = 'sectors'
                 pctchg_data_list.append(sectors_data)
-            if pctchg_indexes_file.exists():
+            if pctchg_indexes_file and pctchg_indexes_file.exists():
                 indexes_data = pd.read_csv(pctchg_indexes_file)
                 indexes_data['analysis_type'] = 'indexes'
                 pctchg_data_list.append(indexes_data)
@@ -200,17 +220,21 @@ class ReportGenerator:
             if pctchg_data_list:
                 data['pctchg'] = pd.concat(pctchg_data_list, ignore_index=True)
             
-            # Load RS analysis - sectors and indexes
-            rs_sectors_file = overview_dir / f'pctChgRS_rs_sectors_{safe_user_choice}_{timeframe}_{data_date}.csv'
-            rs_indexes_file = overview_dir / f'pctChgRS_rs_indexes_{safe_user_choice}_{timeframe}_{data_date}.csv'
-            
+            # Load RS analysis - sectors and indexes (try both naming conventions)
+            rs_sectors_file = self._find_file_with_naming_variants(
+                overview_dir, 'pctChgRS_rs_sectors_{choice}_{timeframe}_{data_date}.csv', timeframe, data_date
+            )
+            rs_indexes_file = self._find_file_with_naming_variants(
+                overview_dir, 'pctChgRS_rs_indexes_{choice}_{timeframe}_{data_date}.csv', timeframe, data_date
+            )
+
             # Combine sectors and indexes for legacy compatibility, or load separately
             rs_data_list = []
-            if rs_sectors_file.exists():
+            if rs_sectors_file and rs_sectors_file.exists():
                 sectors_rs_data = pd.read_csv(rs_sectors_file)
                 sectors_rs_data['analysis_type'] = 'sectors'
                 rs_data_list.append(sectors_rs_data)
-            if rs_indexes_file.exists():
+            if rs_indexes_file and rs_indexes_file.exists():
                 indexes_rs_data = pd.read_csv(rs_indexes_file)
                 indexes_rs_data['analysis_type'] = 'indexes'
                 rs_data_list.append(indexes_rs_data)
@@ -223,10 +247,13 @@ class ReportGenerator:
             if tornado_file.exists():
                 data['tornado_chart'] = tornado_file
             
-            # Load basic calculations if needed
-            safe_user_choice = str(self.user_config.ticker_choice).replace('-', '_')
-            basic_calc_file = self.config.directories['BASIC_CALCULATION_DIR'] / f'basic_calculation_{safe_user_choice}_{timeframe}_{data_date}.csv'
-            if basic_calc_file.exists():
+            # Load basic calculations if needed (try both naming conventions)
+            basic_calc_file = self._find_file_with_naming_variants(
+                self.config.directories['BASIC_CALCULATION_DIR'],
+                'basic_calculation_{choice}_{timeframe}_{data_date}.csv',
+                timeframe, data_date
+            )
+            if basic_calc_file and basic_calc_file.exists():
                 data['basic_calc'] = pd.read_csv(basic_calc_file)
                 
             logger.info(f"Loaded {len(data)} data files for {timeframe} ({data_date})")

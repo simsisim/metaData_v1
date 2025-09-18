@@ -182,12 +182,33 @@ class FTDDistributionAnalyzer(BaseIndicator):
                         # Generate chart if configured
                         if index in self.chart_indexes:
                             chart_file = self._generate_ftd_dd_chart(
-                                market_data[index], index_results, index, 
+                                market_data[index], index_results, index,
                                 timeframe, latest_data_date
                             )
                             if chart_file:
                                 index_results['chart_file'] = chart_file
                                 chart_files.append(chart_file)
+
+                        # Generate PDF report if enabled
+                        report_enabled = self._is_report_generation_enabled()
+                        logger.info(f"FTD/DD report generation enabled: {report_enabled} for {index}")
+
+                        if report_enabled and index in self.chart_indexes:
+                            logger.info(f"Generating FTD/DD PDF report for {index}")
+                            report_file = self._generate_ftd_dd_report(
+                                output_file, signals_file,
+                                index_results.get('chart_file'),
+                                index, timeframe, latest_data_date
+                            )
+                            if report_file:
+                                index_results['report_file'] = report_file
+                                logger.info(f"FTD/DD report successfully generated: {report_file}")
+                            else:
+                                logger.warning(f"FTD/DD report generation failed for {index}")
+                        elif report_enabled:
+                            logger.info(f"FTD/DD report generation skipped for {index} - not in chart indexes: {self.chart_indexes}")
+                        else:
+                            logger.debug(f"FTD/DD report generation disabled for {index}")
                         
                         results_by_index[index] = index_results
                     else:
@@ -686,9 +707,9 @@ class FTDDistributionAnalyzer(BaseIndicator):
                 dates = pd.to_datetime(chart_data.index)
                 chart_data['Date'] = dates
             
-            # Create figure with 3 subplots
-            fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(16, 14), 
-                                              gridspec_kw={'height_ratios': [2, 1, 1], 'hspace': 0.15})
+            # Create figure with 3 subplots - optimal 16:10 aspect ratio for financial charts
+            fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(16, 10),
+                                              gridspec_kw={'height_ratios': [2.5, 1, 1], 'hspace': 0.25})
             fig.patch.set_facecolor('white')
             
             # Set white background for all subplots
@@ -709,9 +730,6 @@ class FTDDistributionAnalyzer(BaseIndicator):
             # Format x-axis (only on bottom subplot)
             self._format_chart_axes(ax1, ax2, ax3, dates)
             
-            # Add metrics table
-            self._add_metrics_table(fig, index_results)
-            
             # Save chart - ensure it goes to market_pulse subdirectory
             base_results_dir = Path(self.paths.get('results', 'results'))
             output_dir = base_results_dir / 'market_pulse'
@@ -720,9 +738,9 @@ class FTDDistributionAnalyzer(BaseIndicator):
             chart_filename = f"ftd_dd_chart_{index}_{self.user_config.ticker_choice}_{timeframe}_{data_date}.png"
             chart_path = output_dir / chart_filename
             
-            # Use subplots_adjust instead of tight_layout to avoid warnings
-            plt.subplots_adjust(left=0.08, right=0.95, top=0.95, bottom=0.15, hspace=0.3)
-            plt.savefig(chart_path, dpi=150, bbox_inches='tight', facecolor='white')
+            # Use subplots_adjust for clean chart without bottom text
+            plt.subplots_adjust(left=0.08, right=0.95, top=0.92, bottom=0.12, hspace=0.25)
+            plt.savefig(chart_path, dpi=200, bbox_inches='tight', facecolor='white')
             plt.close()
             
             logger.info(f"Enhanced FTD/DD chart for {index} saved to: {chart_path}")
@@ -761,10 +779,10 @@ class FTDDistributionAnalyzer(BaseIndicator):
             # Add FTD and DD markers (latest 5 only)
             self._add_enhanced_signal_markers(ax, chart_data, index_results)
             
-            # Formatting
-            ax.set_title(f'{index} - Follow-Through Days & Distribution Days Analysis', 
-                        fontsize=16, fontweight='bold', color='black')
-            ax.set_ylabel('Price ($)', fontsize=12, color='black')
+            # Formatting with larger fonts
+            ax.set_title(f'{index} - Follow-Through Days & Distribution Days Analysis',
+                        fontsize=18, fontweight='bold', color='black')
+            ax.set_ylabel('Price ($)', fontsize=14, color='black')
             
             # Set x-axis to show only indices for now
             ax.set_xlim(-0.5, len(chart_data) - 0.5)
@@ -795,9 +813,9 @@ class FTDDistributionAnalyzer(BaseIndicator):
             ax.plot(range(len(chart_data)), dd_threshold_volume, 
                    color='red', linestyle='--', alpha=0.7, label=f'DD Threshold ({self.dd_volume_threshold}x)')
             
-            # Formatting
-            ax.set_ylabel('Volume', fontsize=12, color='black')
-            ax.legend(loc='upper left', fontsize=9)
+            # Formatting with larger fonts
+            ax.set_ylabel('Volume', fontsize=14, color='black')
+            ax.legend(loc='upper left', fontsize=11)
             ax.set_xticklabels([])  # Remove x-labels (shared with bottom)
             
             # Format volume numbers (millions/billions)
@@ -838,10 +856,10 @@ class FTDDistributionAnalyzer(BaseIndicator):
                                   (chart_data['volume_ratio'] < self.ftd_volume_threshold)), 
                            color='orange', alpha=0.2, interpolate=True)
             
-            # Formatting
-            ax.set_ylabel('Volume Ratio', fontsize=12, color='black')
-            ax.set_xlabel('Trading Days', fontsize=12, color='black')
-            ax.legend(loc='upper left', fontsize=9)
+            # Formatting with larger fonts
+            ax.set_ylabel('Volume Ratio', fontsize=14, color='black')
+            ax.set_xlabel('Trading Days', fontsize=14, color='black')
+            ax.legend(loc='upper left', fontsize=11)
             ax.set_ylim(0, max(3.0, chart_data['volume_ratio'].max() * 1.1))
             
         except Exception as e:
@@ -862,7 +880,7 @@ class FTDDistributionAnalyzer(BaseIndicator):
             tick_labels = [dates.iloc[i].strftime('%Y-%m-%d') for i in tick_positions]
             
             ax3.set_xticks(tick_positions)
-            ax3.set_xticklabels(tick_labels, rotation=45, ha='right', fontsize=10)
+            ax3.set_xticklabels(tick_labels, rotation=45, ha='right', fontsize=12)
             
         except Exception as e:
             logger.error(f"Error formatting chart axes: {e}")
@@ -877,12 +895,12 @@ class FTDDistributionAnalyzer(BaseIndicator):
             logger.info(f"Processing signals: {len(ftd_days)} FTDs, {len(dd_days)} DDs")
             logger.info(f"Chart data date range: {chart_data['Date'].min()} to {chart_data['Date'].max()}")
             
-            # Sort by date and get latest 5 of each type
-            latest_ftd = sorted(ftd_days, key=lambda x: x['date'], reverse=True)[:5]
-            latest_dd = sorted(dd_days, key=lambda x: x['date'], reverse=True)[:5]
+            # Sort by date and get latest 10 of each type
+            latest_ftd = sorted(ftd_days, key=lambda x: x['date'], reverse=True)[:10]
+            latest_dd = sorted(dd_days, key=lambda x: x['date'], reverse=True)[:10]
             
-            logger.info(f"Latest 5 FTDs: {[f['date'] for f in latest_ftd]}")
-            logger.info(f"Latest 5 DDs: {[d['date'] for d in latest_dd]}")
+            logger.info(f"Latest 10 FTDs: {[f['date'] for f in latest_ftd]}")
+            logger.info(f"Latest 10 DDs: {[d['date'] for d in latest_dd]}")
             
             # Normalize chart data dates for easier matching
             chart_data['Date_normalized'] = pd.to_datetime(chart_data['Date']).dt.strftime('%Y-%m-%d')
@@ -907,12 +925,20 @@ class FTDDistributionAnalyzer(BaseIndicator):
                         # Get position in chart (use reset index for consistent positioning)
                         chart_position = matching_data.index[0]
                         row_position = chart_data.reset_index().index[chart_data.index == chart_position][0]
-                        price = matching_data['High'].iloc[0] + (matching_data['High'].iloc[0] * 0.01)  # Position above high
+                        high_price = matching_data['High'].iloc[0]
+
+                        # Validate price data to prevent NaN/infinite values
+                        if pd.isna(high_price) or not np.isfinite(high_price):
+                            logger.warning(f"Invalid price data for FTD marker at {ftd_date_str}")
+                            continue
+
+                        price = high_price + (high_price * 0.01)  # Position above high
                         
                         # Marker size based on strength (larger for more recent)
-                        base_size = 200 - (i * 30)  # Decreasing size: 200, 170, 140, 110, 80
+                        base_size = max(50, 200 - (i * 20))  # Decreasing size with minimum of 50
                         strength_multiplier = {'Strong': 1.2, 'Moderate': 1.0, 'Weak': 0.8}
-                        final_size = base_size * strength_multiplier.get(ftd.get('strength', 'Moderate'), 1.0)
+                        multiplier = strength_multiplier.get(ftd.get('strength', 'Moderate'), 1.0)
+                        final_size = max(30, base_size * multiplier)  # Ensure minimum size of 30
                         
                         # Add upward arrow marker
                         ax.scatter(row_position, price, color='limegreen', marker='^', 
@@ -954,12 +980,20 @@ class FTDDistributionAnalyzer(BaseIndicator):
                         # Get position in chart
                         chart_position = matching_data.index[0]
                         row_position = chart_data.reset_index().index[chart_data.index == chart_position][0]
-                        price = matching_data['Low'].iloc[0] - (matching_data['Low'].iloc[0] * 0.01)  # Position below low
+                        low_price = matching_data['Low'].iloc[0]
+
+                        # Validate price data to prevent NaN/infinite values
+                        if pd.isna(low_price) or not np.isfinite(low_price):
+                            logger.warning(f"Invalid price data for DD marker at {dd_date_str}")
+                            continue
+
+                        price = low_price - (low_price * 0.01)  # Position below low
                         
                         # Marker size based on severity (larger for more recent)
-                        base_size = 200 - (i * 30)  # Decreasing size: 200, 170, 140, 110, 80
+                        base_size = max(50, 200 - (i * 20))  # Decreasing size with minimum of 50
                         severity_multiplier = {'Severe': 1.2, 'Moderate': 1.0, 'Mild': 0.8}
-                        final_size = base_size * severity_multiplier.get(dd.get('severity', 'Moderate'), 1.0)
+                        multiplier = severity_multiplier.get(dd.get('severity', 'Moderate'), 1.0)
+                        final_size = max(30, base_size * multiplier)  # Ensure minimum size of 30
                         
                         # Add downward arrow marker
                         ax.scatter(row_position, price, color='red', marker='v', 
@@ -985,14 +1019,14 @@ class FTDDistributionAnalyzer(BaseIndicator):
             if latest_ftd or latest_dd:
                 legend_elements = []
                 if latest_ftd:
-                    legend_elements.append(plt.scatter([], [], color='limegreen', marker='^', s=120, 
-                                                     label=f'Latest 5 FTD (Shown: {ftd_markers_added})', 
+                    legend_elements.append(plt.scatter([], [], color='limegreen', marker='^', s=120,
+                                                     label=f'Latest 10 FTD (Shown: {ftd_markers_added})',
                                                      edgecolor='darkgreen', linewidth=1))
                 if latest_dd:
-                    legend_elements.append(plt.scatter([], [], color='red', marker='v', s=120, 
-                                                     label=f'Latest 5 DD (Shown: {dd_markers_added})', 
+                    legend_elements.append(plt.scatter([], [], color='red', marker='v', s=120,
+                                                     label=f'Latest 10 DD (Shown: {dd_markers_added})',
                                                      edgecolor='darkred', linewidth=1))
-                ax.legend(handles=legend_elements, loc='upper right', fontsize=10, 
+                ax.legend(handles=legend_elements, loc='upper left', fontsize=10,
                          fancybox=True, shadow=True)
             
             logger.info(f"Signal markers summary: {ftd_markers_added} FTD markers, {dd_markers_added} DD markers added")
@@ -1226,8 +1260,8 @@ class FTDDistributionAnalyzer(BaseIndicator):
             latest_5_ftd = sorted(ftd_days, key=lambda x: x['date'], reverse=True)[:5]
             latest_5_dd = sorted(dd_days, key=lambda x: x['date'], reverse=True)[:5]
             
-            # Format dates for display
-            def format_signal_dates(signals):
+            # Format dates with strength/severity for display
+            def format_signal_dates(signals, signal_type='FTD'):
                 if not signals:
                     return "None"
                 dates = []
@@ -1240,7 +1274,18 @@ class FTDDistributionAnalyzer(BaseIndicator):
                         date_display = f"{date_str[5:7]}/{date_str[8:10]}"
                     else:
                         date_display = date_str[-5:]  # Last 5 chars
-                    dates.append(f"{i+1}:{date_display}")
+
+                    # Get strength/severity info
+                    if signal_type == 'FTD':
+                        strength_info = signal.get('strength', 'Unknown')
+                        # Abbreviate strength: Strong->S, Moderate->M, Weak->W
+                        strength_abbr = strength_info[0] if strength_info else 'U'
+                    else:  # DD
+                        strength_info = signal.get('severity', 'Unknown')
+                        # Abbreviate severity: Severe->S, Moderate->M, Mild->Mi
+                        strength_abbr = 'S' if strength_info == 'Severe' else ('M' if strength_info == 'Moderate' else 'Mi')
+
+                    dates.append(f"{i+1}:{date_display}({strength_abbr})")
                 return ", ".join(dates)
             
             # Create enhanced metrics data
@@ -1249,20 +1294,84 @@ class FTDDistributionAnalyzer(BaseIndicator):
                 ['Recent FTDs', f"{market_state['recent_ftd_count']} (last {self.recent_activity_period} days)\\nRecent DDs: {market_state['recent_dd_count']} (last {self.recent_activity_period} days)"],
                 ['FTD/DD Ratio', f"{market_state['ftd_dd_ratio']:.2f}\\nSignal Strength: {index_results['signal_strength']}"],
                 ['Latest Signal', f"{index_results['latest_signal']}\\nTotal FTDs: {summary['total_ftd_count']}, Total DDs: {summary['total_dd_count']}"],
-                ['Latest 5 FTDs', format_signal_dates(latest_5_ftd)],
-                ['Latest 5 DDs', format_signal_dates(latest_5_dd)]
+                ['Latest 5 FTDs', format_signal_dates(latest_5_ftd, 'FTD')],
+                ['Latest 5 DDs', format_signal_dates(latest_5_dd, 'DD')]
             ]
             
-            # Create metrics text
-            metrics_text = '\\n\\n'.join([f'{label}: {value}' for label, value in metrics_data])
-            
-            # Add enhanced table to figure
-            fig.text(0.02, 0.02, metrics_text,
-                    fontsize=8, verticalalignment='bottom', 
+            # Create metrics text with proper line breaks
+            metrics_text = '\n\n'.join([f'{label}: {value}' for label, value in metrics_data])
+
+            # Add enhanced table to figure with larger font and better positioning
+            fig.text(0.02, 0.05, metrics_text,
+                    fontsize=20, verticalalignment='bottom',
                     fontfamily='monospace',
-                    bbox=dict(boxstyle='round,pad=0.8', facecolor='lightyellow', alpha=0.9, edgecolor='gray'))
+                    bbox=dict(boxstyle='round,pad=1.0', facecolor='lightyellow', alpha=0.9, edgecolor='gray'))
             
         except Exception as e:
             logger.error(f"Error adding enhanced metrics table: {e}")
             import traceback
             logger.error(f"Traceback: {traceback.format_exc()}")
+
+    def _is_report_generation_enabled(self) -> bool:
+        """Check if FTD/DD report generation is enabled."""
+        if not self.user_config:
+            logger.debug("FTD/DD report generation: No user_config available")
+            return False
+
+        enabled = getattr(self.user_config, 'market_pulse_ftd_dd_report_enable', False)
+        logger.debug(f"FTD/DD report generation config value: {enabled}")
+        return enabled
+
+    def _generate_ftd_dd_report(self, csv_path: str, signals_path: str, chart_path: str,
+                               index: str, timeframe: str, data_date: str) -> Optional[str]:
+        """
+        Generate FTD/DD PDF report using ReportLab.
+
+        Args:
+            csv_path: Path to FTD/DD CSV file
+            signals_path: Path to signals JSON file
+            chart_path: Path to chart PNG file
+            index: Index symbol
+            timeframe: Data timeframe
+            data_date: Data date for file naming
+
+        Returns:
+            Path to generated PDF report or None if generation fails
+        """
+        try:
+            # Import the report generator
+            from ..reporting.ftd_dd_reporting import FTDDistributionReportGenerator
+
+            # Create output directory for reports
+            base_results_dir = Path(self.paths.get('results', 'results'))
+            reports_dir = base_results_dir / 'reports'
+            reports_dir.mkdir(parents=True, exist_ok=True)
+
+            # Generate report filename
+            report_filename = f"ftd_dd_{index}_{self.user_config.ticker_choice}_{timeframe}_{data_date}.pdf"
+            report_path = reports_dir / report_filename
+
+            # Initialize report generator
+            report_generator = FTDDistributionReportGenerator(self.user_config)
+
+            # Generate report
+            success = report_generator.generate_report(
+                ftd_dd_csv_path=Path(csv_path) if csv_path else None,
+                chart_path=Path(chart_path) if chart_path else None,
+                signals_path=Path(signals_path) if signals_path else None,
+                output_path=report_path,
+                index_symbol=index
+            )
+
+            if success:
+                logger.info(f"FTD/DD PDF report generated: {report_path}")
+                return str(report_path)
+            else:
+                logger.warning(f"Failed to generate FTD/DD report for {index}")
+                return None
+
+        except Exception as e:
+            logger.error(f"Error generating FTD/DD report for {index}: {e}")
+            import traceback
+            logger.error(f"Traceback: {traceback.format_exc()}")
+            return None
