@@ -1790,12 +1790,28 @@ def main() -> None:
         # ================================
         # ADVANCED POST-PROCESSING SECTION
         # ================================
-        # Future implementation: Advanced post-processing capabilities
-        # - Custom stage analysis filtering and reporting
-        # - Sector/industry specific analysis
-        # - Technical pattern screening from CSV data
-        # - Custom universe generation from existing results
-        print(f"\n📋 Advanced post-processing capabilities available for future implementation")
+        print(f"\n🔄 RUNNING POST-PROCESSING WORKFLOW...")
+
+        try:
+            from src.post_process import run_post_processing
+
+            # Run the post-processing workflow with configuration from user_data_pp.csv
+            processed_files = run_post_processing()
+
+            if processed_files:
+                print(f"✅ Post-processing completed successfully!")
+                print(f"📁 Processed {len(processed_files)} file types:")
+                for logical_name, output_path in processed_files.items():
+                    print(f"   • {logical_name} -> {Path(output_path).name}")
+                print(f"📂 Output directory: results/post_process/")
+            else:
+                print(f"⚠️  Post-processing completed with no files processed")
+                print(f"   Check user_data_pp.csv configuration and ensure input files exist")
+
+        except Exception as e:
+            print(f"❌ Post-processing error: {e}")
+            logger.error(f"Post-processing workflow failed: {e}")
+            print(f"   Please check user_data_pp.csv configuration")
 
         print(f"✅ POST-PROCESSING PHASE COMPLETED")
     else:

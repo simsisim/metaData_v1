@@ -1,9 +1,4 @@
-Filename,Step,Action,Column,Condition,Value,Order,Logic
-file1.csv,1,Filter,Status,equals,active,,
-file1.csv,2,Filter,Amount,greater_than,1000,,AND
-file1.csv,3,Filter,Category,equals,approved,,OR
-file1.csv,4,Sort,Date,,,asc,
-file1.csv,5,Sort,Amount,,,desc,
-file2.csv,1,Filter,Status,equals,inactive,,
-file2.csv,2,Sort,Date,,,asc,
-
+Filename,Output_id,File_id,PDF_enable,PDF_type,Step,Action,Column,Condition,Value,Order,Logic
+stage_analysis,,1,TRUE,stage_analysis,1,Filter,current_price,greater_than,1000,,
+stage_analysis,,1,,,2,Filter,SP500,equals,True,,AND
+stage_analysis,,2,FALSE,stage_analysis,1,Filter,NASDAQ100,equals,True,,

@@ -1,0 +1,8 @@
+Filename,Output_id,Step,Action,Column,Condition,Value,Order,Logic
+file1.csv,,1,Filter,Status,equals,active,,
+file1.csv,,2,Filter,Amount,greater_than,1000,,AND
+file1.csv,,3,Filter,Category,equals,approved,,OR
+file1.csv,,4,Sort,Date,,,asc,
+file1.csv,,5,Sort,Amount,,,desc,
+file2.csv,,1,Filter,Status,equals,inactive,,
+file2.csv,,2,Sort,Date,,,asc,
