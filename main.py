@@ -23,7 +23,6 @@ from src.basic_calculations import basic_calculations, save_basic_calculations_m
 from src.market_breadth_calculation import save_market_breadth_matrix
 from src.stage_analysis_processor import run_stage_analysis_processing, StageAnalysisProcessor
 from src.pvb_screener_processor import PVBScreenerProcessor
-from src.index_overview_file import create_index_overview
 from src.run_screeners import run_screeners
 from src.models import run_models
 from src.percentage_movers import run_movers_analysis
@@ -1679,68 +1678,6 @@ def main() -> None:
         print("📊 MARKET_PULSE_enable=FALSE - Market Pulse analysis disabled")
         print("⏭️  Skipping market pulse processing for all timeframes")
     
-    # INDEX OVERVIEW GENERATION (after RS analysis, before dashboard)
-    if user_config.index_overview_enable:
-        print(f"\n" + "="*60)
-        print("INDEX OVERVIEW GENERATION")
-        print("="*60)
-        print("📋 Creating comprehensive index overview...")
-        
-        try:
-            # Process overview for all timeframes (daily, weekly, monthly)
-            overview_timeframes = ['daily', 'weekly', 'monthly']
-            overview_output_path = config.directories['RESULTS_DIR'] / 'overview'
-            overview_output_path.mkdir(exist_ok=True)
-            
-            for overview_timeframe in overview_timeframes:
-                print(f"📊 Processing {overview_timeframe} timeframe overview...")
-                
-                try:
-                    # Load data for current timeframe
-                    data_reader_for_overview = DataReader(config, overview_timeframe, 500)  # Larger batch for overview
-                    data_reader_for_overview.load_tickers_from_file(clean_file)
-                    data_reader_for_overview.load_ticker_info()
-                    
-                    # Load batch data for overview
-                    ticker_list = tickers_df['ticker'].tolist()
-                    batch_data_for_overview = {}
-                    
-                    for ticker in ticker_list:
-                        try:
-                            ticker_data = data_reader_for_overview.load_ticker_data(ticker)
-                            if ticker_data is not None and not ticker_data.empty:
-                                batch_data_for_overview[ticker] = ticker_data
-                        except Exception:
-                            continue
-                    
-                    # Generate overview for current timeframe with centralized data dates
-                    if batch_data_for_overview or (user_config.index_overview_indexes.strip()):
-                        # Get data date for this timeframe from centralized storage
-                        timeframe_data_date = None
-                        if hasattr(main, 'data_dates') and overview_timeframe in main.data_dates:
-                            timeframe_data_date = main.data_dates[overview_timeframe]['data_date']
-                            print(f"📅 Using centralized data date for {overview_timeframe} overview: {main.data_dates[overview_timeframe]['formatted_date']}")
-                        else:
-                            print(f"⚠️  No centralized data date available for {overview_timeframe}, module will use discovery")
-                        
-                        create_index_overview(batch_data_for_overview, overview_output_path, overview_timeframe, user_config, config, timeframe_data_date)
-                        if batch_data_for_overview:
-                            print(f"✅ {overview_timeframe.title()} overview created for {len(batch_data_for_overview)} tickers")
-                        else:
-                            print(f"✅ {overview_timeframe.title()} overview created using basic calculation data (index mode)")
-                    else:
-                        print(f"⚠️  No data available for {overview_timeframe} overview generation")
-                        
-                except Exception as e:
-                    logger.error(f"{overview_timeframe.title()} overview generation failed: {e}")
-                    print(f"❌ {overview_timeframe.title()} overview generation failed: {e}")
-            
-            print(f"📁 All overview files saved to: {overview_output_path}")
-                
-        except Exception as e:
-            logger.error(f"Index overview generation failed: {e}")
-            print(f"❌ Index overview generation failed: {e}")
-    
     # DASHBOARD GENERATION (final step - uses all processed data)
     if user_config.dashboard_enable:
         print(f"\n" + "="*60)
@@ -1832,8 +1769,6 @@ def main() -> None:
         print("  • Check generated PDF report for comprehensive overview")
     if user_config.dashboard_enable:
         print("  • Open Excel dashboard for market overview")
-    if user_config.index_overview_enable:
-        print("  • Check comprehensive index overview analysis")
     print("  • Check percentage movers reports for significant movements")
     print("  • Implement specific calculation modules in src/")
     print("  • Customize screeners and models as needed")

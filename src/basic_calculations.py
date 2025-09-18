@@ -788,83 +788,66 @@ def calculate_volume_metrics(df, timeframe='daily'):
 
 def load_index_boolean_data(config):
     """
-    Load boolean index/classification data from tradingview_universe_bool.csv.
-    
+    Load ticker universe data from ticker_universe_all.csv.
+    Includes all columns except description.
+
     Returns:
-        dict: Dictionary mapping ticker -> boolean classifications
+        dict: Dictionary mapping ticker -> universe data
     """
-    boolean_data = {}
-    
+    universe_data = {}
+
     try:
-        # Load the trading universe boolean file
-        bool_file = config.directories['TICKERS_DIR'] / 'tradingview_universe_bool.csv'
-        if not bool_file.exists():
-            logger.warning(f"Boolean classification file not found: {bool_file}")
-            return boolean_data
-            
-        # Use normalized CSV loading
-        bool_df = pd.read_csv(bool_file, index_col=0) if bool_file.exists() else pd.DataFrame()
-        
-        # If date-based loading fails, fall back to regular loading
-        if bool_df.empty:
-            bool_df = pd.read_csv(bool_file)
-        
-        # Check for ticker data properly based on loading method
-        has_ticker_data = (
-            'ticker' in bool_df.columns or  # ticker as column (fallback loading)
-            bool_df.index.name == 'ticker'  # ticker as index (primary loading)
-        )
-        
-        if not has_ticker_data:
-            logger.warning("Boolean file missing ticker data")
-            return boolean_data
-            
-        # Define the boolean columns we want to include
-        # Focus on major indices and classifications
-        boolean_columns = [
-            'SP500', 'NASDAQ100', 'Russell1000', 'Russell2000', 'Russell3000',
-            'SP100', 'NASDAQComposite', 'DowJonesIndustrialAverage',
-            'SP500CommunicationServices', 'SP500ConsumerDiscretionary', 'SP500ConsumerStaples',
-            'SP500Energy', 'SP500Financials', 'SP500HealthCare', 'SP500Industrials',
-            'SP500InformationTechnology', 'SP500Materials', 'SP500RealEstate', 'SP500Utilities'
-        ]
-        
-        # Filter to columns that actually exist in the file
-        available_columns = [col for col in boolean_columns if col in bool_df.columns]
-        
+        # Load the ticker universe all file
+        universe_file = config.directories['RESULTS_DIR'] / 'ticker_universes' / 'ticker_universe_all.csv'
+        if not universe_file.exists():
+            logger.warning(f"Ticker universe file not found: {universe_file}")
+            return universe_data
+
+        # Load CSV file
+        universe_df = pd.read_csv(universe_file)
+
+        # Check for ticker column
+        if 'ticker' not in universe_df.columns:
+            logger.warning("Ticker universe file missing ticker column")
+            return universe_data
+
+        # Get all columns except ticker and description
+        exclude_columns = ['ticker', 'description']
+        available_columns = [col for col in universe_df.columns if col not in exclude_columns]
+
         if not available_columns:
-            logger.warning("No boolean classification columns found in file")
-            return boolean_data
-            
-        # Create dictionary mapping ticker to boolean classifications
-        for idx, row in bool_df.iterrows():
-            # Handle ticker data based on loading method
-            if 'ticker' in bool_df.columns:
-                ticker = row['ticker']  # ticker as column (fallback loading)
-            else:
-                ticker = idx  # ticker as index (primary loading)
-            ticker_bools = {}
-            
+            logger.warning("No universe data columns found in file")
+            return universe_data
+
+        # Create dictionary mapping ticker to universe data
+        for _, row in universe_df.iterrows():
+            ticker = row['ticker']
+            ticker_data = {}
+
             for col in available_columns:
-                # Convert to boolean, handle various formats
                 value = row[col]
-                if pd.isna(value):
-                    ticker_bools[col] = False
-                elif isinstance(value, bool):
-                    ticker_bools[col] = value
-                elif isinstance(value, str):
-                    ticker_bools[col] = value.lower() in ['true', '1', 'yes']
+                # Handle boolean conversion for True/False columns
+                if isinstance(value, bool):
+                    ticker_data[col] = value
+                elif pd.isna(value):
+                    # Handle NaN values based on column type
+                    if col.startswith(('SP500', 'NASDAQ', 'Russell', 'Dow', 'exchange_', 'rating_')):
+                        ticker_data[col] = False  # Boolean columns default to False
+                    else:
+                        ticker_data[col] = value  # Keep NaN for other columns
+                elif isinstance(value, str) and value.lower() in ['true', 'false']:
+                    ticker_data[col] = value.lower() == 'true'
                 else:
-                    ticker_bools[col] = bool(value)
-                    
-            boolean_data[ticker] = ticker_bools
-            
-        logger.info(f"Loaded boolean classifications for {len(boolean_data)} tickers with {len(available_columns)} classification types")
-        
+                    ticker_data[col] = value
+
+            universe_data[ticker] = ticker_data
+
+        logger.info(f"Loaded universe data for {len(universe_data)} tickers with {len(available_columns)} data columns")
+
     except Exception as e:
-        logger.error(f"Error loading boolean classification data: {e}")
-        
-    return boolean_data
+        logger.error(f"Error loading ticker universe data: {e}")
+
+    return universe_data
 
 
 def basic_calculations(batch_data, output_path, timeframe, user_config, config=None):
@@ -1376,8 +1359,14 @@ def save_basic_calculations_matrix(config, user_config, timeframe):
     add_pattern_columns([lambda x: 'candle' in x and x not in ordered_cols])  # Other candle metrics
     
     # 11. INDEX MEMBERSHIP BOOLEANS GROUP
-    add_pattern_columns([lambda x: x.startswith(('SP500', 'NASDAQ100', 'Russell', 'DOW')) and x.endswith('_bool')])
-    add_pattern_columns([lambda x: '_bool' in x and x not in ordered_cols])  # Other boolean indicators
+    add_pattern_columns([lambda x: x.startswith(('SP500', 'NASDAQ100', 'Russell', 'Dow'))])  # Index membership
+    add_pattern_columns([lambda x: x.startswith('exchange_')])  # Exchange flags
+    add_pattern_columns([lambda x: x.startswith('rating_')])  # Analyst rating flags
+
+    # 12. UNIVERSE METADATA GROUP
+    add_pattern_columns([lambda x: x in ['market_cap', 'market_cap_currency', 'sector', 'industry', 'exchange', 'analyst rating']])  # Core metadata
+    add_pattern_columns([lambda x: x in ['upcoming earnings date', 'recent earnings date', 'index']])  # Additional metadata
+    add_pattern_columns([lambda x: x.startswith(('filter_applied', 'universe_name', 'generation_source', 'generation_date'))])  # File metadata
     
     # Add any remaining columns at the end (preserves any new indicators we missed)
     if remaining_cols:

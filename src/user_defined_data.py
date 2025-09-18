@@ -73,17 +73,6 @@ class UserConfiguration:
     sp500_overview: bool = True
     nasdaq100_overview: bool = True
     djia_overview: bool = True
-    index_overview_enable: bool = True
-    index_overview_indexes_counts: str = "SP500,NASDAQ100"  # DEPRECATED: Use index_overview_universe_filter
-    index_overview_universe_filter: str = "SP500,NASDAQ100"  # Universe names for filtering (uses ticker_universe files)
-    index_overview_indexes: str = "SPY,QQQ"
-    index_overview_pctchgrs_tickers: str = "SPY,QQQ,XLF,XLE,XLK,XLV,XLI,XLB,XLRE,XLP,XLY,XLU,XLC"
-    index_overview_pctchgrs_sectors: str = "XLF,XLE,XLK,XLV,XLI,XLB,XLRE,XLP,XLY,XLU,XLC"
-    index_overview_pctchgrs_indexes: str = "SPY,QQQ"
-    index_overview_etfs: str = ""
-    index_overview_stocks: str = ""
-    index_overview_tornado_chart: bool = True
-    index_overview_tornado_columns: str = "return_1m,return_3m,return_6m,volatility,volume_ratio,rsi"
     
     # Index Overview Period Configurations
     # Daily Period Percent Change Configuration        
@@ -853,17 +842,6 @@ def read_user_data(file_path: str = 'user_data.csv') -> UserConfiguration:
             'SP500_overview': ('sp500_overview', parse_boolean),
             'NASDAQ100_overview': ('nasdaq100_overview', parse_boolean),
             'DJIA_overview': ('djia_overview', parse_boolean),
-            'INDEX_OVERVIEW_enable': ('index_overview_enable', parse_boolean),
-            'INDEX_OVERVIEW_indexes_counts': ('index_overview_indexes_counts', str),  # DEPRECATED
-            'INDEX_OVERVIEW_universe_filter': ('index_overview_universe_filter', str),  # NEW: Universe filtering
-            'INDEX_OVERVIEW_indexes': ('index_overview_indexes', str),
-            'INDEX_OVERVIEW_sectors': ('index_overview_sectors', str),
-            'INDEX_OVERVIEW_pctChgRS_sectors': ('index_overview_pctchgrs_sectors', str),
-            'INDEX_OVERVIEW_pctChgRS_indexes': ('index_overview_pctchgrs_indexes', str),
-            'INDEX_OVERVIEW_ETFs': ('index_overview_etfs', str),
-            'INDEX_OVERVIEW_stocks': ('index_overview_stocks', str),
-            'INDEX_OVERVIEW_tornado_chart': ('index_overview_tornado_chart', parse_boolean),
-            'INDEX_OVERVIEW_tornado_columns': ('index_overview_tornado_columns', str),
             
             # Index Period Configurations
             'index_daily_daily_periods': ('index_daily_daily_periods', str),

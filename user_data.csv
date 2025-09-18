@@ -337,27 +337,6 @@ indexes_overview_file,indexes_overview.csv,Name of automatically generated index
 ,,
 # INDEX OVERVIEW CONFIGURATION,,
 ,,
-INDEX_OVERVIEW_enable,TRUE,Enable index overview generation
-INDEX_OVERVIEW_universe_filter,SP500; NASDAQ100,Universe names for filtering (uses ticker_universe files)
-INDEX_OVERVIEW_pctChgRS_sectors," XLF, XLE, XLK, XLV, XLI, XLB, XLRE, XLP, XLY, XLU, XLC",Comma-separated list of sectors/categories to analyze
-INDEX_OVERVIEW_pctChgRS_indexes,"SPY, QQQ",
-INDEX_OVERVIEW_ETFs,,
-INDEX_OVERVIEW_stocks,,
-INDEX_OVERVIEW_tornado_chart,TRUE,Generate tornado charts for index comparison
-INDEX_OVERVIEW_tornado_columns,ALL_COLUMNS,Display ALL available numeric columns in original order for tornado chart analysis
-,,
-# Index Overview Period Configurations for Index_overview_pctChgRS,,
-# Daily Period Percent Change Configuration,,        
-index_daily_daily_periods,1;3;5,Daily data: daily percent change periods (semicolon separated - 3d;5d)
-index_daily_weekly_periods,7;14,Daily data: weekly percent change periods (days back)
-index_daily_monthly_periods,22;44,Daily data: monthly percent change periods (semicolon separated - 1m;2m)
-index_daily_quarterly_periods,66;132,Daily data: quarterly percent change periods (semicolon separated - 1q;2q)
-index_daily_yearly_periods,252,Daily data: yearly percent change periods (days back)
-# Weekly Period Percent Change Configuration,,        
-index_weekly_weekly_periods,2;4,Weekly data: weekly percent change periods (weeks back)
-index_weekly_monthly_periods,4;8,Weekly data: monthly percent change periods (semicolon separated - 1m;2m)
-# Monthly Period Percent Change Configuration,,        
-index_monthly_monthly_periods,2;3;6,Monthly data: monthly percent change periods (months back)
 ,,
 # Index Overview Period Configurations for Index_overview_pctChgRS,,
 # Daily RS parameters,,
