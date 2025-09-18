@@ -1,0 +1,49 @@
+{
+  "data_files": {
+    "trading_data": "basic_calculation_daily_*.csv",
+    "universe_data": "tradingview_universe.csv"
+  },
+  "key_metrics": {
+    "performance_columns": [
+      "daily_daily_daily_1d_pct_change",
+      "daily_daily_daily_5d_pct_change",
+      "daily_daily_weekly_7d_pct_change",
+      "daily_daily_monthly_22d_pct_change",
+      "daily_daily_quarterly_66d_pct_change",
+      "daily_daily_yearly_252d_pct_change"
+    ],
+    "technical_indicators": [
+      "daily_rsi_14",
+      "daily_momentum_20",
+      "daily_macd",
+      "daily_macd_signal",
+      "daily_price_position_52w",
+      "atr_pct"
+    ],
+    "risk_metrics": [
+      "atr_pct",
+      "daily_rsi_14",
+      "daily_price_position_52w"
+    ],
+    "index_flags": [
+      "in_sp_500",
+      "in_nasdaq_100",
+      "in_nasdaq_composite",
+      "in_russell_1000",
+      "in_dow_jones_industrial_average"
+    ]
+  },
+  "analysis_outputs": [
+    "sector_performance.csv",
+    "index_analysis.csv",
+    "risk_return_analysis.csv",
+    "technical_analysis_by_sector.csv",
+    "time_performance_analysis.csv"
+  ],
+  "visualizations": [
+    "sector_performance_chart",
+    "market_cap_performance_scatter",
+    "index_performance_comparison",
+    "risk_return_scatter"
+  ]
+}

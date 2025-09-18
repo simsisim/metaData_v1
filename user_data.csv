@@ -131,7 +131,6 @@ RTI_output_dir,results/screeners/rti,Output directory for Range Tightening Indic
 ,,
 # BASIC CALCULATIONS CONFIGURATION,,
 # =================================,,
-# Legacy setting - replaced by BASIC_CALCULATION_output_dir above,,
 Basic_calculation_file,basic_calculations.csv,DEPRECATED: Use BASIC_CALCULATION_output_dir instead
 # TIMEFRAME CONFIGURATION (CPU-intensive calculation control),,
 Basic_calc_daily_enable,TRUE,Enable basic calculations for daily timeframe
@@ -186,24 +185,6 @@ stage_monthly_atr_threshold_low,4,Monthly: ATR low volatility threshold percenta
 stage_monthly_atr_threshold_high,7,Monthly: ATR high volatility threshold percentage
 stage_monthly_ma_convergence_threshold,1,Monthly: MA convergence threshold for Launch Pad detection (%)
 #,,
-,,
-,,
-,,
-,,
-,,
-#STAGE_ANALYSIS_output_dir,,
-# Legacy compatibility,,
-#stage_analysis_enabled,TRUE,Legacy: Enable stage analysis calculations (deprecated)
-#stage_analysis_min_price,5,Minimum stock price for stage analysis (dollars)
-#stage_analysis_min_vol,100000,Minimum daily volume for stage analysis
-#stage_ema_fast_period,10,Legacy: Fast EMA period for stage analysis (deprecated)
-#stage_sma_medium_period,20,Legacy: Medium SMA period for stage analysis (deprecated)
-#stage_sma_slow_period,50,Legacy: Slow SMA period for stage analysis (deprecated)
-#stage_atr_period,14,Legacy: ATR calculation period for stage analysis (deprecated)
-#stage_atr_threshold_low,4,Legacy: ATR low volatility threshold percentage (deprecated)
-#stage_atr_threshold_high,7,Legacy: ATR high volatility threshold percentage (deprecated)
-#stage_ma_convergence_threshold,1,Legacy: MA convergence threshold for Launch Pad detection (%) (deprecated)
-,,
 # MARKET BREADTH ANALYSIS CONFIGURATION,,
 # =======================================,,
 MARKET_BREADTH_enable,FALSE,Enable comprehensive market breadth analysis (A/D line new H/L MA breadth)

@@ -1,0 +1,134 @@
+Yes, absolutely—your current report is a great start for spotting top and bottom performers across time periods and indices, but to better "find and follow" high % change gainers (e.g., momentum stocks), you could add charts that layer in context like volume, technical indicators, or multi-period trends. This would help filter for sustainable movers (e.g., high gains with confirming volume or RSI) rather than one-off spikes.I'll suggest 5 practical chart ideas, tailored to your CSV structure (which has % change columns like daily_daily_daily_1d_pct_change, volume trends, RSI, MACD, etc.). Each includes a brief rationale, visualization type, and a code snippet to generate it using your existing setup (Pandas + Matplotlib + ReportLab integration). These can slot into your PDF as additional sections or overlays.1. Multi-Period Momentum HeatmapWhy? Quickly scan which stocks are consistently gaining across daily/weekly/monthly/quarterly/yearly frames. Hot spots (e.g., green for >5% gains) highlight "follow-worthy" trends vs. noise.
+Viz Type: Heatmap (rows: top 20 gainers by daily %; columns: time periods).
+Code Snippet (add after data load; generates PNG for PDF):python
+
+# Filter top 20 daily gainers
+daily_col = 'daily_daily_daily_1d_pct_change'
+top_gainers = df.nlargest(20, daily_col)[['ticker', daily_col, 'daily_daily_weekly_7d_pct_change', 
+                                          'daily_daily_monthly_22d_pct_change', 'daily_daily_quarterly_66d_pct_change', 
+                                          'daily_daily_yearly_252d_pct_change']]
+
+# Pivot for heatmap
+heatmap_df = top_gainers.set_index('ticker').T  # Transpose for periods as columns
+plt.figure(figsize=(10, 6))
+sns.heatmap(heatmap_df, annot=True, cmap='RdYlGn', center=0, fmt='.1f')  # Need import seaborn as sns
+plt.title('Momentum Heatmap: Top Gainers Across Periods')
+plt.tight_layout()
+plt.savefig('momentum_heatmap.png', dpi=150)
+plt.close()
+# In PDF: story.append(Image('momentum_heatmap.png', width=6*inch, height=4*inch))
+
+2. Volume vs. % Change Bubble ChartWhy? High gains on low volume might be traps; bubbles sized by volume (e.g., daily_avg_volume_20) show conviction. Follow bubbles in the top-right quadrant.
+Viz Type: Scatter plot with bubble sizing.
+Code Snippet:python
+
+# Top 50 by daily % change
+top50 = df.nlargest(50, daily_col)
+plt.figure(figsize=(10, 6))
+bubble_sizes = top50['daily_avg_volume_20'] / 1e6  # Scale for visibility
+scatter = plt.scatter(top50[daily_col], top50['daily_avg_volume_20']/1e6, 
+                      s=bubble_sizes, c=top50['daily_rsi_14'], cmap='viridis', alpha=0.6)
+plt.colorbar(scatter, label='RSI (14)')
+plt.xlabel('Daily % Change')
+plt.ylabel('Avg Volume (Millions)')
+plt.title('Volume vs. Daily Gains: Bubble Size = Volume')
+plt.axhline(y=0, color='k', linestyle='--')
+plt.tight_layout()
+plt.savefig('volume_bubble.png', dpi=150)
+plt.close()
+# In PDF: story.append(Image('volume_bubble.png', width=6*inch, height=4*inch))
+
+
+3. RSI-Momentum Scatter with Trend LinesWhy? Pairs daily/weekly % change with RSI to spot "healthy" gainers (e.g., RSI 50-70 for upward momentum without overbought risk). Add a regression line to guide following thresholds.
+Viz Type: Scatter plot with linear regression.
+Code Snippet:
+
+from scipy.stats import linregress
+top50 = df.nlargest(50, daily_col)
+plt.figure(figsize=(10, 6))
+scatter = plt.scatter(top50['daily_rsi_14'], top50[daily_col], alpha=0.7, c='green')
+# Regression line
+slope, intercept, _, _, _ = linregress(top50['daily_rsi_14'], top50[daily_col])
+line = slope * top50['daily_rsi_14'] + intercept
+plt.plot(top50['daily_rsi_14'], line, 'r--', label=f'Trend: {slope:.2f}x')
+plt.xlabel('RSI (14)')
+plt.ylabel('Daily % Change')
+plt.title('RSI vs. Daily Gains (Top 50)')
+plt.axvline(x=70, color='orange', linestyle=':', label='Overbought (70)')
+plt.legend()
+plt.tight_layout()
+plt.savefig('rsi_scatter.png', dpi=150)
+plt.close()
+# In PDF: story.append(Image('rsi_scatter.png', width=6*inch, height=4*inch))
+
+from scipy.stats import linregress
+top50 = df.nlargest(50, daily_col)
+plt.figure(figsize=(10, 6))
+scatter = plt.scatter(top50['daily_rsi_14'], top50[daily_col], alpha=0.7, c='green')
+# Regression line
+slope, intercept, _, _, _ = linregress(top50['daily_rsi_14'], top50[daily_col])
+line = slope * top50['daily_rsi_14'] + intercept
+plt.plot(top50['daily_rsi_14'], line, 'r--', label=f'Trend: {slope:.2f}x')
+plt.xlabel('RSI (14)')
+plt.ylabel('Daily % Change')
+plt.title('RSI vs. Daily Gains (Top 50)')
+plt.axvline(x=70, color='orange', linestyle=':', label='Overbought (70)')
+plt.legend()
+plt.tight_layout()
+plt.savefig('rsi_scatter.png', dpi=150)
+plt.close()
+# In PDF: story.append(Image('rsi_scatter.png', width=6*inch, height=4*inch))
+
+
+4. Cumulative % Change Stacked Bar (Index Breakdown)Why? Shows how top gainers contribute to index performance (e.g., stack by index membership). Helps follow sector/index leaders.
+Viz Type: Stacked horizontal bar (top 10 gainers, colored by index).
+Code Snippet:
+
+top10 = df.nlargest(10, daily_col)
+# Assign index color (simplified; map your indexes dict)
+index_map = {'NASDAQ100': '#4FC3F7', 'SP500': '#81C784'}  # Expand as needed
+colors = [index_map.get(idx, 'gray') for idx in top10['SP500'].apply(lambda x: 'SP500' if x else 'NASDAQ100')]  # Example mapping
+plt.figure(figsize=(10, 6))
+y_pos = range(len(top10))
+plt.barh(y_pos, top10[daily_col], color=colors, alpha=0.7)
+plt.yticks(y_pos, top10['ticker'])
+plt.xlabel('Daily % Change')
+plt.title('Top 10 Gainers: Stacked by Index')
+plt.tight_layout()
+plt.savefig('cumulative_stacked.png', dpi=150)
+plt.close()
+# In PDF: story.append(Image('cumulative_stacked.png', width=6*inch, height=3*inch))
+
+
+MACD Histogram vs. % Change FunnelWhy? Filters gainers by MACD signal (positive histogram for bullish momentum). Visualize as a funnel to narrow "follow" candidates (e.g., high gain + positive MACD).
+Viz Type: Horizontal bar (funnel-style) or pyramid chart.
+
+Code Snippet:
+
+
+# Filter positive MACD + top gains
+momentum_filter = (df['daily_macd_histogram'] > 0) & (df[daily_col] > df[daily_col].quantile(0.8))
+filtered = df[momentum_filter].nlargest(15, daily_col)[['ticker', daily_col, 'daily_macd_histogram']]
+plt.figure(figsize=(10, 6))
+y_pos = range(len(filtered))
+widths = filtered[daily_col].abs()  # For funnel effect
+bars = plt.barh(y_pos, widths, alpha=0.7, color='blue')
+# Annotate MACD
+for i, (bar, macd) in enumerate(zip(bars, filtered['daily_macd_histogram'])):
+    plt.text(bar.get_width() + 0.5, bar.get_y() + bar.get_height()/2, f'MACD: {macd:.2f}', va='center')
+plt.yticks(y_pos, filtered['ticker'])
+plt.xlabel('Daily % Change')
+plt.title('Funnel: High Gainers with Positive MACD')
+plt.tight_layout()
+plt.savefig('macd_funnel.png', dpi=150)
+plt.close()
+# In PDF: story.append(Image('macd_funnel.png', width=6*inch, height=4*inch))
+
+
+
+
+
+
+
+
+

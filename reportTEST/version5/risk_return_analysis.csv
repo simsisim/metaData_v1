@@ -1,0 +1,65 @@
+ticker,Description,Sector,current_price,daily_daily_yearly_252d_pct_change,atr_pct,daily_rsi_14,daily_price_position_52w,market_cap_billions,in_sp_500
+NVDA,NVIDIA Corporation,Electronic technology,174.18,38.71,2.84,35.75,0.9,4435.188104248,True
+MSFT,Microsoft Corporation,Technology services,506.69,24.12,1.52,36.29,0.84,3731.746975137,True
+AAPL,Apple Inc.,Electronic technology,232.14,2.97,1.84,60.39,0.7,3403.049714052,True
+GOOGL,Alphabet Inc.,Technology services,212.91,31.37,2.07,72.45,1.0,2509.549439362,True
+GOOG,Alphabet Inc.,Technology services,213.53,30.43,2.04,72.87,1.0,2509.549439362,True
+AMZN,"Amazon.com, Inc.",Retail trade,229.0,34.07,2.0,61.4,0.83,2439.172120138,True
+META,"Meta Platforms, Inc.",Technology services,738.7,43.43,2.27,39.23,0.83,1894.27078628,True
+AVGO,Broadcom Inc.,Electronic technology,297.39,90.15,3.18,45.12,0.91,1401.681495683,True
+TSLA,"Tesla, Inc.",Consumer durables,333.87,62.27,3.76,46.82,0.47,1134.293684211,True
+JPM,JP Morgan Chase & Co.,Finance,301.42,39.27,1.56,69.9,1.0,820.993971036,True
+WMT,Walmart Inc.,Retail trade,96.98,28.71,1.67,25.53,0.75,766.519170253,True
+LLY,Eli Lilly and Company,Health technology,732.58,-22.21,2.99,83.83,0.33,696.620571821,True
+V,Visa Inc.,Finance,351.78,31.6,1.47,79.3,0.8,676.583677317,True
+ORCL,Oracle Corporation,Technology services,226.13,65.72,3.39,27.19,0.77,657.856797618,True
+MA,Mastercard Incorporated,Finance,595.29,26.9,1.37,74.49,0.97,534.822428416,True
+NFLX,"Netflix, Inc.",Technology services,1208.25,76.69,2.22,46.93,0.81,520.99791012,True
+XOM,Exxon Mobil Corporation,Energy minerals,114.29,1.63,1.53,95.49,0.71,475.309406762,True
+JNJ,Johnson & Johnson,Health technology,177.17,11.58,1.31,67.59,0.98,425.047739899,True
+COST,Costco Wholesale Corporation,Retail trade,943.32,6.77,1.54,29.7,0.36,417.46272762,True
+HD,"Home Depot, Inc. (The)",Retail trade,406.77,11.78,1.82,62.55,0.79,405.472956866,True
+PLTR,Palantir Technologies Inc.,Technology services,156.71,416.17,4.79,24.14,0.81,381.639044047,True
+BAC,Bank of America Corporation,Finance,50.74,30.12,1.59,83.58,1.0,372.199100098,True
+ABBV,AbbVie Inc.,Health technology,210.4,11.53,1.72,79.79,0.95,368.080073368,True
+PG,Procter & Gamble Company (The),Consumer non-durables,157.04,-4.76,1.37,56.82,0.25,365.339698509,True
+CVX,Chevron Corporation,Energy minerals,160.6,14.99,1.58,75.15,0.88,322.177908642,True
+KO,Coca-Cola Company (The),Consumer non-durables,68.99,-1.03,1.31,37.61,0.67,295.79108038,True
+ASML,ASML Holding N.V. - New York Registry Shares,Electronic technology,742.62,-15.77,2.14,57.62,0.49,293.673549180826,False
+GE,GE Aerospace,Electronic technology,275.2,61.15,2.08,50.0,0.96,290.496752938,True
+TMUS,"T-Mobile US, Inc.",Communications,251.99,26.86,1.69,56.43,0.75,282.705235628,True
+UNH,UnitedHealth Group Incorporated,Health services,309.87,-46.36,3.28,81.05,0.19,272.09152654,True
+CSCO,"Cisco Systems, Inc.",Electronic technology,69.09,42.4,1.76,42.39,0.89,270.824280706,True
+AMD,"Advanced Micro Devices, Inc.",Electronic technology,162.63,11.12,4.05,40.8,0.79,270.398217701,True
+PM,Philip Morris International Inc,Consumer non-durables,167.13,41.71,2.08,44.2,0.76,259.452302369,True
+AZN,AstraZeneca PLC,Health technology,79.9,-6.59,1.53,82.07,0.75,248.03680299616101,False
+C,"Citigroup, Inc.",Finance,96.57,61.64,1.89,64.83,0.99,176.210742262,True
+PDD,PDD Holdings Inc.,Retail trade,120.22,34.82,3.47,61.85,0.48,172.08257199,False
+QCOM,QUALCOMM Incorporated,Electronic technology,160.73,-4.42,2.06,74.44,0.72,171.744428024,True
+GEV,GE Vernova Inc.,Producer manufacturing,612.97,233.79,3.63,36.01,0.89,170.387677716,True
+ISRG,"Intuitive Surgical, Inc.",Health technology,473.3,-1.85,2.01,51.21,0.14,170.011069085,True
+ANET,"Arista Networks, Inc.",Electronic technology,136.55,60.1,3.27,47.71,0.94,168.75931678,True
+SPGI,S&P Global Inc.,Commercial services,548.44,9.32,1.42,43.26,0.88,168.623291494,True
+ACN,Accenture plc,Technology services,259.97,-21.53,2.16,79.57,0.14,159.089025566,True
+APP,Applovin Corporation,Technology services,478.59,443.85,4.73,54.17,0.93,158.750832316,False
+BSX,Boston Scientific Corporation,Health technology,105.5,32.67,1.6,62.47,0.92,157.643550427,True
+AMGN,Amgen Inc.,Health technology,287.71,-10.49,1.9,53.73,0.45,155.898825241,True
+HPQ,HP Inc.,Technology services,28.54,-14.7,2.43,73.86,0.42,25.369760925,True
+LULU,lululemon athletica inc.,Consumer non-durables,202.2,-21.88,3.03,64.24,0.07,25.308438499,True
+VRSN,"VeriSign, Inc.",Technology services,273.37,51.72,1.89,59.95,0.75,25.219384902,True
+NTRS,Northern Trust Corporation,Finance,131.28,52.62,1.79,68.08,0.98,25.217933233,True
+FE,FirstEnergy Corp.,Utilities,43.62,3.86,1.22,54.08,0.95,25.169037426,True
+XLF,,Financial,53.99,22.03,0.98,75.59,1.0,,False
+XLE,,Energy,90.39,4.01,1.43,90.39,0.76,,False
+XLK,,Health,262.45,20.43,1.37,46.98,0.93,,False
+XLV,,,137.43,-10.28,1.18,75.72,0.35,,False
+XLI,,,152.01,19.39,1.04,56.41,0.92,,False
+XLB,,,92.28,1.45,1.17,75.53,0.83,,False
+XLRE,,,42.31,1.0,1.14,66.93,0.76,,False
+XLP,,,80.78,0.67,1.02,37.4,0.69,,False
+XLY,,,231.74,26.98,1.21,66.61,0.9,,False
+XLU,,,84.32,15.26,1.13,36.5,0.8,,False
+XLC,,,111.39,29.57,1.01,69.74,0.99,,False
+VGT,,,697.02,23.0,1.41,51.08,0.95,,False
+SPY,,,645.05,16.98,0.8,61.04,0.97,,False
+QQQ,,,570.4,21.7,1.1,47.47,0.94,,False

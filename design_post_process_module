@@ -1,0 +1,88 @@
+Here is the updated workflow and Python script that includes the "Filename" column in the configuration to apply different operations on multiple files:
+Updated Workflow
+
+    The configuration file now includes a "Filename" column to specify which file each operation applies to.
+
+    The main Python script reads the configuration file and groups operations by filename.
+
+    For each filename, it loads the corresponding data file, applies all filters and sorts in the configured order, then saves or outputs the processed data.
+
+    This structure supports multiple files with independent or separate sets of filter and sort rules.
+
+Updated Example Configuration CSV Structure
+
+text
+Filename,Step,Action,Column,Condition,Value,Order,Logic
+file1.csv,1,Filter,Status,equals,active,,
+file1.csv,2,Filter,Amount,greater_than,1000,,AND
+file1.csv,3,Filter,Category,equals,approved,,OR
+file1.csv,4,Sort,Date,,,asc,
+file1.csv,5,Sort,Amount,,,desc,
+file2.csv,1,Filter,Status,equals,inactive,,
+file2.csv,2,Sort,Date,,,asc,
+
+Updated Python Script
+
+python
+import pandas as pd
+
+# Read the configuration file
+config = pd.read_csv("user_data_pp.csv")
+
+# Group the config by Filename so we can process each file separately
+for filename, ops in config.groupby("Filename"):
+    print(f"Processing file: {filename}")
+
+    # Load the data file for this filename
+    df = pd.read_csv(filename)
+
+    # Apply filters first
+    filters = []
+    logic_ops = []
+    for _, row in ops.iterrows():
+        if row["Action"].lower() == "filter":
+            col = row["Column"]
+            cond = row["Condition"]
+            val = row["Value"]
+            # Build condition string according to condition type
+            if cond == "equals":
+                filters.append(f"(df['{col}'] == '{val}')")
+            elif cond == "greater_than":
+                filters.append(f"(df['{col}'] > {val})")
+            elif cond == "less_than":
+                filters.append(f"(df['{col}'] < {val})")
+            # Additional conditions can be added here
+            logic_ops.append(row.get("Logic", "AND") or "AND")
+
+    # Combine filter conditions logically
+    if filters:
+        query = filters[0]
+        for i, op in enumerate(logic_ops[1:], start=1):
+            query = f"({query}) {op} ({filters[i]})"
+        filtered_df = df.query(query)
+    else:
+        filtered_df = df
+
+    # Apply sorting steps in order
+    sort_cols = []
+    ascending = []
+    for _, row in ops.iterrows():
+        if row["Action"].lower() == "sort":
+            sort_cols.append(row["Column"])
+            ascending.append(row["Order"].lower() == "asc")
+
+    if sort_cols:
+        sorted_df = filtered_df.sort_values(by=sort_cols, ascending=ascending)
+    else:
+        sorted_df = filtered_df
+
+    # Save or output the resulting dataframe
+    output_filename = f"processed_{filename}"
+    sorted_df.to_csv(output_filename, index=False)
+    print(f"Saved processed file to: {output_filename}")
+
+
+                    
+
+
+

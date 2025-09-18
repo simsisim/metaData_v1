@@ -1,0 +1,65 @@
+ticker,sector,industry,current_price,market_cap,analyst_rating,132d_change,252d_change,year_change,price_vs_sma200,sma200_slope,sp500_member,long_term_score
+NVDA,Electronic technology,Semiconductors,174.18,4435188104248.0,Strong buy,29.59,38.71,38.71,25.54,0.18,True,1.0
+MSFT,Technology services,Packaged software,506.69,3731746975137.0,Strong buy,24.35,24.12,24.12,14.74,0.45,True,1.0
+AMZN,Retail trade,Internet retail,229.0,2439172120138.0,Strong buy,5.73,34.07,34.07,7.6,0.13,True,1.0
+WMT,Retail trade,Specialty stores,96.98,766519170253.0,Strong buy,3.09,28.71,28.71,2.9,0.07,True,1.0
+JPM,Finance,Major banks,301.42,820993971036.0,Buy,15.33,39.27,39.27,16.38,0.35,True,0.95
+V,Finance,Finance/Rental/Leasing,351.78,676583677317.0,Buy,1.28,31.6,31.6,4.03,0.26,True,0.95
+CVX,Energy minerals,Integrated oil,160.6,322177908642.0,Buy,4.74,14.99,14.99,8.94,0.05,True,0.95
+JNJ,Health technology,Pharmaceuticals: major,177.17,425047739899.0,Buy,10.91,11.58,11.58,14.64,0.12,True,0.95
+CSCO,Electronic technology,Telecommunications equipment,69.09,270824280706.0,Buy,9.36,42.4,42.4,11.5,0.06,True,0.95
+GOOG,Technology services,Internet software/Services,213.53,2509549439362.0,Strong buy,17.87,30.43,30.43,18.84,0.17,True,0.95
+META,Technology services,Internet software/Services,738.7,1894270786280.0,Strong buy,8.25,43.43,43.43,14.18,0.87,True,0.95
+GOOGL,Technology services,Internet software/Services,212.91,2509549439362.0,Strong buy,18.79,31.37,31.37,19.48,0.18,True,0.95
+AVGO,Electronic technology,Semiconductors,297.39,1401681495683.0,Strong buy,36.74,90.15,90.15,31.45,0.62,True,0.95
+BSX,Health technology,Medical specialties,105.5,157643550427.0,Strong buy,0.97,32.67,32.67,5.75,0.1,True,0.95
+SPGI,Commercial services,Financial publishing/Services,548.44,168623291494.0,Strong buy,3.38,9.32,9.32,7.21,0.3,True,0.95
+ANET,Electronic technology,Computer peripherals,136.55,168759316780.0,Strong buy,38.91,60.1,60.1,34.2,0.16,True,0.95
+GE,Electronic technology,Aerospace & defense,275.2,290496752938.0,Buy,38.17,61.15,61.15,28.45,0.48,True,0.9
+AMD,Electronic technology,Semiconductors,162.63,270398217701.0,Buy,46.73,11.12,11.12,29.75,0.1,True,0.9
+ABBV,Health technology,Pharmaceuticals: major,210.4,368080073368.0,Buy,5.99,11.53,11.53,12.95,0.07,True,0.9
+BAC,Finance,Major banks,50.74,372199100098.0,Buy,14.62,30.12,30.12,14.37,0.04,True,0.9
+PM,Consumer non-durables,Tobacco,167.13,259452302369.0,Buy,10.02,41.71,41.71,9.19,0.21,True,0.9
+NFLX,Technology services,Internet software/Services,1208.25,520997910120.0,Buy,20.45,76.69,76.69,14.61,2.22,True,0.9
+MA,Finance,Finance/Rental/Leasing,595.29,534822428416.0,Buy,7.09,26.9,26.9,8.55,0.4,True,0.9
+ORCL,Technology services,Packaged software,226.13,657856797618.0,Buy,35.53,65.72,65.72,24.44,0.28,True,0.9
+C,Finance,Major banks,96.57,176210742262.0,Buy,23.02,61.64,61.64,26.15,0.16,True,0.9
+FE,Utilities,Electric utilities,43.62,25169037426.0,Buy,5.3,3.86,3.86,8.52,0.02,True,0.9
+GEV,Producer manufacturing,Electrical products,612.97,170387677716.0,Buy,87.17,233.79,233.79,45.38,1.47,True,0.9
+VRSN,Technology services,Internet software/Services,273.37,25219384902.0,Neutral,18.56,51.72,51.72,11.9,0.45,True,0.85
+PLTR,Technology services,Packaged software,156.71,381639044047.0,Neutral,54.62,416.17,416.17,43.79,0.53,True,0.85
+NTRS,Finance,Investment managers,131.28,25217933233.0,Neutral,17.95,52.62,52.62,20.7,0.15,True,0.85
+APP,Technology services,Packaged software,478.59,158750832316.0,Buy,15.24,443.85,443.85,38.13,1.32,False,0.85
+XLU,,,84.32,,,6.53,15.26,15.26,6.28,0.04,False,0.8
+SPY,,,645.05,,,8.16,16.98,16.98,8.97,0.32,False,0.8
+QQQ,,,570.4,,,8.71,21.7,21.7,10.2,0.36,False,0.8
+XLC,,,111.39,,,8.71,29.57,29.57,10.63,0.09,False,0.8
+XLY,,,231.74,,,6.63,26.98,26.98,7.52,0.13,False,0.8
+XLK,Health,,262.45,,,12.12,20.43,20.43,12.29,0.17,False,0.8
+XLF,Financial,,53.99,,,7.14,22.03,22.03,7.63,0.03,False,0.8
+VGT,,,697.02,,,11.94,23.0,23.0,12.81,0.46,False,0.8
+XLI,,,152.01,,,13.42,19.39,19.39,9.34,0.08,False,0.8
+HD,Retail trade,Home improvement chains,406.77,405472956866.0,Buy,6.9,11.78,11.78,6.89,0.08,True,0.75
+XOM,Energy minerals,Integrated oil,114.29,475309406762.0,Buy,5.17,1.63,1.63,5.76,-0.02,True,0.7
+XLRE,,,42.31,,,1.74,1.0,1.0,2.59,-0.0,False,0.6
+XLE,Energy,,90.39,,,1.0,4.01,4.01,4.51,-0.0,False,0.6
+XLB,,,92.28,,,5.82,1.45,1.45,5.87,-0.0,False,0.6
+PDD,Retail trade,Department stores,120.22,172082571990.0,Buy,-8.47,34.82,34.82,9.72,0.01,False,0.55
+XLP,,,80.78,,,-0.51,0.67,0.67,0.84,0.01,False,0.5
+AAPL,Electronic technology,Telecommunications equipment,232.14,3403049714052.0,Buy,-5.23,2.97,2.97,5.2,0.03,True,0.45
+TMUS,Communications,Wireless telecommunications,251.99,282705235628.0,Buy,-4.3,26.86,26.86,4.3,0.12,True,0.4
+TSLA,Consumer durables,Motor vehicles,333.87,1134293684211.0,Neutral,-1.16,62.27,62.27,1.16,0.33,True,0.35
+AZN,Health technology,Pharmaceuticals: major,79.9,248036802996.161,Strong buy,8.4,-6.59,-6.59,13.81,0.08,False,0.2
+COST,Retail trade,Specialty stores,943.32,417462727620.0,Buy,-8.62,6.77,6.77,-3.06,0.2,True,0.2
+ASML,Electronic technology,Semiconductors,742.62,293673549180.826,Buy,1.02,-15.77,-15.77,2.9,0.45,False,0.15
+KO,Consumer non-durables,Beverages: non-alcoholic,68.99,295791080380.0,Buy,-1.9,-1.03,-1.03,2.13,0.03,True,-0.05
+AMGN,Health technology,Biotechnology,287.71,155898825241.0,Buy,-4.21,-10.49,-10.49,0.58,-0.13,True,-0.25
+QCOM,Electronic technology,Semiconductors,160.73,171744428024.0,Buy,-1.73,-4.42,-4.42,3.82,-0.04,True,-0.3
+PG,Consumer non-durables,Household/Personal care,157.04,365339698509.0,Buy,-6.54,-4.76,-4.76,-3.46,-0.03,True,-0.65
+UNH,Health services,Managed health care,309.87,272091526540.0,Buy,-32.81,-46.36,-46.36,-27.52,-1.38,True,-0.65
+LLY,Health technology,Pharmaceuticals: major,732.58,696620571821.0,Buy,-15.79,-22.21,-22.21,-6.62,-0.36,True,-0.7
+ISRG,Health technology,Medical specialties,473.3,170011069085.0,Buy,-20.02,-1.85,-1.85,-10.48,-0.24,True,-0.7
+ACN,Technology services,Information technology services,259.97,159089025566.0,Buy,-27.92,-21.53,-21.53,-18.38,-0.45,True,-0.7
+LULU,Consumer non-durables,Apparel/Footwear,202.2,25308438499.0,Buy,-43.67,-21.88,-21.88,-33.35,-0.56,True,-0.7
+HPQ,Technology services,Information technology services,28.54,25369760925.0,Neutral,-15.79,-14.7,-14.7,-0.76,-0.04,True,-0.75
+XLV,,,137.43,,,-5.33,-10.28,-10.28,-0.75,-0.05,False,-0.8
