@@ -182,6 +182,9 @@ class MarketOverviewAnalyzer:
         if 'industry' in self.df.columns:
             analysis.update(self._analyze_industries_enhanced())
 
+            # Multi-timeframe leaders vs laggards extension
+            analysis.update(self._analyze_multi_timeframe_leaders())
+
         return analysis
 
     def _detect_rotation_signals(self, group_perf: pd.DataFrame) -> pd.DataFrame:
@@ -220,6 +223,34 @@ class MarketOverviewAnalyzer:
                 rankings[label] = ranked[[col]].copy()
 
         return rankings
+
+    def _get_timeframe_label_for_analysis(self, analysis_type: str) -> str:
+        """Get user-friendly timeframe label for specific analysis type."""
+        timeframe_labels = {
+            '1D': '1D/Daily',
+            '7D': '7D/Weekly',
+            '22D': '22D/Monthly',
+            '66D': '66D/Quarterly',
+            '252D': '252D/Annual'
+        }
+
+        if analysis_type == 'rotation':
+            # Rotation uses 1D AND 7D
+            short_term_labels = []
+            for label in ['1D', '7D']:
+                if label in self.available_timeframes:
+                    short_term_labels.append(timeframe_labels.get(label, label))
+            return ' & '.join(short_term_labels) if short_term_labels else 'Short-term'
+
+        elif analysis_type in ['dispersion', 'leaders_laggards', 'risk']:
+            # These use longest available timeframe
+            for label in ['252D', '66D', '22D', '7D', '1D']:
+                if label in self.available_timeframes:
+                    return timeframe_labels.get(label, label)
+            return 'Long-term'
+
+        else:
+            return 'Multi-timeframe'
 
     def _analyze_industries_enhanced(self) -> dict:
         """Enhanced industry analysis with market cap weighting and leader/laggard identification."""
@@ -443,6 +474,11 @@ class MarketOverviewAnalyzer:
         chart_paths['industry_dispersion_box'] = self._create_industry_dispersion_box()
         chart_paths['leader_laggard_comparison'] = self._create_leader_laggard_comparison()
         chart_paths['industry_rotation_flow'] = self._create_industry_rotation_flow()
+
+        # G. Multi-Timeframe Leaders vs Laggards Extension Charts
+        chart_paths['multi_timeframe_leaders_grid'] = self._create_multi_timeframe_leaders_grid()
+        chart_paths['leaders_consistency_heatmap'] = self._create_leaders_consistency_heatmap()
+        chart_paths['timeframe_rotation_flow'] = self._create_timeframe_rotation_flow()
 
         return chart_paths
 
@@ -1016,6 +1052,503 @@ class MarketOverviewAnalyzer:
             logger.error(f"Error creating industry rotation flow: {e}")
             return ""
 
+    def _analyze_multi_timeframe_leaders(self) -> dict:
+        """Analyze leaders/laggards across all available timeframes."""
+        logger.info("Performing multi-timeframe leaders analysis")
+
+        analysis = {}
+
+        # Identify leaders/laggards for each timeframe
+        analysis['multi_timeframe_leaders_laggards'] = self._identify_multi_timeframe_leaders_laggards()
+
+        # Calculate consistency scores
+        analysis['leadership_consistency'] = self._calculate_leadership_consistency_scores(
+            analysis['multi_timeframe_leaders_laggards'])
+
+        # Analyze rotation patterns
+        analysis['timeframe_rotation_patterns'] = self._analyze_timeframe_rotation_patterns(
+            analysis['multi_timeframe_leaders_laggards'])
+
+        return analysis
+
+    def _identify_multi_timeframe_leaders_laggards(self) -> dict:
+        """Identify leaders/laggards for EACH available timeframe."""
+        multi_timeframe_data = {}
+
+        for timeframe_label, timeframe_col in self.available_timeframes.items():
+            if timeframe_col not in self.df.columns:
+                continue
+
+            timeframe_leaders_laggards = {}
+
+            for industry, industry_data in self.df.groupby('industry'):
+                if len(industry_data) < 3:  # Skip industries with too few stocks
+                    continue
+
+                # Sort by performance for this specific timeframe
+                sorted_data = industry_data.sort_values(timeframe_col, ascending=False)
+
+                # Top 3 performers
+                leaders = sorted_data.head(3)[['ticker', timeframe_col]].copy()
+                if 'market_cap' in self.df.columns:
+                    leaders = sorted_data.head(3)[['ticker', timeframe_col, 'market_cap']].copy()
+
+                # Bottom 2 laggards
+                laggards = sorted_data.tail(2)[['ticker', timeframe_col]].copy()
+                if 'market_cap' in self.df.columns:
+                    laggards = sorted_data.tail(2)[['ticker', timeframe_col, 'market_cap']].copy()
+
+                # Calculate performance gap
+                if len(leaders) > 0 and len(laggards) > 0:
+                    performance_gap = leaders[timeframe_col].iloc[0] - laggards[timeframe_col].iloc[-1]
+                else:
+                    performance_gap = 0
+
+                timeframe_leaders_laggards[industry] = {
+                    'leaders': leaders,
+                    'laggards': laggards,
+                    'performance_gap': performance_gap,
+                    'stock_count': len(industry_data)
+                }
+
+            multi_timeframe_data[timeframe_label] = timeframe_leaders_laggards
+
+        return multi_timeframe_data
+
+    def _calculate_leadership_consistency_scores(self, multi_timeframe_data: dict) -> dict:
+        """Calculate consistency scores for leaders across timeframes."""
+        consistency_data = {}
+
+        # Get all unique tickers
+        all_tickers = set()
+        for timeframe_data in multi_timeframe_data.values():
+            for industry_data in timeframe_data.values():
+                for ticker in industry_data['leaders']['ticker']:
+                    all_tickers.add(ticker)
+
+        # Calculate consistency for each ticker
+        for ticker in all_tickers:
+            leadership_count = 0
+            total_appearances = 0
+
+            for timeframe_data in multi_timeframe_data.values():
+                for industry_data in timeframe_data.values():
+                    if ticker in industry_data['leaders']['ticker'].values:
+                        leadership_count += 1
+                        total_appearances += 1
+                    elif ticker in industry_data['laggards']['ticker'].values:
+                        total_appearances += 1
+
+            if total_appearances > 0:
+                consistency_score = leadership_count / total_appearances
+                persistence_score = leadership_count / len(self.available_timeframes)
+
+                consistency_data[ticker] = {
+                    'consistency_score': consistency_score,
+                    'persistence_score': persistence_score,
+                    'leadership_count': leadership_count,
+                    'total_appearances': total_appearances
+                }
+
+        return consistency_data
+
+    def _analyze_timeframe_rotation_patterns(self, multi_timeframe_data: dict) -> dict:
+        """Analyze leadership rotation patterns between timeframes."""
+        rotation_patterns = {}
+
+        timeframe_labels = list(self.available_timeframes.keys())
+
+        for i in range(len(timeframe_labels) - 1):
+            current_tf = timeframe_labels[i]
+            next_tf = timeframe_labels[i + 1]
+
+            if current_tf not in multi_timeframe_data or next_tf not in multi_timeframe_data:
+                continue
+
+            transition_key = f"{current_tf}_to_{next_tf}"
+
+            # Count transitions
+            leader_to_leader = 0
+            leader_to_laggard = 0
+            laggard_to_leader = 0
+            laggard_to_laggard = 0
+
+            # Get industries present in both timeframes
+            common_industries = set(multi_timeframe_data[current_tf].keys()) & set(multi_timeframe_data[next_tf].keys())
+
+            for industry in common_industries:
+                current_leaders = set(multi_timeframe_data[current_tf][industry]['leaders']['ticker'])
+                current_laggards = set(multi_timeframe_data[current_tf][industry]['laggards']['ticker'])
+                next_leaders = set(multi_timeframe_data[next_tf][industry]['leaders']['ticker'])
+                next_laggards = set(multi_timeframe_data[next_tf][industry]['laggards']['ticker'])
+
+                # Count transitions
+                leader_to_leader += len(current_leaders & next_leaders)
+                leader_to_laggard += len(current_leaders & next_laggards)
+                laggard_to_leader += len(current_laggards & next_leaders)
+                laggard_to_laggard += len(current_laggards & next_laggards)
+
+            rotation_patterns[transition_key] = {
+                'leader_to_leader': leader_to_leader,
+                'leader_to_laggard': leader_to_laggard,
+                'laggard_to_leader': laggard_to_leader,
+                'laggard_to_laggard': laggard_to_laggard
+            }
+
+        return rotation_patterns
+
+    def _create_multi_timeframe_leaders_grid(self) -> str:
+        """Create 5×6 grid showing leaders vs laggards across all timeframes and top 6 industries."""
+        try:
+            if 'industry' not in self.df.columns:
+                return ""
+
+            # Get multi-timeframe data
+            multi_timeframe_data = self._identify_multi_timeframe_leaders_laggards()
+
+            if not multi_timeframe_data:
+                return ""
+
+            # Get top 6 industries by total stock count across all timeframes
+            industry_counts = {}
+            for timeframe_data in multi_timeframe_data.values():
+                for industry, data in timeframe_data.items():
+                    if industry not in industry_counts:
+                        industry_counts[industry] = 0
+                    industry_counts[industry] += data['stock_count']
+
+            top_industries = sorted(industry_counts.items(), key=lambda x: x[1], reverse=True)[:6]
+            top_industry_names = [industry for industry, _ in top_industries]
+
+            # Create subplot grid
+            num_timeframes = len(self.available_timeframes)
+            fig, axes = plt.subplots(num_timeframes, 6, figsize=(24, 4*num_timeframes))
+
+            if num_timeframes == 1:
+                axes = axes.reshape(1, -1)
+
+            timeframe_labels = list(self.available_timeframes.keys())
+
+            for row, timeframe_label in enumerate(timeframe_labels):
+                if timeframe_label not in multi_timeframe_data:
+                    continue
+
+                timeframe_data = multi_timeframe_data[timeframe_label]
+
+                for col, industry in enumerate(top_industry_names):
+                    if col >= 6:
+                        break
+
+                    ax = axes[row, col]
+
+                    if industry not in timeframe_data:
+                        ax.set_visible(False)
+                        continue
+
+                    industry_data = timeframe_data[industry]
+                    leaders_df = industry_data['leaders']
+                    laggards_df = industry_data['laggards']
+
+                    # Get performance column
+                    perf_col = self.available_timeframes[timeframe_label]
+
+                    # Prepare data for plotting
+                    plot_data = []
+                    plot_labels = []
+                    colors_list = []
+
+                    # Add leaders (green shades)
+                    for idx, (_, row_data) in enumerate(leaders_df.iterrows()):
+                        plot_data.append(row_data[perf_col])
+                        plot_labels.append(f"{row_data['ticker']}")
+                        colors_list.append(plt.cm.Greens(0.6 + 0.2 * idx))
+
+                    # Add laggards (red shades)
+                    for idx, (_, row_data) in enumerate(laggards_df.iterrows()):
+                        plot_data.append(row_data[perf_col])
+                        plot_labels.append(f"{row_data['ticker']}")
+                        colors_list.append(plt.cm.Reds(0.6 + 0.2 * idx))
+
+                    # Create bar chart
+                    bars = ax.bar(range(len(plot_data)), plot_data, color=colors_list, alpha=0.8, edgecolor='black', linewidth=0.5)
+
+                    # Add value labels on bars
+                    for bar, value in zip(bars, plot_data):
+                        height = bar.get_height()
+                        ax.text(bar.get_x() + bar.get_width()/2., height + (0.5 if height >= 0 else -1.5),
+                               f'{value:.1f}%', ha='center', va='bottom' if height >= 0 else 'top', fontsize=7)
+
+                    ax.set_xticks(range(len(plot_labels)))
+                    ax.set_xticklabels(plot_labels, rotation=45, ha='right', fontsize=8)
+                    ax.set_ylabel('Performance (%)', fontsize=8)
+
+                    # Set title only for top row
+                    if row == 0:
+                        ax.set_title(f'{industry[:15]}...' if len(industry) > 15 else industry,
+                                   fontweight='bold', fontsize=9)
+
+                    # Set timeframe label only for first column
+                    if col == 0:
+                        ax.text(-0.15, 0.5, timeframe_label, transform=ax.transAxes, fontsize=10,
+                               fontweight='bold', ha='center', va='center', rotation=90)
+
+                    ax.grid(True, alpha=0.3)
+                    ax.axhline(y=0, color='black', linestyle='-', alpha=0.5)
+
+            plt.suptitle('Multi-Timeframe Leaders vs Laggards Analysis (Top 6 Industries)',
+                        fontsize=16, fontweight='bold')
+            plt.tight_layout()
+            chart_path = self.png_dir / "multi_timeframe_leaders_grid.png"
+            plt.savefig(chart_path, dpi=300, bbox_inches='tight')
+            plt.close()
+
+            return str(chart_path)
+
+        except Exception as e:
+            logger.error(f"Error creating multi-timeframe leaders grid: {e}")
+            return ""
+
+    def _create_leaders_consistency_heatmap(self) -> str:
+        """Create heatmap showing leadership consistency across timeframes."""
+        try:
+            if 'industry' not in self.df.columns:
+                return ""
+
+            # Get consistency data
+            multi_timeframe_data = self._identify_multi_timeframe_leaders_laggards()
+            consistency_data = self._calculate_leadership_consistency_scores(multi_timeframe_data)
+
+            if not consistency_data:
+                return ""
+
+            # Create consistency matrix
+            timeframe_labels = list(self.available_timeframes.keys())
+            top_consistent_tickers = sorted(consistency_data.items(),
+                                          key=lambda x: x[1]['persistence_score'], reverse=True)[:20]
+
+            ticker_names = [ticker for ticker, _ in top_consistent_tickers]
+
+            # Create matrix: tickers × timeframes
+            consistency_matrix = np.zeros((len(ticker_names), len(timeframe_labels)))
+
+            for i, ticker in enumerate(ticker_names):
+                for j, timeframe_label in enumerate(timeframe_labels):
+                    if timeframe_label in multi_timeframe_data:
+                        # Check if ticker is leader (1), laggard (-1), or neither (0)
+                        for industry_data in multi_timeframe_data[timeframe_label].values():
+                            if ticker in industry_data['leaders']['ticker'].values:
+                                consistency_matrix[i, j] = 1  # Leader
+                                break
+                            elif ticker in industry_data['laggards']['ticker'].values:
+                                consistency_matrix[i, j] = -1  # Laggard
+                                break
+
+            fig, ax = plt.subplots(figsize=(12, 10))
+
+            # Create heatmap
+            im = ax.imshow(consistency_matrix, cmap='RdYlGn', aspect='auto', vmin=-1, vmax=1)
+
+            # Set ticks and labels
+            ax.set_xticks(range(len(timeframe_labels)))
+            ax.set_xticklabels(timeframe_labels)
+            ax.set_yticks(range(len(ticker_names)))
+            ax.set_yticklabels(ticker_names)
+
+            # Add text annotations
+            for i in range(len(ticker_names)):
+                for j in range(len(timeframe_labels)):
+                    value = consistency_matrix[i, j]
+                    if value == 1:
+                        text = 'L'
+                        color = 'white'
+                    elif value == -1:
+                        text = 'Lag'
+                        color = 'white'
+                    else:
+                        text = '-'
+                        color = 'black'
+                    ax.text(j, i, text, ha='center', va='center', color=color, fontweight='bold')
+
+            # Add colorbar
+            cbar = plt.colorbar(im, ax=ax)
+            cbar.set_label('Leadership Status', rotation=270, labelpad=20)
+            cbar.set_ticks([-1, 0, 1])
+            cbar.set_ticklabels(['Laggard', 'Neither', 'Leader'])
+
+            ax.set_title('Leadership Consistency Across Timeframes (Top 20 Most Consistent)', fontsize=14, fontweight='bold')
+            ax.set_xlabel('Timeframe')
+            ax.set_ylabel('Stock Ticker')
+
+            plt.tight_layout()
+            chart_path = self.png_dir / "leaders_consistency_heatmap.png"
+            plt.savefig(chart_path, dpi=300, bbox_inches='tight')
+            plt.close()
+
+            return str(chart_path)
+
+        except Exception as e:
+            logger.error(f"Error creating leaders consistency heatmap: {e}")
+            return ""
+
+    def _create_timeframe_rotation_flow(self) -> str:
+        """Create rotation flow diagram showing leadership transitions between timeframes."""
+        try:
+            if 'industry' not in self.df.columns:
+                return ""
+
+            # Get rotation patterns
+            multi_timeframe_data = self._identify_multi_timeframe_leaders_laggards()
+            rotation_patterns = self._analyze_timeframe_rotation_patterns(multi_timeframe_data)
+
+            if not rotation_patterns:
+                return ""
+
+            # Create subplot for each transition
+            num_transitions = len(rotation_patterns)
+            if num_transitions == 0:
+                return ""
+
+            cols = min(3, num_transitions)
+            rows = (num_transitions + cols - 1) // cols
+
+            fig, axes = plt.subplots(rows, cols, figsize=(5*cols, 4*rows))
+            if num_transitions == 1:
+                axes = [axes]
+            elif rows == 1:
+                axes = [axes] if cols == 1 else axes
+            else:
+                axes = axes.flatten()
+
+            for i, (transition_key, transition_data) in enumerate(rotation_patterns.items()):
+                if i >= len(axes):
+                    break
+
+                ax = axes[i]
+
+                # Prepare data for pie chart
+                labels = ['Leader→Leader', 'Leader→Laggard', 'Laggard→Leader', 'Laggard→Laggard']
+                sizes = [
+                    transition_data['leader_to_leader'],
+                    transition_data['leader_to_laggard'],
+                    transition_data['laggard_to_leader'],
+                    transition_data['laggard_to_laggard']
+                ]
+                colors = ['darkgreen', 'orange', 'lightgreen', 'darkred']
+
+                # Only include non-zero slices
+                non_zero_data = [(label, size, color) for label, size, color in zip(labels, sizes, colors) if size > 0]
+
+                if non_zero_data:
+                    labels_nz, sizes_nz, colors_nz = zip(*non_zero_data)
+
+                    wedges, texts, autotexts = ax.pie(sizes_nz, labels=labels_nz, autopct='%1.1f%%',
+                                                     colors=colors_nz, startangle=90)
+
+                    # Style the text
+                    for autotext in autotexts:
+                        autotext.set_color('white')
+                        autotext.set_fontweight('bold')
+                        autotext.set_fontsize(8)
+
+                    for text in texts:
+                        text.set_fontsize(8)
+
+                ax.set_title(f'{transition_key.replace("_", " ")}', fontsize=10, fontweight='bold')
+
+            # Hide unused subplots
+            for i in range(num_transitions, len(axes)):
+                axes[i].set_visible(False)
+
+            plt.suptitle('Leadership Transition Patterns Between Timeframes', fontsize=14, fontweight='bold')
+            plt.tight_layout()
+            chart_path = self.png_dir / "timeframe_rotation_flow.png"
+            plt.savefig(chart_path, dpi=300, bbox_inches='tight')
+            plt.close()
+
+            return str(chart_path)
+
+        except Exception as e:
+            logger.error(f"Error creating timeframe rotation flow: {e}")
+            return ""
+
+    def _create_multi_timeframe_leaders_section(self, styles, sector_analysis: dict, chart_paths: dict) -> list:
+        """Create multi-timeframe leaders analysis section."""
+        content = []
+
+        content.append(Paragraph("<b>Multi-Timeframe Leaders vs Laggards Analysis</b>", styles['Heading1']))
+        content.append(Spacer(1, 0.2*inch))
+
+        # Multi-timeframe leaders grid
+        if chart_paths.get('multi_timeframe_leaders_grid'):
+            content.append(Paragraph("<b>Leaders vs Laggards Across All Timeframes</b>", styles['Heading3']))
+            content.append(Spacer(1, 0.1*inch))
+            img = RLImage(chart_paths['multi_timeframe_leaders_grid'], width=8*inch, height=6*inch)
+            content.append(img)
+            content.append(Spacer(1, 0.2*inch))
+
+        # Leadership consistency heatmap
+        if chart_paths.get('leaders_consistency_heatmap'):
+            content.append(Paragraph("<b>Leadership Consistency Analysis</b>", styles['Heading3']))
+            content.append(Spacer(1, 0.1*inch))
+            img = RLImage(chart_paths['leaders_consistency_heatmap'], width=7*inch, height=5*inch)
+            content.append(img)
+            content.append(Spacer(1, 0.2*inch))
+
+        # Timeframe rotation flow
+        if chart_paths.get('timeframe_rotation_flow'):
+            content.append(Paragraph("<b>Leadership Transition Patterns</b>", styles['Heading3']))
+            content.append(Spacer(1, 0.1*inch))
+            img = RLImage(chart_paths['timeframe_rotation_flow'], width=7*inch, height=4*inch)
+            content.append(img)
+            content.append(Spacer(1, 0.2*inch))
+
+        # Consistency analysis tables
+        if 'leadership_consistency' in sector_analysis:
+            content.extend(self._create_consistency_analysis_tables(sector_analysis['leadership_consistency'], styles))
+
+        return content
+
+    def _create_consistency_analysis_tables(self, consistency_data: dict, styles) -> list:
+        """Create leadership consistency analysis tables."""
+        content = []
+
+        content.append(Paragraph("<b>Top Leadership Consistency Scores</b>", styles['Heading3']))
+        content.append(Spacer(1, 0.1*inch))
+
+        # Sort by persistence score
+        sorted_consistency = sorted(consistency_data.items(),
+                                  key=lambda x: x[1]['persistence_score'], reverse=True)[:15]
+
+        table_data = [['Ticker', 'Persistence Score', 'Consistency Score', 'Leadership Count', 'Total Appearances']]
+
+        for ticker, data in sorted_consistency:
+            table_data.append([
+                ticker,
+                f"{data['persistence_score']:.2f}",
+                f"{data['consistency_score']:.2f}",
+                str(data['leadership_count']),
+                str(data['total_appearances'])
+            ])
+
+        if len(table_data) > 1:  # Only create table if we have data
+            table = Table(table_data)
+            table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.darkblue),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, 0), 10),
+                ('FONTSIZE', (0, 1), (-1, -1), 9),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black)
+            ]))
+
+            content.append(table)
+            content.append(Spacer(1, 0.2*inch))
+
+        return content
+
     def assemble_pdf(self, pdf_path: str, performance_analysis: dict,
                     sector_analysis: dict, chart_paths: dict) -> bool:
         """Step 4: Assemble professional PDF report."""
@@ -1062,6 +1595,10 @@ class MarketOverviewAnalyzer:
 
             # Industry Risk & Attribution Section
             content.extend(self._create_industry_risk_section(styles, sector_analysis, chart_paths))
+            content.append(PageBreak())
+
+            # Multi-Timeframe Leaders Analysis Section (3 pages)
+            content.extend(self._create_multi_timeframe_leaders_section(styles, sector_analysis, chart_paths))
             content.append(PageBreak())
 
             # Momentum & Rotation Analysis
@@ -1172,7 +1709,8 @@ class MarketOverviewAnalyzer:
 
         # Tornado chart
         if chart_paths.get('tornado_chart'):
-            content.append(Paragraph("<b>Sector Dispersion Analysis</b>", styles['Heading3']))
+            dispersion_timeframe = self._get_timeframe_label_for_analysis('dispersion')
+            content.append(Paragraph(f"<b>Sector Dispersion Analysis ({dispersion_timeframe})</b>", styles['Heading3']))
             content.append(Spacer(1, 0.1*inch))
             img = RLImage(chart_paths['tornado_chart'], width=7*inch, height=5*inch)
             content.append(img)
@@ -1256,7 +1794,8 @@ class MarketOverviewAnalyzer:
         """Create intra-industry leaders & laggards section."""
         content = []
 
-        content.append(Paragraph("<b>Intra-Industry Leaders & Laggards Analysis</b>", styles['Heading1']))
+        leaders_timeframe = self._get_timeframe_label_for_analysis('leaders_laggards')
+        content.append(Paragraph(f"<b>Intra-Industry Leaders & Laggards Analysis ({leaders_timeframe})</b>", styles['Heading1']))
         content.append(Spacer(1, 0.2*inch))
 
         # Leaders vs laggards comparison
@@ -1285,7 +1824,8 @@ class MarketOverviewAnalyzer:
         """Create industry risk & attribution analysis section."""
         content = []
 
-        content.append(Paragraph("<b>Industry Risk & Attribution Analysis</b>", styles['Heading1']))
+        risk_timeframe = self._get_timeframe_label_for_analysis('risk')
+        content.append(Paragraph(f"<b>Industry Risk & Attribution Analysis ({risk_timeframe})</b>", styles['Heading1']))
         content.append(Spacer(1, 0.2*inch))
 
         # Industry rotation flow
@@ -1589,7 +2129,8 @@ class MarketOverviewAnalyzer:
         """Create sector rotation signals table."""
         content = []
 
-        content.append(Paragraph("<b>Sector Rotation Signals</b>", styles['Heading3']))
+        rotation_timeframe = self._get_timeframe_label_for_analysis('rotation')
+        content.append(Paragraph(f"<b>Sector Rotation Signals ({rotation_timeframe})</b>", styles['Heading3']))
         content.append(Spacer(1, 0.1*inch))
 
         # Group by rotation signal
