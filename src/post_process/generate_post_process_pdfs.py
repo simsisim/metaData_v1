@@ -54,23 +54,36 @@ def generate_post_process_pdfs(df: pd.DataFrame, pdf_type: str, csv_output_path:
         logger.error(f"Failed to generate PDF with template '{pdf_type}': {e}")
         raise
 
-def extract_pdf_type_from_config(file_ops: pd.DataFrame) -> str:
+def extract_template_from_config(file_ops: pd.DataFrame) -> str:
     """
-    Extract PDF_type from configuration operations.
+    Extract explicit template or fall back to PDF_type auto-selection.
 
     Args:
         file_ops: DataFrame containing operations for this file group
 
     Returns:
-        PDF type string, defaults to 'default' if not specified
+        Template name string, defaults to 'default' if not specified
     """
+    # 1. Check for explicit Template column first (NEW)
+    if 'Template' in file_ops.columns:
+        templates = file_ops['Template'].dropna()
+        if not templates.empty:
+            template = str(templates.iloc[0]).strip()
+            if template and template.lower() != 'auto':
+                return template  # Direct template specification
+
+    # 2. Fall back to PDF_type (EXISTING LOGIC - backward compatible)
     if 'PDF_type' in file_ops.columns:
-        # Get first non-null PDF_type value
         pdf_types = file_ops['PDF_type'].dropna()
         if not pdf_types.empty:
             return str(pdf_types.iloc[0]).strip()
 
     return 'default'
+
+# Backward compatibility alias
+def extract_pdf_type_from_config(file_ops: pd.DataFrame) -> str:
+    """Backward compatibility alias for extract_template_from_config."""
+    return extract_template_from_config(file_ops)
 
 def is_pdf_enabled(file_ops: pd.DataFrame) -> bool:
     """

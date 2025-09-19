@@ -347,10 +347,9 @@ def generate_tornado_charts(data: pd.DataFrame,
     Returns:
         List of generated chart file paths
     """
-    if not user_config or not hasattr(user_config, 'index_overview_tornado_chart'):
-        return []
-    
-    if not user_config.index_overview_tornado_chart:
+    # NOTE: index_overview module removed from BASIC calculations
+    # Tornado charts now use fallback data only
+    if not user_config:
         return []
     
     # Get ALL available numeric columns in their original order (exclude ticker, date, and text columns)

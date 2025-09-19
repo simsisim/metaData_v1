@@ -20,7 +20,7 @@ from pathlib import Path
 from datetime import datetime
 
 from .return_file_info import get_latest_file
-from .generate_post_process_pdfs import generate_post_process_pdfs, extract_pdf_type_from_config, should_generate_pdf, is_pdf_enabled
+from .generate_post_process_pdfs import generate_post_process_pdfs, extract_template_from_config, should_generate_pdf, is_pdf_enabled
 
 logger = logging.getLogger(__name__)
 
@@ -112,30 +112,34 @@ class PostProcessWorkflow:
             try:
                 condition_mask = pd.Series([False] * len(df), index=df.index)
 
-                if condition.lower() == 'equals':
-                    if str(value).lower() == 'true':
+                # Convert condition to string and handle NaN/empty values
+                condition_str = str(condition).strip().lower() if pd.notna(condition) else ''
+                value_str = str(value).strip() if pd.notna(value) else ''
+
+                if condition_str == 'equals':
+                    if value_str.lower() == 'true':
                         condition_mask = df[col] == True
-                    elif str(value).lower() == 'false':
+                    elif value_str.lower() == 'false':
                         condition_mask = df[col] == False
                     else:
                         condition_mask = df[col] == value
 
-                elif condition.lower() == 'greater_than':
+                elif condition_str == 'greater_than':
                     condition_mask = df[col] > float(value)
 
-                elif condition.lower() == 'less_than':
+                elif condition_str == 'less_than':
                     condition_mask = df[col] < float(value)
 
-                elif condition.lower() == 'greater_equal':
+                elif condition_str == 'greater_equal':
                     condition_mask = df[col] >= float(value)
 
-                elif condition.lower() == 'less_equal':
+                elif condition_str == 'less_equal':
                     condition_mask = df[col] <= float(value)
 
-                elif condition.lower() == 'contains':
-                    condition_mask = df[col].astype(str).str.contains(str(value), na=False)
+                elif condition_str == 'contains':
+                    condition_mask = df[col].astype(str).str.contains(value_str, na=False)
 
-                elif condition.lower() == 'not_equals':
+                elif condition_str == 'not_equals':
                     condition_mask = df[col] != value
 
                 else:
@@ -206,7 +210,9 @@ class PostProcessWorkflow:
                 continue
 
             sort_columns.append(col)
-            ascending_flags.append(order.lower() == 'asc')
+            # Convert order to string and handle NaN/empty values
+            order_str = str(order).strip().lower() if pd.notna(order) else 'asc'
+            ascending_flags.append(order_str == 'asc')
 
         if sort_columns:
             try:
@@ -241,7 +247,10 @@ class PostProcessWorkflow:
 
         if not output_id:
             # Auto-generate from filter conditions
-            filter_ops = file_ops[file_ops['Action'].str.lower() == 'filter']
+            # Handle NaN values in Action column before string operations
+            file_ops_safe = file_ops.copy()
+            file_ops_safe['Action'] = file_ops_safe['Action'].fillna('')
+            filter_ops = file_ops_safe[file_ops_safe['Action'].str.lower() == 'filter']
             conditions = []
 
             for _, row in filter_ops.iterrows():
@@ -251,18 +260,21 @@ class PostProcessWorkflow:
 
                 if col and condition and value:
                     # Create short condition descriptor
-                    if condition.lower() == 'greater_than':
+                    condition_lower = condition.lower()
+                    value_lower = value.lower()
+
+                    if condition_lower == 'greater_than':
                         conditions.append(f"{col}_gt{value}")
-                    elif condition.lower() == 'less_than':
+                    elif condition_lower == 'less_than':
                         conditions.append(f"{col}_lt{value}")
-                    elif condition.lower() == 'equals':
-                        if value.lower() == 'true':
+                    elif condition_lower == 'equals':
+                        if value_lower == 'true':
                             conditions.append(f"{col}_true")
-                        elif value.lower() == 'false':
+                        elif value_lower == 'false':
                             conditions.append(f"{col}_false")
                         else:
                             conditions.append(f"{col}_{value}")
-                    elif condition.lower() == 'contains':
+                    elif condition_lower == 'contains':
                         conditions.append(f"{col}_has_{value}")
                     else:
                         conditions.append(f"{col}_{condition}_{value}")
@@ -330,6 +342,8 @@ class PostProcessWorkflow:
             file_ops = file_ops.sort_values('Step')
 
             # 4. Separate filter and sort operations
+            # Handle NaN values in Action column before string operations
+            file_ops['Action'] = file_ops['Action'].fillna('')
             filter_ops = file_ops[file_ops['Action'].str.lower() == 'filter']
             sort_ops = file_ops[file_ops['Action'].str.lower() == 'sort']
 
@@ -366,8 +380,8 @@ class PostProcessWorkflow:
                 logger.info(f"PDF generation skipped - no PDF_type specified for {logical_filename} (file_id: {file_id})")
             elif should_generate_pdf(file_ops):
                 try:
-                    pdf_type = extract_pdf_type_from_config(file_ops)
-                    logger.info(f"Generating PDF (PDF_enable=TRUE) with template '{pdf_type}' for {logical_filename} (file_id: {file_id})")
+                    template_name = extract_template_from_config(file_ops)
+                    logger.info(f"Generating PDF (PDF_enable=TRUE) with template '{template_name}' for {logical_filename} (file_id: {file_id})")
 
                     # Create rich metadata context
                     metadata = {
@@ -384,7 +398,7 @@ class PostProcessWorkflow:
                     }
 
                     # Generate PDF with same filtered DataFrame
-                    pdf_path = generate_post_process_pdfs(df, pdf_type, str(output_path), metadata)
+                    pdf_path = generate_post_process_pdfs(df, template_name, str(output_path), metadata)
                     logger.info(f"Successfully generated PDF: {pdf_path}")
 
                 except Exception as pdf_error:
@@ -396,6 +410,53 @@ class PostProcessWorkflow:
         except Exception as e:
             logger.error(f"Error processing {logical_filename} (file_id: {file_id}): {e}")
             return None
+
+    def _is_generation_enabled(self, group_config: pd.DataFrame) -> bool:
+        """
+        Check if Generation flag is enabled for this file group.
+
+        The Generation flag is hierarchical below POST_PROCESS:
+        - If POST_PROCESS is disabled, skip entirely
+        - If POST_PROCESS is enabled but Generation is FALSE, skip generation
+        - If Generation column doesn't exist, default to TRUE (enabled)
+        - If Generation is TRUE or empty, enable generation
+
+        Args:
+            group_config: DataFrame containing operations for this file group
+
+        Returns:
+            bool: True if generation should proceed, False if should be skipped
+        """
+        try:
+            # Check if Generation column exists
+            if 'Generation' not in group_config.columns:
+                return True  # Default to enabled if column missing
+
+            # Get all Generation values for this group
+            generation_values = group_config['Generation'].dropna()
+
+            if generation_values.empty:
+                return True  # Default to enabled if all values are empty
+
+            # Check if any row enables generation (conservative approach)
+            for value in generation_values:
+                value_str = str(value).upper().strip()
+                if value_str == 'TRUE':
+                    return True
+
+            # If we have explicit values and none are TRUE, then it's disabled
+            # This handles cases where Generation=FALSE is explicitly set
+            for value in generation_values:
+                value_str = str(value).upper().strip()
+                if value_str == 'FALSE':
+                    return False
+
+            # If no explicit TRUE or FALSE found, default to enabled
+            return True
+
+        except Exception as e:
+            logger.warning(f"Error checking Generation flag: {e}")
+            return True  # Default to enabled on error
 
     def run_workflow(self) -> Dict[str, str]:
         """
@@ -414,7 +475,28 @@ class PostProcessWorkflow:
             # 2. Get unique filename + file_id combinations to process
             if 'File_id' in self.config_df.columns:
                 # Group by Filename + File_id
-                file_groups = self.config_df.groupby(['Filename', 'File_id']).size().index.tolist()
+                all_file_groups = self.config_df.groupby(['Filename', 'File_id']).size().index.tolist()
+
+                # Filter by Generation flag if column exists
+                if 'Generation' in self.config_df.columns:
+                    enabled_groups = []
+                    for logical_filename, file_id in all_file_groups:
+                        group_config = self.config_df[
+                            (self.config_df['Filename'] == logical_filename) &
+                            (self.config_df['File_id'].astype(str) == str(file_id))
+                        ]
+
+                        # Check Generation flag (hierarchical below POST_PROCESS)
+                        generation_enabled = self._is_generation_enabled(group_config)
+                        if generation_enabled:
+                            enabled_groups.append((logical_filename, file_id))
+                        else:
+                            logger.info(f"Skipping {logical_filename}_f{file_id} - Generation=FALSE")
+
+                    file_groups = enabled_groups
+                else:
+                    file_groups = all_file_groups
+
                 logger.info(f"Processing {len(file_groups)} file groups: {file_groups}")
 
                 # 3. Process each file group

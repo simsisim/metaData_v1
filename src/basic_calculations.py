@@ -592,107 +592,8 @@ def calculate_percentage_moves(df, timeframe='daily', user_config=None):
     return move_metrics
 
 
-def calculate_index_overview_metrics(df, timeframe='daily', indicators=None):
-    """
-    Calculate comprehensive technical metrics for INDEX_OVERVIEW table.
-    Based on S&P 500 Table Metrics specification.
-    
-    Args:
-        df: DataFrame with OHLCV data
-        timeframe: Data timeframe for MA naming consistency
-        indicators: Pre-calculated technical indicators dictionary
-        
-    Returns:
-        dict: Dictionary with technical analysis metrics
-    """
-    index_metrics = {}
-    
-    if 'Close' not in df.columns or len(df) < 20:
-        return index_metrics
-        
-    try:
-        close = df['Close']
-        current_price = close.iloc[-1]
-        
-        # Trend Days - % of last N days that were up
-        if len(df) >= 10:
-            last_10_changes = close.tail(10).diff().dropna()
-            up_days = (last_10_changes > 0).sum()
-            index_metrics['trend_days_10_pct'] = (up_days / len(last_10_changes)) * 100
-            
-        # MA comparison indicators (more robust - calculate what we can)
-        mas_available = {}
-        
-        # Use pre-calculated MAs from technical indicators section (with timeframe prefixes)
-        if indicators and f'{timeframe}_sma10' in indicators:
-            mas_available['sma10'] = indicators[f'{timeframe}_sma10']
-            index_metrics[f'{timeframe}_priceabovesma10'] = current_price > mas_available['sma10']
-        elif len(df) >= 10:
-            # Fallback calculation if not in configurable list
-            mas_available['sma10'] = close.rolling(10).mean().iloc[-1]
-            index_metrics[f'{timeframe}_priceabovesma10'] = current_price > mas_available['sma10']
-            
-        if indicators and f'{timeframe}_sma20' in indicators:
-            mas_available['sma20'] = indicators[f'{timeframe}_sma20']
-        elif len(df) >= 20:
-            mas_available['sma20'] = close.rolling(20).mean().iloc[-1]
-            
-        if indicators and f'{timeframe}_ema20' in indicators:
-            mas_available['ema20'] = indicators[f'{timeframe}_ema20']
-            index_metrics[f'{timeframe}_priceaboveema20'] = current_price > mas_available['ema20']
-        elif len(df) >= 20:
-            mas_available['ema20'] = close.ewm(span=20).mean().iloc[-1]
-            index_metrics[f'{timeframe}_priceaboveema20'] = current_price > mas_available['ema20']
-            
-        if indicators and f'{timeframe}_sma50' in indicators:
-            mas_available['sma50'] = indicators[f'{timeframe}_sma50']
-            index_metrics[f'{timeframe}_priceabovesma50'] = current_price > mas_available['sma50']
-        elif len(df) >= 50:
-            mas_available['sma50'] = close.rolling(50).mean().iloc[-1]
-            index_metrics[f'{timeframe}_priceabovesma50'] = current_price > mas_available['sma50']
-            
-        if indicators and f'{timeframe}_sma200' in indicators:
-            mas_available['sma200'] = indicators[f'{timeframe}_sma200']
-        elif len(df) >= 200:
-            mas_available['sma200'] = close.rolling(200).mean().iloc[-1]
-            
-        # SMA comparisons (only if both MAs available)
-        if 'sma10' in mas_available and 'sma20' in mas_available:
-            index_metrics[f'{timeframe}_sma10vssma20'] = mas_available['sma10'] > mas_available['sma20']
-            
-        if 'sma20' in mas_available and 'sma50' in mas_available:
-            index_metrics[f'{timeframe}_sma20vssma50'] = mas_available['sma20'] > mas_available['sma50']
-            
-        if 'sma50' in mas_available and 'sma200' in mas_available:
-            index_metrics[f'{timeframe}_sma50vssma200'] = mas_available['sma50'] > mas_available['sma200']
-            
-        # Perfect bullish alignment (only if all MAs available)
-        if 'sma20' in mas_available and 'sma50' in mas_available and 'sma200' in mas_available:
-            index_metrics[f'{timeframe}_perfectbullishalignment'] = (
-                mas_available['sma20'] > mas_available['sma50'] and 
-                mas_available['sma50'] > mas_available['sma200']
-            )
-            
-        # 20-day high/low analysis
-        if len(df) >= 20:
-            close_20d = close.tail(20)
-            high_20d = close_20d.max()
-            low_20d = close_20d.min()
-            
-            index_metrics[f'{timeframe}_at_20day_high'] = current_price >= high_20d
-            index_metrics[f'{timeframe}_at_20day_low'] = current_price <= low_20d
-            
-        # 5-day low vs 30-day high analysis
-        if len(df) >= 30:
-            low_5d = close.tail(5).min()
-            high_30d = close.tail(30).max()
-            
-            index_metrics[f'{timeframe}_5day_low_vs_30day_high'] = low_5d > high_30d  # Conservative interpretation
-            
-    except Exception as e:
-        logger.error(f"Error calculating index overview metrics: {e}")
-        
-    return index_metrics
+# NOTE: calculate_index_overview_metrics function removed
+# as index_overview module has been removed from BASIC calculations
 
 
 def calculate_ath_atl(df, timeframe='daily'):
@@ -935,9 +836,8 @@ def basic_calculations(batch_data, output_path, timeframe, user_config, config=N
             
             # Calculate candle strength metrics
             candle_strength_metrics = calculate_candle_strength(df, timeframe)
-            
-            # Calculate index overview metrics
-            index_overview_metrics = calculate_index_overview_metrics(df, timeframe, indicators)
+
+            # NOTE: index_overview_metrics calculation removed (obsolete module)
             
             # Calculate technical indicators if enabled
             advanced_indicators = {}
@@ -1026,10 +926,8 @@ def basic_calculations(batch_data, output_path, timeframe, user_config, config=N
             # Store candle strength metrics
             for key, value in candle_strength_metrics.items():
                 ticker_result[key] = value
-            
-            # Store index overview metrics
-            for key, value in index_overview_metrics.items():
-                ticker_result[key] = value
+
+            # NOTE: index_overview_metrics storage removed (obsolete module)
             
             # Store advanced indicators
             for key, value in advanced_indicators.items():

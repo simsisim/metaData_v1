@@ -38,7 +38,7 @@ TW_intraday_data,FALSE,Process intraday data from TradingView source
 TW_intraday_file,intraday_data.csv,File name for intraday data input
 ,,
 # GLOBAL STRUCTURE FLAGS,,
-BASIC,TRUE,Execute data processing and core calculations phase
+BASIC,FALSE,Execute data processing and core calculations phase
 SCREENERS,FALSE,Execute screening and analysis phase
 POST_PROCESS,TRUE,Execute post-processing and report generation phase
 ,,
@@ -717,7 +717,7 @@ DASHBOARD_save_historical,TRUE,Save historical dashboard versions for tracking
 # REPORT GENERATION CONFIGURATION,,
 # ================================,,
 REPORT_enable,TRUE,Enable automated report generation at end of pipeline
-REPORT_template_type,indexes_overview,Report template type (indexes_overview | market_analysis | full_analysis)
+REPORT_template_type,market_analysis,Report template type (market_analysis | full_analysis)
 REPORT_page_size,A4_landscape,Report page size and orientation (A4_portrait | A4_landscape | A3_landscape)
 REPORT_output_dir,results/reports,Output directory for generated reports
 REPORT_include_charts,TRUE,Include tornado charts and visualizations in reports

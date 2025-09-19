@@ -35,7 +35,7 @@ class ReportGenerator:
         self.results_dir = config.directories.get('RESULTS_DIR')
         
         # Report configuration
-        self.template_type = getattr(user_config, 'report_template_type', 'indexes_overview')
+        self.template_type = getattr(user_config, 'report_template_type', 'market_analysis')
         self.page_size = getattr(user_config, 'report_page_size', 'A4_landscape')
         self.include_charts = getattr(user_config, 'report_include_charts', True)
         self.file_dates_auto = getattr(user_config, 'report_file_dates_auto', True)
@@ -93,13 +93,17 @@ class ReportGenerator:
             
             # Generate report based on template type
             if self.template_type == 'indexes_overview':
-                return self._generate_indexes_overview_report(report_data, file_dates)
+                logger.warning("indexes_overview template is deprecated (index_overview module removed)")
+                print(f"⚠️  Template 'indexes_overview' is deprecated. Using 'market_analysis' instead.")
+                self.template_type = 'market_analysis'
+                return self._generate_market_analysis_report(report_data, file_dates)
             elif self.template_type == 'market_analysis':
                 return self._generate_market_analysis_report(report_data, file_dates)
             elif self.template_type == 'full_analysis':
                 return self._generate_full_analysis_report(report_data, file_dates)
             else:
                 logger.error(f"Unknown report template: {self.template_type}")
+                logger.error("Available templates: market_analysis, full_analysis")
                 return None
                 
         except Exception as e:
@@ -263,75 +267,8 @@ class ReportGenerator:
             logger.error(f"Failed to load data for {timeframe} ({data_date}): {e}")
             return {}
     
-    def _generate_indexes_overview_report(self, report_data: Dict, file_dates: Dict) -> Path:
-        """Generate indexes overview report."""
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        output_file = self.output_dir / f'indexes_overview_report_{timestamp}.pdf'
-        
-        # Determine page size
-        if self.page_size == 'A4_portrait':
-            page_size = A4
-        elif self.page_size == 'A4_landscape':
-            page_size = landscape(A4)
-        elif self.page_size == 'A3_landscape':
-            page_size = landscape(A3)
-        else:
-            page_size = landscape(A4)  # default
-        
-        doc = SimpleDocTemplate(str(output_file), pagesize=page_size)
-        styles = getSampleStyleSheet()
-        story = []
-        
-        # Title
-        title_style = ParagraphStyle(
-            'CustomTitle',
-            parent=styles['Heading1'],
-            fontSize=16,
-            spaceAfter=30,
-            alignment=TA_CENTER
-        )
-        
-        story.append(Paragraph("Indexes Overview Analysis Report", title_style))
-        story.append(Spacer(1, 12))
-        
-        # Metadata section
-        if self.include_metadata:
-            story.extend(self._create_metadata_section(file_dates, styles))
-            story.append(Spacer(1, 20))
-        
-        # Summary section
-        if self.sections['summary']:
-            story.extend(self._create_summary_section(report_data, styles))
-            story.append(Spacer(1, 20))
-        
-        # Basic statistics section
-        if self.sections['basic_stats']:
-            story.extend(self._create_basic_stats_section(report_data, styles))
-            story.append(Spacer(1, 20))
-        
-        # Tornado charts section
-        if self.sections['tornado_charts'] and self.include_charts:
-            story.extend(self._create_tornado_charts_section(report_data, styles))
-            story.append(PageBreak())
-        
-        # Percentage analysis section
-        if self.sections['percentage_analysis']:
-            story.extend(self._create_percentage_analysis_section(report_data, styles))
-            story.append(Spacer(1, 20))
-        
-        # RS analysis section
-        if self.sections['rs_analysis']:
-            story.extend(self._create_rs_analysis_section(report_data, styles))
-        
-        # Build PDF
-        doc.build(story)
-        
-        logger.info(f"Indexes overview report generated: {output_file}")
-        print(f"  📄 Report generated: {output_file.name}")
-        
-        # File logging removed - using CSV files directly
-        
-        return output_file
+    # NOTE: _generate_indexes_overview_report method removed
+    # indexes_overview template deprecated due to removal of index_overview module
     
     def _create_metadata_section(self, file_dates: Dict, styles) -> List:
         """Create metadata section showing data dates and file info."""
@@ -529,9 +466,63 @@ class ReportGenerator:
         return elements
     
     def _generate_market_analysis_report(self, report_data: Dict, file_dates: Dict) -> Path:
-        """Generate market analysis report (placeholder for future expansion)."""
-        logger.info("Market analysis report template not yet implemented")
-        return None
+        """Generate market analysis report using basic_calculation data."""
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        output_file = self.output_dir / f'market_analysis_report_{timestamp}.pdf'
+
+        # Determine page size
+        if self.page_size == 'A4_portrait':
+            page_size = A4
+        elif self.page_size == 'A4_landscape':
+            page_size = landscape(A4)
+        elif self.page_size == 'A3_landscape':
+            page_size = landscape(A3)
+        else:
+            page_size = landscape(A4)  # default
+
+        doc = SimpleDocTemplate(str(output_file), pagesize=page_size)
+        styles = getSampleStyleSheet()
+        story = []
+
+        # Title
+        title_style = ParagraphStyle(
+            'CustomTitle',
+            parent=styles['Heading1'],
+            fontSize=16,
+            spaceAfter=30,
+            alignment=TA_CENTER
+        )
+
+        story.append(Paragraph("Market Analysis Report", title_style))
+        story.append(Spacer(1, 12))
+
+        # Metadata section
+        if self.include_metadata:
+            story.extend(self._create_metadata_section(file_dates, styles))
+            story.append(Spacer(1, 20))
+
+        # Summary section
+        if self.sections['summary']:
+            story.extend(self._create_summary_section(report_data, styles))
+            story.append(Spacer(1, 20))
+
+        # Basic statistics section
+        if self.sections['basic_stats']:
+            story.extend(self._create_basic_stats_section(report_data, styles))
+            story.append(Spacer(1, 20))
+
+        # Tornado charts section
+        if self.sections['tornado_charts'] and self.include_charts:
+            story.extend(self._create_tornado_charts_section(report_data, styles))
+            story.append(PageBreak())
+
+        # Build PDF
+        doc.build(story)
+
+        logger.info(f"Market analysis report generated: {output_file}")
+        print(f"  📄 Report generated: {output_file.name}")
+
+        return output_file
     
     def _generate_full_analysis_report(self, report_data: Dict, file_dates: Dict) -> Path:
         """Generate full analysis report (placeholder for future expansion).""" 

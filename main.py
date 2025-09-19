@@ -1472,56 +1472,57 @@ def main() -> None:
 
         # 2. Stage Analysis - All timeframes, all batches
         stage_analysis_results = run_all_stage_analysis(config, user_config, timeframes_to_process, clean_file)
+
+        # 2.5. Stage Analysis Reports - Generate PDF reports for stage analysis results
+        if user_config.stage_analysis_report_enable and sum(stage_analysis_results.values()) > 0:
+            try:
+                print(f"\n📄 GENERATING STAGE ANALYSIS REPORTS...")
+                from src.report_generators.stage_analysis_report_generator import process_stage_analysis_csv
+
+                stage_dir = config.directories['RESULTS_DIR'] / 'stage_analysis'
+                reports_dir = config.directories['RESULTS_DIR'] / 'reports'
+                reports_dir.mkdir(parents=True, exist_ok=True)
+
+                # Generate reports for each stage analysis CSV file
+                csv_files = list(stage_dir.glob('stage_analysis_*.csv'))
+                reports_generated = 0
+
+                for csv_file in csv_files:
+                    try:
+                        print(f"  🎯 Processing: {csv_file.name}")
+                        png_path, pdf_path = process_stage_analysis_csv(str(csv_file))
+
+                        if Path(pdf_path).exists():
+                            reports_generated += 1
+                            pdf_size = Path(pdf_path).stat().st_size / 1024
+                            print(f"  ✅ Generated: {Path(pdf_path).name} ({pdf_size:.1f} KB)")
+                        else:
+                            print(f"  ❌ Failed: {csv_file.name}")
+
+                    except Exception as e:
+                        print(f"  ❌ Error processing {csv_file.name}: {e}")
+                        logger.error(f"Stage analysis report generation failed for {csv_file}: {e}")
+                        continue
+
+                print(f"📄 STAGE ANALYSIS REPORTS COMPLETED: {reports_generated} reports generated")
+
+            except Exception as e:
+                print(f"❌ Stage analysis report generation error: {e}")
+                logger.error(f"Stage analysis report generation failed: {e}")
+        elif sum(stage_analysis_results.values()) > 0:
+            print(f"\n📄 Stage analysis PDF/PNG generation disabled in configuration")
+        else:
+            print(f"\n📄 No stage analysis results available for report generation")
+
+        # 3. Market Breadth Analysis - All timeframes (positioned after stage analysis)
+        market_breadth_results = run_all_market_breadth(config, user_config, timeframes_to_process)
+
+        print(f"✅ BASIC CALCULATIONS PHASE COMPLETED")
     else:
         print(f"\n⏭️  BASIC CALCULATIONS PHASE SKIPPED")
         basic_calc_results = {}
         stage_analysis_results = {}
-
-    # 2.5. Stage Analysis Reports - Generate PDF reports for stage analysis results
-    if user_config.stage_analysis_report_enable and sum(stage_analysis_results.values()) > 0:
-        try:
-            print(f"\n📄 GENERATING STAGE ANALYSIS REPORTS...")
-            from src.report_generators.stage_analysis_report_generator import process_stage_analysis_csv
-
-            stage_dir = config.directories['RESULTS_DIR'] / 'stage_analysis'
-            reports_dir = config.directories['RESULTS_DIR'] / 'reports'
-            reports_dir.mkdir(parents=True, exist_ok=True)
-
-            # Generate reports for each stage analysis CSV file
-            csv_files = list(stage_dir.glob('stage_analysis_*.csv'))
-            reports_generated = 0
-
-            for csv_file in csv_files:
-                try:
-                    print(f"  🎯 Processing: {csv_file.name}")
-                    png_path, pdf_path = process_stage_analysis_csv(str(csv_file))
-
-                    if Path(pdf_path).exists():
-                        reports_generated += 1
-                        pdf_size = Path(pdf_path).stat().st_size / 1024
-                        print(f"  ✅ Generated: {Path(pdf_path).name} ({pdf_size:.1f} KB)")
-                    else:
-                        print(f"  ❌ Failed: {csv_file.name}")
-
-                except Exception as e:
-                    print(f"  ❌ Error processing {csv_file.name}: {e}")
-                    logger.error(f"Stage analysis report generation failed for {csv_file}: {e}")
-                    continue
-
-            print(f"📄 STAGE ANALYSIS REPORTS COMPLETED: {reports_generated} reports generated")
-
-        except Exception as e:
-            print(f"❌ Stage analysis report generation error: {e}")
-            logger.error(f"Stage analysis report generation failed: {e}")
-    elif sum(stage_analysis_results.values()) > 0:
-        print(f"\n📄 Stage analysis PDF/PNG generation disabled in configuration")
-    else:
-        print(f"\n📄 No stage analysis results available for report generation")
-
-    # 3. Market Breadth Analysis - All timeframes (positioned after stage analysis)
-    market_breadth_results = run_all_market_breadth(config, user_config, timeframes_to_process)
-
-    print(f"✅ BASIC CALCULATIONS PHASE COMPLETED")
+        market_breadth_results = {}
 
     # ============================
     # PHASE 2: SCREENERS
@@ -1610,132 +1611,6 @@ def main() -> None:
         print(f"\n📈 EXECUTING POST-PROCESSING PHASE")
         print("="*60)
 
-        # 🟢 MARKET PULSE ANALYSIS - NEW PIPELINE POSITION
-        # Now runs after all calculation phases are completed for better efficiency
-        print(f"\n" + "="*60)
-        print("MARKET PULSE ANALYSIS")
-        print("="*60)
-
-    if user_config.market_pulse_enable:
-        print("📊 Market Pulse Configuration:")
-        print("   • GMI: Daily calculation only")
-        print("   • GMI2: Daily calculation only")
-        print("   • Other components: Per timeframe settings")
-        print()
-
-        from src.market_pulse import MarketPulseManager
-        
-        for timeframe in timeframes_to_process:
-            print(f"📊 Running market pulse analysis for {timeframe}...")
-            
-            # Get centralized data date for this timeframe
-            timeframe_data_date = None
-            formatted_date = "unknown"
-            if hasattr(main, 'data_dates') and timeframe in main.data_dates:
-                timeframe_data_date = main.data_dates[timeframe]['data_date']
-                formatted_date = main.data_dates[timeframe]['formatted_date']
-                print(f"📅 Using centralized data date: {formatted_date}")
-            else:
-                print(f"⚠️  No centralized data date available for {timeframe}")
-                # Could extract from basic calculation files as fallback
-            
-            # Initialize market pulse manager
-            pulse_manager = MarketPulseManager(config, user_config)
-            
-            # Run analysis with proper date
-            pulse_results = pulse_manager.run_complete_analysis(timeframe, timeframe_data_date)
-            
-            if pulse_results.get('success'):
-                # Save with proper naming convention
-                pulse_output_dir = config.directories['RESULTS_DIR'] / 'market_pulse'
-                pulse_output_dir.mkdir(exist_ok=True)
-                saved_files = pulse_manager.save_results(pulse_output_dir, timeframe, timeframe_data_date or "unknown")
-                
-                print(f"✅ Market pulse analysis completed for {timeframe}")
-                print(f"📈 Indexes analyzed: {len(pulse_results.get('indexes', {}))}")
-                print(f"📊 Market state: {pulse_results.get('market_summary', {}).get('overall_market_state', 'Unknown')}")
-                print(f"📁 Files saved: {len(saved_files)}")
-                
-                # Display key insights
-                market_summary = pulse_results.get('market_summary', {})
-                if market_summary:
-                    print(f"💡 Market Health: {market_summary.get('breadth_health', 'Unknown')}")
-                    print(f"🎯 Recommendation: {market_summary.get('recommendation', 'Neutral')}")
-                
-                # Show top alerts
-                alerts = pulse_results.get('alerts', [])
-                if alerts:
-                    print(f"🚨 Active alerts: {len(alerts)}")
-                    for alert in alerts[:2]:  # Show top 2 alerts
-                        alert_type = alert.get('type', 'Unknown')
-                        alert_msg = alert.get('alert', 'Unknown')
-                        print(f"  • [{alert_type}] {alert_msg}")
-                
-            else:
-                error_msg = pulse_results.get('error', 'Unknown error')
-                print(f"❌ Market pulse analysis failed for {timeframe}: {error_msg}")
-    else:
-        print("📊 MARKET_PULSE_enable=FALSE - Market Pulse analysis disabled")
-        print("⏭️  Skipping market pulse processing for all timeframes")
-    
-    # DASHBOARD GENERATION (final step - uses all processed data)
-    if user_config.dashboard_enable:
-        print(f"\n" + "="*60)
-        print("GENERATING MARKET OVERVIEW DASHBOARD")
-        print("="*60)
-        
-        try:
-            from src.dashboard.real_data_connector import create_production_dashboard
-            
-            # Create dashboard using latest results
-            dashboard_path = create_production_dashboard(
-                config=config,
-                user_config=user_config, 
-                results_dir=config.directories['RESULTS_DIR'],
-                timeframe='daily',
-                data_reader=data_reader if 'data_reader' in locals() else None
-            )
-            
-            print(f"✅ Market overview dashboard created: {dashboard_path}")
-            print(f"📊 Dashboard includes: Market Pulse, Screener Results, Sector Analysis, Alerts")
-            
-        except Exception as e:
-            logger.error(f"Dashboard generation failed: {e}")
-            print(f"❌ Dashboard generation failed: {e}")
-    
-    # Final summary
-    print(f"\n" + "="*60)
-    print("ALL POST-PROCESSING COMPLETED")
-    print("="*60)
-    print(f"✅ Processed {len(timeframes_to_process)} timeframes")
-    print(f"📊 Ticker selection: Choice {user_config.ticker_choice} ({len(tickers_df)} tickers)")
-    print(f"📁 Results directory: {config.directories['RESULTS_DIR']}")
-    if user_config.dashboard_enable:
-        print(f"📈 Dashboard output: {user_config.dashboard_output_dir}")
-    
-    # Generate automated report if enabled
-    if getattr(user_config, 'report_enable', False):
-        print("\n📄 Generating Automated Report...")
-        try:
-            from src.report_generator import ReportGenerator
-            
-            report_generator = ReportGenerator(config, user_config)
-            report_file = report_generator.generate_report(main.data_dates)
-            
-            if report_file:
-                print(f"  ✅ Report generated: {report_file}")
-                print(f"  📄 Report type: {getattr(user_config, 'report_template_type', 'indexes_overview')}")
-                print(f"  📐 Format: {getattr(user_config, 'report_page_size', 'A4_landscape')}")
-            else:
-                print(f"  ❌ Report generation failed")
-                
-        except Exception as e:
-            print(f"  ❌ Report generation error: {e}")
-            logger.warning(f"Report generation failed: {e}")
-    
-        # ================================
-        # ADVANCED POST-PROCESSING SECTION
-        # ================================
         print(f"\n🔄 RUNNING POST-PROCESSING WORKFLOW...")
 
         try:

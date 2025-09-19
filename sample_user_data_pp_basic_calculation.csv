@@ -1,0 +1,12 @@
+Filename,File_id,Generation,Step,Action,Column,Condition,Value,Logic,PDF_enable,PDF_type,Output_id
+# Basic calculation market trends examples with Generation flag control
+basic_calculation,1,TRUE,1,filter,SP500,equals,TRUE,,TRUE,basic_calculation,sp500_analysis
+basic_calculation,2,TRUE,1,filter,sector,equals,Electronic technology,,TRUE,basic_calculation,tech_sector
+basic_calculation,3,FALSE,1,filter,industry,equals,Semiconductors,,TRUE,basic_calculation,semiconductor_industry
+basic_calculation,4,TRUE,1,filter,current_price,greater_than,100,,TRUE,basic_calculation,high_price_stocks
+basic_calculation,4,TRUE,2,sort,daily_daily_yearly_252d_pct_change,desc,,,,,
+basic_calculation,5,TRUE,1,filter,atr_pct,greater_than,5,,TRUE,basic_calculation,high_volatility_stocks
+basic_calculation,6,FALSE,1,filter,NASDAQ100,equals,TRUE,,TRUE,basic_calculation,nasdaq100_analysis
+basic_calculation,7,TRUE,1,filter,daily_rsi_14,greater_than,70,,TRUE,basic_calculation,overbought_stocks
+basic_calculation,8,TRUE,1,filter,market_cap,greater_than,10000000000,,TRUE,basic_calculation,large_cap_analysis
+basic_calculation,8,TRUE,2,sort,daily_daily_yearly_252d_pct_change,desc,,,,,

@@ -24,7 +24,6 @@ from src.basic_calculations import (
     calculate_volume_metrics,
     calculate_ath_atl,
     calculate_candle_strength,
-    calculate_index_overview_metrics,
     load_index_boolean_data
 )
 
@@ -124,9 +123,7 @@ class BasicCalculationsStreamingProcessor(StreamingCalculationBase):
             candle_strength_metrics = calculate_candle_strength(df, timeframe)
             ticker_result.update(candle_strength_metrics)
 
-            # Calculate index overview metrics
-            index_overview_metrics = calculate_index_overview_metrics(df, timeframe, indicators)
-            ticker_result.update(index_overview_metrics)
+            # NOTE: index_overview_metrics calculation removed (obsolete module)
 
             # Calculate advanced indicators if enabled
             if hasattr(self.user_config, 'indicators_enable') and self.user_config.indicators_enable:
