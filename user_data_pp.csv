@@ -1,12 +1,39 @@
 Filename,File_id,Generation,Output_id,PDF_enable,PDF_type,Template,Step,Action,Column,Condition,Value,Order,Logic
+# Test Configuration for Multi-File Filtering System,,,,,,,,,,,,,
+# Example 1: Simple 2-file intersection (performance + stage analysis),,,,,,,,,,,,,
+basic_calculation,100,TRUE,momentum_bullish_simple,TRUE,basic_calculation,market_trends,1,filter,current_price,greater_than,100,,AND
+stage_analysis,100,,,,,,2,filter,daily_sa_name,contains,Bullish,,AND
+,,,,,,,,,,,,,
+# Example 2: Complex 3-file intersection with multiple criteria,,,,,,,,,,,,,
+#basic_calculation,200,FALSE,comprehensive_growth_screen,TRUE,basic_calculation,,1,filter,daily_daily_monthly_22d_pct_change,greater_than,15,,AND
+#basic_calculation,200,,,,,,filter,current_price,greater_than,20,,AND,
+#stage_analysis,200,,,,,,filter,daily_sa_name,contains,Bullish,,AND,stage_analysis
+#stage_analysis,200,,,,,,filter,daily_sa_code,not_equals,4A,,AND,stage_analysis
+,,,,,,,,,,,,,
+# Example 3: High momentum with bullish stage OR launch pad,,,,,,,,,,,,,
+#basic_calculation,300,FALSE,momentum_with_stage_options,FALSE,,,1,filter,daily_daily_monthly_22d_pct_change,greater_than,25,,AND
+#stage_analysis,300,,,,,,filter,daily_sa_name,contains,Bullish,,OR,stage_analysis
+#stage_analysis,300,,,,,,filter,daily_sa_name,contains,Launch Pad,,OR,stage_analysis
+,,,,,,,,,,,,,
+# Example 4: Traditional single-file processing (should use existing workflow),,,,,,,,,,,,,
+#basic_calculation,400,FALSE,simple_momentum,FALSE,basic_calculation,,1,filter,daily_daily_monthly_22d_pct_change,greater_than,30,,AND
+#basic_calculation,400,,,,,,sort,daily_daily_monthly_22d_pct_change,desc,1,,,
+,,,,,,,,,,,,,
+# Example 5: Price and volume filters with technical analysis,,,,,,,,,,,,,
+#basic_calculation,500,FALSE,high_volume_breakout,FALSE,,,1,filter,current_price,greater_than,50,,AND
+#basic_calculation,500,,,,,,filter,daily_daily_weekly_7d_pct_change,greater_than,10,,AND,
+#stage_analysis,500,,,,,,filter,daily_sa_name,contains,Bullish,,AND,stage_analysis
+#stage_analysis,500,,,,,,filter,daily_rsi_14,between,30,70,AND,stage_analysis
+,,,,,,,,,,,,,
+#######################################################,,,,,,,,,,,,,
 stage_analysis,1,FALSE,,FALSE,stage_analysis,,1,Filter,current_price,greater_than,1000,,
 stage_analysis,1,,,,,stage_analysis,Filter,SP500,equals,True,,AND,
 stage_analysis,2,FALSE,,FALSE,stage_analysis,stage_analysis,1,Filter,NASDAQ100,equals,True,,
 ,,,,,,,,,,,,,
 # Basic calculation template configurations with auto-selection logic,,,,,,,,,,,,,
 # Market trends template (default/comprehensive analysis),,,,,,,,,,,,,
-basic_calculation,1,FALSE,market_overview,FALSE,basic_calculation,auto,1,filter,current_price,greater_than,10,,
-basic_calculation,1,,,,,2,sort,daily_daily_yearly_252d_pct_change,desc,,1,,
+#basic_calculation,1,FALSE,market_overview,FALSE,basic_calculation,auto,1,filter,current_price,greater_than,10,,
+#basic_calculation,1,,,,,2,sort,daily_daily_yearly_252d_pct_change,desc,,1,,
 ,,,,,,,,,,,,,
 # Sector analysis template (triggered by sector filter),,,,,,,,,,,,,
 basic_calculation,2,FALSE,tech_sector_analysis,FALSE,basic_calculation,sector_analysis,1,filter,sector,equals,Electronic technology,,
@@ -47,13 +74,16 @@ basic_calculation,20,,,,,2,filter,daily_daily_monthly_22d_pct_change,greater_tha
 basic_calculation,20,,,,,3,sort,daily_daily_yearly_252d_pct_change,desc,,1,,
 ,,,,,,,,,,,,,
 # Top Performers Evolution Templates (multi-timeframe performance tracking),,,,,,,,,,,,,
-basic_calculation,50,TRUE,sp500_top_performers,TRUE,top_performers_evolution_v1,,1,filter,SP500,equals,TRUE,,
-#basic_calculation,51,TRUE,nasdaq100_top_performers,TRUE,top_performers_evolution,,1,filter,NASDAQ100,equals,TRUE,,
+basic_calculation,50,FALSE,sp500_top_performers,TRUE,top_performers_evolution_v1,,1,filter,SP500,equals,TRUE,,
+#basic_calculation,51,FALSE,nasdaq100_top_performers,TRUE,top_performers_evolution,,1,filter,NASDAQ100,equals,TRUE,,
 #basic_calculation,52,FALSE,tech_sector_top_performers,FALSE,top_performers_evolution,,1,filter,sector,equals,Electronic technology,,
-basic_calculation,53,TRUE,semiconductor_top_performers,TRUE,top_performers_evolution,,1,filter,industry,equals,Semiconductors,,
-#basic_calculation,54,TRUE,all_market_top_performers,TRUE,top_performers_evolution,,1,filter,current_price,greater_than,1,,
+basic_calculation,53,FALSE,semiconductor_top_performers,TRUE,top_performers_evolution,,1,filter,industry,equals,Semiconductors,,
+#basic_calculation,54,FALSE,all_market_top_performers,TRUE,top_performers_evolution,,1,filter,current_price,greater_than,1,,
 #basic_calculation,55,FALSE,healthcare_top_performers,FALSE,top_performers_evolution,,1,filter,sector,equals,Health technology,,
 #basic_calculation,56,FALSE,financial_top_performers,FALSE,top_performers_evolution,,1,filter,sector,equals,Finance,,
 ,,,,,,,,,,,,,
 # Overview V1 Template (comprehensive daily market analysis),,,,,,,,,,,,,
-basic_calculation,60,TRUE,daily_market_overview,TRUE,overview_v1,,1,filter,current_price,greater_than,1,,
+basic_calculation,60,FALSE,daily_market_overview,TRUE,overview_v1,,1,filter,current_price,greater_than,1,,
+,,,,,,,,,,,,,
+# RS/PER Template (comprehensive multi-timeframe RS and percentile analysis),,,,,,,,,,,,,
+rs/per,200,TRUE,comprehensive_rs_per_analysis,FALSE,rs_per_template,,1,filter,current_price,greater_than,1,,

@@ -13,6 +13,7 @@ Creates output files:
 
 import pandas as pd
 import numpy as np
+import gc
 from pathlib import Path
 import logging
 from datetime import datetime
@@ -200,7 +201,13 @@ class PVBScreenerProcessor:
             # Save results
             results_df.to_csv(output_path, index=False, float_format='%.4f')
 
-            logger.info(f"Saved {timeframe} PVB screener: {len(results_df)} results to {output_path}")
+            # Memory cleanup after CSV write - free accumulated results data
+            del results_df
+            del self.all_results[timeframe]
+            gc.collect()
+            logger.debug(f"Memory cleaned up after {timeframe} PVB screener CSV write and results cleared")
+
+            logger.info(f"Saved {timeframe} PVB screener: results to {output_path}")
             results[timeframe] = str(output_path)
 
         logger.info(f"PVB screener matrix save completed: {len(results)} files generated")

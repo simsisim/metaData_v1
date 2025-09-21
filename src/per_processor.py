@@ -170,101 +170,214 @@ class PERProcessor:
     
     def _process_asset_level_per(self, asset_level, timeframe, ticker_choice, benchmark_tickers):
         """
-        Process percentile calculations for a specific asset level.
-        
+        Process percentile calculations for a specific asset level using mapping-based approach.
+
         Args:
             asset_level: Asset level ('stocks', 'sectors', 'industries')
-            timeframe: Data timeframe 
+            timeframe: Data timeframe
             ticker_choice: User ticker choice number
-            benchmark_tickers: List of benchmark tickers
-            
+            benchmark_tickers: List of benchmark tickers (legacy parameter)
+
         Returns:
             List of created file paths
         """
-        # Load corresponding RS file
-        rs_file_path = self._find_rs_file(asset_level, timeframe, ticker_choice)
-        if not rs_file_path or not rs_file_path.exists():
-            logger.warning(f"RS file not found for {asset_level} {timeframe}: {rs_file_path}")
+        # Get benchmark-to-universe mappings for this asset level
+        mappings = self._parse_percentile_mappings(asset_level)
+
+        if not mappings:
+            logger.warning(f"No percentile mappings found for {asset_level}")
             return []
-        
-        logger.info(f"Loading RS data from: {rs_file_path}")
-        rs_df = pd.read_csv(rs_file_path, index_col=0)
-        
-        if rs_df.empty:
-            logger.warning(f"Empty RS file for {asset_level} {timeframe}")
-            return []
-        
-        # Get universe configurations for this asset level
-        universe_configs = self._get_universe_configs(asset_level)
-        
-        # Calculate percentiles for each universe configuration
-        per_results = {}
-        
-        for universe_config in universe_configs:
-            logger.info(f"Calculating percentiles for {asset_level} universe: {universe_config}")
-            
-            # Get universe data based on configuration
+
+        created_files = []
+
+        # Process each benchmark-universe mapping separately
+        for benchmark_ticker, universe_config in mappings.items():
+            logger.info(f"Processing {asset_level} percentiles: {benchmark_ticker} -> {universe_config}")
+
+            # Load specific RS file for this benchmark
+            rs_file_path = self._find_rs_file_for_benchmark(asset_level, timeframe, ticker_choice, benchmark_ticker)
+            if not rs_file_path or not rs_file_path.exists():
+                logger.warning(f"RS file not found for {benchmark_ticker} {asset_level} {timeframe}: {rs_file_path}")
+                continue
+
+            logger.info(f"Loading RS data from: {rs_file_path}")
+            rs_df = pd.read_csv(rs_file_path, index_col=0)
+
+            if rs_df.empty:
+                logger.warning(f"Empty RS file for {benchmark_ticker} {asset_level} {timeframe}")
+                continue
+
+            # Get universe data for this specific universe
             universe_data = self._load_universe_data(universe_config, asset_level, ticker_choice)
             if universe_data is None and universe_config.lower() != 'all':
                 logger.warning(f"Could not load universe data for {universe_config}")
                 continue
-            
-            # Calculate percentiles for all RS columns in this universe
-            universe_percentiles = self._calculate_universe_percentiles(
-                rs_df, universe_data, universe_config, benchmark_tickers
+
+            # Calculate percentiles for this specific benchmark-universe combination
+            percentile_df = self._calculate_universe_percentiles(
+                rs_df, universe_data, universe_config, [benchmark_ticker]
             )
-            
-            per_results[universe_config] = universe_percentiles
-        
-        # Combine all universe results into single DataFrame
-        if per_results:
-            combined_per_df = self._combine_universe_percentiles(per_results, rs_df)
-            
-            # Save PER results
-            per_file_path = self._save_per_results(combined_per_df, asset_level, timeframe, ticker_choice)
-            return [per_file_path]
-        
-        return []
+
+            if not percentile_df.empty:
+                # Combine with RS data for complete dataset
+                combined_per_df = self._combine_single_universe_percentiles(percentile_df, rs_df)
+
+                # Save individual PER file for this mapping
+                per_file_path = self._save_per_results_with_mapping(
+                    combined_per_df, asset_level, timeframe, ticker_choice,
+                    benchmark_ticker, universe_config, rs_file_path.name
+                )
+                if per_file_path:
+                    created_files.append(per_file_path)
+
+        return created_files
     
     def _find_rs_file(self, asset_level, timeframe, ticker_choice):
-        """Find the corresponding RS file for an asset level and timeframe."""
+        """Find the corresponding RS file for an asset level and timeframe with new benchmark naming."""
         rs_dir = self.config.directories['RESULTS_DIR'] / 'rs'
-        
+
+        # Get benchmark tickers from configuration
+        benchmark_tickers = self._parse_benchmark_tickers()
+
         # Look for recent RS file - try today's date first for quick lookup
         today_date_str = datetime.now().strftime('%Y%m%d')
+
+        # Try new naming convention with benchmarks first
+        for benchmark in benchmark_tickers:
+            rs_filename = f"rs_{benchmark}_ibd_{asset_level}_{timeframe}_{ticker_choice}_{today_date_str}.csv"
+            rs_file_path = rs_dir / rs_filename
+            if rs_file_path.exists():
+                return rs_file_path
+
+        # Fallback: look for any RS file matching new pattern (most recent)
+        for benchmark in benchmark_tickers:
+            pattern = f"rs_{benchmark}_ibd_{asset_level}_{timeframe}_{ticker_choice}_*.csv"
+            matching_files = list(rs_dir.glob(pattern))
+            if matching_files:
+                return max(matching_files, key=lambda f: f.stat().st_mtime)
+
+        # Legacy fallback: try old naming convention without benchmark prefix
         rs_filename = f"rs_ibd_{asset_level}_{timeframe}_{ticker_choice}_{today_date_str}.csv"
         rs_file_path = rs_dir / rs_filename
-        
         if rs_file_path.exists():
             return rs_file_path
-        
-        # Fallback: look for any RS file matching the pattern (most recent)
+
         pattern = f"rs_ibd_{asset_level}_{timeframe}_{ticker_choice}_*.csv"
         matching_files = list(rs_dir.glob(pattern))
         if matching_files:
             return max(matching_files, key=lambda f: f.stat().st_mtime)
-        
+
         # Additional fallback: look for combined ticker choice patterns (e.g., 0-5)
-        combined_patterns = [
-            f"rs_ibd_{asset_level}_{timeframe}_*-{ticker_choice}_*.csv",
-            f"rs_ibd_{asset_level}_{timeframe}_{ticker_choice}-*_*.csv",
-            f"rs_ibd_{asset_level}_{timeframe}_*{ticker_choice}*_*.csv"
-        ]
-        
-        for pattern in combined_patterns:
-            matching_files = list(rs_dir.glob(pattern))
-            if matching_files:
-                return max(matching_files, key=lambda f: f.stat().st_mtime)
-        
+        for benchmark in benchmark_tickers:
+            combined_patterns = [
+                f"rs_{benchmark}_ibd_{asset_level}_{timeframe}_*-{ticker_choice}_*.csv",
+                f"rs_{benchmark}_ibd_{asset_level}_{timeframe}_{ticker_choice}-*_*.csv",
+                f"rs_{benchmark}_ibd_{asset_level}_{timeframe}_*{ticker_choice}*_*.csv"
+            ]
+
+            for pattern in combined_patterns:
+                matching_files = list(rs_dir.glob(pattern))
+                if matching_files:
+                    return max(matching_files, key=lambda f: f.stat().st_mtime)
+
         return None
-    
-    def _get_universe_configs(self, asset_level):
-        """Get universe configurations for an asset level."""
+
+    def _find_rs_file_for_benchmark(self, asset_level, timeframe, ticker_choice, benchmark_ticker):
+        """Find RS file for a specific benchmark ticker."""
+        rs_dir = self.config.directories['RESULTS_DIR'] / 'rs'
+
+        # Look for recent RS file with specific benchmark
+        today_date_str = datetime.now().strftime('%Y%m%d')
+
+        # Try new naming convention with specific benchmark
+        rs_filename = f"rs_{benchmark_ticker}_ibd_{asset_level}_{timeframe}_{ticker_choice}_{today_date_str}.csv"
+        rs_file_path = rs_dir / rs_filename
+        if rs_file_path.exists():
+            return rs_file_path
+
+        # Fallback: look for any RS file matching new pattern (most recent)
+        pattern = f"rs_{benchmark_ticker}_ibd_{asset_level}_{timeframe}_{ticker_choice}_*.csv"
+        matching_files = list(rs_dir.glob(pattern))
+        if matching_files:
+            return max(matching_files, key=lambda f: f.stat().st_mtime)
+
+        # Additional fallback: try generic _find_rs_file method
+        return self._find_rs_file(asset_level, timeframe, ticker_choice)
+
+    def _parse_percentile_mappings(self, asset_level):
+        """
+        Parse benchmark-to-universe mappings for an asset level.
+
+        Returns:
+            Dict of {benchmark_ticker: universe_config} mappings
+        """
+        mapping_key = f'rs_percentile_mapping_{asset_level}'
+
+        # Try new mapping configuration first
+        if hasattr(self.user_config, mapping_key):
+            mapping_str = getattr(self.user_config, mapping_key, '').strip()
+            if mapping_str:
+                # Parse "QQQ:NASDAQ100; SPY:SP500" format
+                mappings = {}
+                for pair in mapping_str.split(';'):
+                    pair = pair.strip()
+                    if ':' in pair:
+                        benchmark, universe = pair.split(':', 1)
+                        mappings[benchmark.strip()] = universe.strip()
+
+                if mappings:
+                    logger.info(f"Using new mapping configuration for {asset_level}: {mappings}")
+                    return mappings
+
+        # Fallback to legacy universe configuration
+        logger.info(f"No mapping configuration found for {asset_level}, using legacy universe configuration")
+
+        # Check if legacy field contains mapping syntax
         config_key = f'rs_percentile_universe_{asset_level}'
         universe_str = getattr(self.user_config, config_key, 'ticker_choice')
-        
-        if isinstance(universe_str, str) and ';' in universe_str:
-            # Multiple universe configurations (e.g., "0;2")
+
+        if isinstance(universe_str, str) and ':' in universe_str:
+            # Legacy field contains mapping syntax - parse it directly
+            mappings = {}
+            for pair in universe_str.split(';'):
+                pair = pair.strip()
+                if ':' in pair:
+                    benchmark, universe = pair.split(':', 1)
+                    mappings[benchmark.strip()] = universe.strip()
+            if mappings:
+                logger.info(f"Using legacy mapping syntax for {asset_level}: {mappings}")
+                return mappings
+
+        # Traditional legacy behavior - separate universe configs
+        universe_configs = self._get_universe_configs(asset_level)
+        benchmark_tickers = self._parse_benchmark_tickers()
+
+        # Apply all universes to all benchmarks (legacy behavior)
+        mappings = {}
+        for benchmark in benchmark_tickers:
+            for universe in universe_configs:
+                # For legacy compatibility, create separate mapping for each universe
+                mappings[f"{benchmark}"] = universe
+
+        logger.info(f"Using legacy configuration for {asset_level}: {mappings}")
+        return mappings
+
+    def _get_universe_configs(self, asset_level):
+        """Get universe configurations for an asset level (legacy method)."""
+        config_key = f'rs_percentile_universe_{asset_level}'
+        universe_str = getattr(self.user_config, config_key, 'ticker_choice')
+
+        # Check if legacy field contains mapping syntax (e.g., "QQQ:NASDAQ100")
+        if isinstance(universe_str, str) and ':' in universe_str:
+            # Legacy field contains mapping syntax - extract just the universe part
+            if ';' in universe_str:
+                # Multiple mappings: "QQQ:NASDAQ100;SPY:SP500"
+                return [mapping.split(':', 1)[1].strip() for mapping in universe_str.split(';') if ':' in mapping.strip()]
+            else:
+                # Single mapping: "QQQ:NASDAQ100"
+                return [universe_str.split(':', 1)[1].strip()]
+        elif isinstance(universe_str, str) and ';' in universe_str:
+            # Multiple universe configurations (e.g., "NASDAQ100;SP500")
             return [u.strip() for u in universe_str.split(';') if u.strip()]
         else:
             # Single universe configuration
@@ -408,7 +521,28 @@ class PERProcessor:
                     percentile_df[per_col_name] = percentiles.reindex(rs_df.index)
         
         return percentile_df
-    
+
+    def _combine_single_universe_percentiles(self, percentile_df, rs_df):
+        """
+        Combine percentile results with RS data for a single universe mapping.
+
+        Args:
+            percentile_df: DataFrame with percentile columns
+            rs_df: Original RS DataFrame
+
+        Returns:
+            Combined DataFrame with both RS and percentile data
+        """
+        # Start with a copy of RS data
+        combined_df = rs_df.copy()
+
+        # Add percentile columns
+        for col in percentile_df.columns:
+            if col not in combined_df.columns:
+                combined_df[col] = percentile_df[col]
+
+        return combined_df
+
     def _combine_universe_percentiles(self, per_results, rs_df):
         """
         Combine percentile results from different universes into single DataFrame.
@@ -439,26 +573,31 @@ class PERProcessor:
         
         return combined_df
     
-    def _save_per_results(self, per_df, asset_level, timeframe, ticker_choice):
+    def _save_per_results(self, per_df, asset_level, timeframe, ticker_choice, benchmark_tickers):
         """
-        Save percentile results to CSV file.
-        
+        Save percentile results to CSV file with benchmark ticker in filename.
+
         Args:
             per_df: DataFrame with percentile results
             asset_level: Asset level ('stocks', 'sectors', 'industries')
             timeframe: Data timeframe
             ticker_choice: User ticker choice number
-            
+            benchmark_tickers: List of benchmark tickers used in calculations
+
         Returns:
             Path to saved file
         """
         # Create output directory using user-configurable path
         per_dir = self.config.directories['PER_DIR']
         per_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # Generate filename using data date from DataFrame
         date_str = self._extract_data_date_from_dataframe(per_df)
-        filename = f"per_ibd_{asset_level}_{timeframe}_{ticker_choice}_{date_str}.csv"
+
+        # Create benchmark string for filename (join multiple with underscore)
+        benchmark_str = '_'.join(benchmark_tickers) if len(benchmark_tickers) > 1 else benchmark_tickers[0]
+
+        filename = f"per_{benchmark_str}_ibd_{asset_level}_{timeframe}_{ticker_choice}_{date_str}.csv"
         output_file = per_dir / filename
         
         # Save to CSV
@@ -466,6 +605,57 @@ class PERProcessor:
         logger.info(f"PER results saved: {output_file}")
         
         return output_file
+
+    def _save_per_results_with_mapping(self, per_df, asset_level, timeframe, ticker_choice,
+                                       benchmark_ticker, universe_config, rs_source_file):
+        """
+        Save PER results with mapping metadata and new naming convention.
+
+        Args:
+            per_df: DataFrame with percentile results
+            asset_level: Asset level ('stocks', 'sectors', 'industries')
+            timeframe: Data timeframe
+            ticker_choice: User ticker choice number
+            benchmark_ticker: Benchmark ticker used
+            universe_config: Universe configuration used
+            rs_source_file: Source RS file name
+
+        Returns:
+            Path to saved file or None if failed
+        """
+        try:
+            # Create output directory
+            per_dir = self.config.directories['PER_DIR']
+            per_dir.mkdir(parents=True, exist_ok=True)
+
+            # Add mapping metadata columns
+            per_df = per_df.copy()
+            per_df['rs_source_file'] = rs_source_file
+            per_df['benchmark_ticker'] = benchmark_ticker
+            per_df['percentile_universe'] = universe_config
+            per_df['percentile_mapping'] = f"{benchmark_ticker}:{universe_config}"
+            per_df['rs_method'] = 'ibd'  # Currently only IBD method supported for PER
+            per_df['generation_source'] = 'per_processor'
+            per_df['generation_date'] = pd.Timestamp.now().isoformat()
+
+            # Create configuration snapshot
+            config_snapshot = f"RS_percentile_mapping_{asset_level}={benchmark_ticker}:{universe_config}"
+            per_df['configuration_snapshot'] = config_snapshot
+
+            # Generate filename with new convention: per_{benchmark}_{universe}_{method}_{level}_{timeframe}_{choice}_{date}.csv
+            date_str = self._extract_data_date_from_dataframe(per_df)
+            filename = f"per_{benchmark_ticker}_{universe_config}_ibd_{asset_level}_{timeframe}_{ticker_choice}_{date_str}.csv"
+            output_file = per_dir / filename
+
+            # Save to CSV
+            per_df.to_csv(output_file, index=True, float_format='%.0f')
+            logger.info(f"PER results saved with mapping metadata: {output_file}")
+
+            return str(output_file)
+
+        except Exception as e:
+            logger.error(f"Error saving PER results with mapping: {e}")
+            return None
 
 
 def run_per_analysis(config, user_config, ticker_choice=0):

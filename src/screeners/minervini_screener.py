@@ -315,13 +315,23 @@ def _minervini_screener_logic(batch_data: Dict, params: Optional[Dict] = None) -
     return results
 
 
+def _get_benchmark_tickers(params: Dict) -> list:
+    """Get benchmark tickers from configuration or default to common ones."""
+    # Default benchmark tickers to try
+    default_benchmarks = ['QQQ', 'SPY']
+
+    # In a real implementation, this would read from user configuration
+    # For now, return defaults
+    return default_benchmarks
+
+
 def _load_rs_data(params: Dict) -> Optional[pd.DataFrame]:
     """
-    Load RS data from results directory.
-    
+    Load RS data from results directory with support for new benchmark naming convention.
+
     Args:
         params: Dictionary with parameters including ticker_choice and timeframe
-        
+
     Returns:
         DataFrame with RS data or None if not found
     """
@@ -329,48 +339,73 @@ def _load_rs_data(params: Dict) -> Optional[pd.DataFrame]:
         ticker_choice = params.get('ticker_choice', 0)
         timeframe = params.get('timeframe', 'daily')
         date_str = datetime.now().strftime('%Y%m%d')
-        
+
         # Try to find RS summary file
         rs_dir = Path('results/RS')
-        
-        # Pattern for RS files: rs_ibd_stocks_{timeframe}_{choice}_{date}.csv (removed _summary for consistency)
-        # Try current date first, then fall back to 20250820 pattern
-        rs_file_pattern = f"rs_ibd_stocks_{timeframe}_{ticker_choice}_{date_str}.csv"
-        rs_file = rs_dir / rs_file_pattern
-        
-        if rs_file.exists():
-            logger.info(f"Loading RS data from: {rs_file}")
-            rs_data = pd.read_csv(rs_file)
-            # Rename first column to 'Symbol' if it's 'Unnamed: 0'
-            if 'Unnamed: 0' in rs_data.columns:
-                rs_data = rs_data.rename(columns={'Unnamed: 0': 'Symbol'})
-            return rs_data
-        else:
-            # Try specific fallback to 20250820 file
-            rs_file_fallback = rs_dir / f"rs_ibd_stocks_{timeframe}_{ticker_choice}_20250820.csv"
-            if rs_file_fallback.exists():
-                logger.info(f"Loading RS data from fallback file: {rs_file_fallback}")
-                rs_data = pd.read_csv(rs_file_fallback)
-                # Rename first column to 'Symbol' if it's unnamed
+
+        # Get benchmark tickers to try
+        benchmark_tickers = _get_benchmark_tickers(params)
+
+        # Try new naming convention first: rs_{benchmark}_ibd_stocks_{timeframe}_{choice}_{date}.csv
+        for benchmark in benchmark_tickers:
+            rs_file_pattern = f"rs_{benchmark}_ibd_stocks_{timeframe}_{ticker_choice}_{date_str}.csv"
+            rs_file = rs_dir / rs_file_pattern
+
+            if rs_file.exists():
+                logger.info(f"Loading RS data from: {rs_file}")
+                rs_data = pd.read_csv(rs_file)
+                # Rename first column to 'Symbol' if it's 'Unnamed: 0'
+                if 'Unnamed: 0' in rs_data.columns:
+                    rs_data = rs_data.rename(columns={'Unnamed: 0': 'Symbol'})
+                return rs_data
+
+        # Try new naming convention with glob pattern for any date
+        for benchmark in benchmark_tickers:
+            rs_file_pattern_nodate = f"rs_{benchmark}_ibd_stocks_{timeframe}_{ticker_choice}_*.csv"
+            import glob
+            matching_files = glob.glob(str(rs_dir / rs_file_pattern_nodate))
+            if matching_files:
+                latest_file = max(matching_files)
+                logger.info(f"Loading RS data from latest new format file: {latest_file}")
+                rs_data = pd.read_csv(latest_file)
                 if rs_data.columns[0] in ['Unnamed: 0', '']:
                     rs_data = rs_data.rename(columns={rs_data.columns[0]: 'Symbol'})
                 return rs_data
-            else:
-                # Try glob pattern as last resort
-                rs_file_pattern_nodate = f"rs_ibd_stocks_{timeframe}_{ticker_choice}_*.csv"
-                import glob
-                matching_files = glob.glob(str(rs_dir / rs_file_pattern_nodate))
-                if matching_files:
-                    latest_file = max(matching_files)
-                    logger.info(f"Loading RS data from latest file: {latest_file}")
-                    rs_data = pd.read_csv(latest_file)
-                    # Rename first column to 'Symbol' if it's unnamed
-                    if rs_data.columns[0] in ['Unnamed: 0', '']:
-                        rs_data = rs_data.rename(columns={rs_data.columns[0]: 'Symbol'})
-                    return rs_data
-                else:
-                    logger.warning(f"No RS data file found matching pattern: {rs_file_pattern}")
-                    return None
+
+        # Legacy fallback: try old naming convention
+        rs_file_pattern = f"rs_ibd_stocks_{timeframe}_{ticker_choice}_{date_str}.csv"
+        rs_file = rs_dir / rs_file_pattern
+
+        if rs_file.exists():
+            logger.info(f"Loading RS data from legacy file: {rs_file}")
+            rs_data = pd.read_csv(rs_file)
+            if 'Unnamed: 0' in rs_data.columns:
+                rs_data = rs_data.rename(columns={'Unnamed: 0': 'Symbol'})
+            return rs_data
+
+        # Try specific fallback to 20250820 file
+        rs_file_fallback = rs_dir / f"rs_ibd_stocks_{timeframe}_{ticker_choice}_20250820.csv"
+        if rs_file_fallback.exists():
+            logger.info(f"Loading RS data from fallback file: {rs_file_fallback}")
+            rs_data = pd.read_csv(rs_file_fallback)
+            if rs_data.columns[0] in ['Unnamed: 0', '']:
+                rs_data = rs_data.rename(columns={rs_data.columns[0]: 'Symbol'})
+            return rs_data
+
+        # Try glob pattern as last resort
+        rs_file_pattern_nodate = f"rs_ibd_stocks_{timeframe}_{ticker_choice}_*.csv"
+        import glob
+        matching_files = glob.glob(str(rs_dir / rs_file_pattern_nodate))
+        if matching_files:
+            latest_file = max(matching_files)
+            logger.info(f"Loading RS data from latest legacy file: {latest_file}")
+            rs_data = pd.read_csv(latest_file)
+            if rs_data.columns[0] in ['Unnamed: 0', '']:
+                rs_data = rs_data.rename(columns={rs_data.columns[0]: 'Symbol'})
+            return rs_data
+        else:
+            logger.warning(f"No RS data file found for any naming convention")
+            return None
                 
     except Exception as e:
         logger.error(f"Error loading RS data: {e}")

@@ -24,7 +24,8 @@ def get_template(template_name: str):
     valid_templates = {
         'stage_analysis', 'default', 'market_trends', 'sector_analysis',
         'industry_analysis', 'risk_analysis', 'universe_analysis', 'basic_calculation',
-        'top_performers_evolution', 'top_performers_evolution_v1', 'overview_v1'
+        'top_performers_evolution', 'top_performers_evolution_v1', 'overview_v1',
+        'rs_per_template'
     }
 
     if template_name not in valid_templates:
@@ -46,6 +47,7 @@ def get_template(template_name: str):
         'top_performers_evolution': 'pdf_top_performers_evolution_template',
         'top_performers_evolution_v1': 'pdf_top_performers_evolution_v1_template',
         'overview_v1': 'pdf_overview_v1_template',
+        'rs_per_template': 'pdf_rs_per_template',
 
         # Auto-selection aliases
         'basic_calculation': 'auto_select_basic_calculation'
@@ -91,6 +93,9 @@ def get_template(template_name: str):
             return generate_pdf
         elif module_name == 'pdf_overview_v1_template':
             from .pdf_overview_v1_template import generate_pdf
+            return generate_pdf
+        elif module_name == 'pdf_rs_per_template':
+            from .pdf_rs_per_template import generate_pdf
             return generate_pdf
 
         else:

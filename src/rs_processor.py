@@ -15,6 +15,14 @@ from datetime import datetime
 from .rs_ibd import IBDRelativeStrengthCalculator
 from .sector_composite import SectorCompositeBuilder
 
+# Import MA calculator only if needed
+try:
+    from .rs_ma import MARelativeStrengthCalculator
+    MA_AVAILABLE = True
+except ImportError:
+    MA_AVAILABLE = False
+    logger.warning("MA RS calculator not available - rs_ma module not found")
+
 logger = logging.getLogger(__name__)
 
 
@@ -35,6 +43,16 @@ class RSProcessor:
         self.user_config = user_config
         self.ibd_calculator = IBDRelativeStrengthCalculator(config, user_config)
         self.composite_builder = SectorCompositeBuilder(config, user_config)
+
+        # Initialize MA calculator if enabled and available
+        self.ma_calculator = None
+        if MA_AVAILABLE and getattr(user_config, 'rs_ma_enable', False):
+            try:
+                self.ma_calculator = MARelativeStrengthCalculator(config, user_config)
+                logger.info("MA RS calculator initialized successfully")
+            except Exception as e:
+                logger.error(f"Failed to initialize MA RS calculator: {e}")
+                self.ma_calculator = None
         
     def process_rs_analysis(self, ticker_list, ticker_choice=0, timeframes=None):
         """
@@ -133,7 +151,7 @@ class RSProcessor:
         Returns:
             Dictionary with timeframe results
         """
-        print(f"\n📊 Processing {timeframe.upper()} timeframe...")
+        logger.info(f"Starting {timeframe} RS analysis for {len(ticker_list)} tickers")
 
         # Get batch size for actual RS processing (not display simulation)
         batch_size = getattr(self.user_config, 'batch_size', 100)  # Use standard batch_size from user config
@@ -141,7 +159,7 @@ class RSProcessor:
         import math
         total_batches = math.ceil(total_tickers / batch_size) if batch_size < total_tickers else 1
 
-        print(f"📦 Processing {total_tickers} tickers in {total_batches} batches of {batch_size}")
+        logger.info(f"Processing {total_tickers} tickers in {total_batches} batches of {batch_size}")
 
         timeframe_results = {
             'timeframe': timeframe,
@@ -162,7 +180,7 @@ class RSProcessor:
             all_benchmark_data = {}
             for benchmark_ticker in benchmark_tickers:
                 try:
-                    print(f"🔄 Processing vs {benchmark_ticker} benchmark...")
+                    logger.info(f"Processing RS vs {benchmark_ticker} benchmark")
                     stock_results = self.ibd_calculator.process_universe(
                         ticker_list, timeframe, benchmark_ticker, batch_size
                     )
@@ -184,12 +202,33 @@ class RSProcessor:
                 
                 # Save combined results (single file per timeframe)
                 if combined_results:
+                    # Use first benchmark ticker for naming combined files
+                    first_benchmark = benchmark_tickers[0] if benchmark_tickers else 'SPY'
                     stock_files = self.ibd_calculator.save_rs_results(
-                        combined_stock_results, 'stocks', str(ticker_choice)
+                        combined_stock_results, 'stocks', str(ticker_choice), first_benchmark
                     )
                     timeframe_results['files_created'].extend(stock_files)
                     logger.info(f"Combined stock RS completed: {len(stock_files)} files created for all benchmarks")
-        
+
+        # 1B. MA STOCK-LEVEL RS ANALYSIS (PARALLEL TO IBD)
+        if self.ma_calculator and getattr(self.user_config, 'rs_enable_stocks', True):
+            try:
+                logger.info(f"Processing MA RS for stocks")
+                ma_stock_results = self.ma_calculator.process_stocks(
+                    ticker_list, timeframe, ticker_choice, benchmark_tickers
+                )
+
+                if ma_stock_results and 'error' not in ma_stock_results.metadata:
+                    files_created = ma_stock_results.metadata.get('files_created', [])
+                    timeframe_results['files_created'].extend(files_created)
+                    logger.info(f"MA stock RS completed: {len(files_created)} files created")
+                else:
+                    error_msg = ma_stock_results.metadata.get('error', 'Unknown error') if ma_stock_results else 'No results'
+                    logger.warning(f"MA stock RS failed: {error_msg}")
+
+            except Exception as e:
+                logger.error(f"Error in MA stock RS analysis: {e}")
+
         # 2. SECTOR/INDUSTRY COMPOSITE ANALYSIS - COMBINED ALL BENCHMARKS
         if (getattr(self.user_config, 'rs_enable_sectors', False) or 
             getattr(self.user_config, 'rs_enable_industries', False)):
@@ -237,7 +276,51 @@ class RSProcessor:
                             )
                             if industry_results:
                                 timeframe_results['files_created'].extend(industry_results)
-                                
+
+                        # 3B. MA SECTOR RS ANALYSIS (PARALLEL TO IBD)
+                        if (self.ma_calculator and getattr(self.user_config, 'rs_enable_sectors', False) and
+                            composite_indices['sectors']):
+                            try:
+                                logger.info(f"Processing MA RS for sectors")
+                                # Convert dict format to DataFrame format for MA calculator
+                                sector_composites_df = self._convert_composites_to_dataframe(composite_indices['sectors'])
+                                ma_sector_results = self.ma_calculator.process_sectors(
+                                    sector_composites_df, timeframe, ticker_choice, benchmark_tickers
+                                )
+
+                                if ma_sector_results and 'error' not in ma_sector_results.metadata:
+                                    files_created = ma_sector_results.metadata.get('files_created', [])
+                                    timeframe_results['files_created'].extend(files_created)
+                                    logger.info(f"MA sector RS completed: {len(files_created)} files created")
+                                else:
+                                    error_msg = ma_sector_results.metadata.get('error', 'Unknown error') if ma_sector_results else 'No results'
+                                    logger.warning(f"MA sector RS failed: {error_msg}")
+
+                            except Exception as e:
+                                logger.error(f"Error in MA sector RS analysis: {e}")
+
+                        # 4B. MA INDUSTRY RS ANALYSIS (PARALLEL TO IBD)
+                        if (self.ma_calculator and getattr(self.user_config, 'rs_enable_industries', False) and
+                            composite_indices['industries']):
+                            try:
+                                logger.info(f"Processing MA RS for industries")
+                                # Convert dict format to DataFrame format for MA calculator
+                                industry_composites_df = self._convert_composites_to_dataframe(composite_indices['industries'])
+                                ma_industry_results = self.ma_calculator.process_industries(
+                                    industry_composites_df, timeframe, ticker_choice, benchmark_tickers
+                                )
+
+                                if ma_industry_results and 'error' not in ma_industry_results.metadata:
+                                    files_created = ma_industry_results.metadata.get('files_created', [])
+                                    timeframe_results['files_created'].extend(files_created)
+                                    logger.info(f"MA industry RS completed: {len(files_created)} files created")
+                                else:
+                                    error_msg = ma_industry_results.metadata.get('error', 'Unknown error') if ma_industry_results else 'No results'
+                                    logger.warning(f"MA industry RS failed: {error_msg}")
+
+                            except Exception as e:
+                                logger.error(f"Error in MA industry RS analysis: {e}")
+
                     else:
                         logger.warning(f"No price data available for {timeframe} composite analysis")
                 else:
@@ -249,8 +332,8 @@ class RSProcessor:
         # Show completion summary like streaming implementations
         tickers_processed = len([f for f in timeframe_results['files_created'] if 'stocks' in str(f)])
         if tickers_processed > 0:
-            print(f"✅ RS analysis completed for {timeframe}: {total_tickers} tickers processed")
-            print(f"📁 Results saved to: {timeframe_results['files_created'][0] if timeframe_results['files_created'] else 'No files created'}")
+            logger.info(f"RS analysis completed for {timeframe}: {total_tickers} tickers processed")
+            logger.info(f"Results saved to: {timeframe_results['files_created'][0] if timeframe_results['files_created'] else 'No files created'}")
 
         logger.info(f"{timeframe} RS analysis completed")
         return timeframe_results
@@ -306,7 +389,7 @@ class RSProcessor:
                     results.rs_values[column_suffix] = rs_df
             
             # Save results
-            saved_files = self.ibd_calculator.save_rs_results(results, level, f"{ticker_choice}_{benchmark_ticker}")
+            saved_files = self.ibd_calculator.save_rs_results(results, level, str(ticker_choice), benchmark_ticker)
             
             logger.info(f"{level.capitalize()} RS analysis vs {benchmark_ticker} completed: {len(saved_files)} files created")
             return saved_files
@@ -455,7 +538,9 @@ class RSProcessor:
                 combined_results.rs_values = combined_rs_data
                 
                 # Save combined results (single file per asset class)
-                saved_files = self.ibd_calculator.save_rs_results(combined_results, level, str(ticker_choice))
+                # Use first benchmark ticker for naming combined files
+                first_benchmark = benchmark_tickers[0] if benchmark_tickers else 'SPY'
+                saved_files = self.ibd_calculator.save_rs_results(combined_results, level, str(ticker_choice), first_benchmark)
                 
                 logger.info(f"Combined {level} RS analysis completed: {len(saved_files)} files created for all benchmarks")
                 return saved_files
@@ -466,6 +551,30 @@ class RSProcessor:
         except Exception as e:
             logger.error(f"Error processing combined {level} RS analysis: {e}")
             return []
+
+    def _convert_composites_to_dataframe(self, composites_dict):
+        """
+        Convert composite indices from dict format to DataFrame format.
+        Memory-optimized version.
+
+        Args:
+            composites_dict: Dictionary of {name: Series} composite indices
+
+        Returns:
+            DataFrame with dates as index and composite names as columns
+        """
+        if not composites_dict:
+            return pd.DataFrame()
+
+        # Convert dictionary of series to DataFrame efficiently
+        try:
+            result = pd.DataFrame(composites_dict)
+            # Clear the input dict reference to help garbage collection
+            composites_dict.clear()
+            return result
+        except Exception as e:
+            logger.warning(f"Error converting composites to DataFrame: {e}")
+            return pd.DataFrame()
 
 
 def run_rs_analysis(ticker_list, config, user_config, ticker_choice=0, timeframes=None):
@@ -502,9 +611,12 @@ def run_rs_analysis(ticker_list, config, user_config, ticker_choice=0, timeframe
     results['summary'] = summary
 
     # Show final completion summary like streaming implementations
-    print(f"\n✅ RS ANALYSIS COMPLETED!")
-    print(f"📊 Total tickers processed: {results['universe_size']}")
-    print(f"🕒 Timeframes processed: {', '.join(results['timeframes_processed'])}")
+    logger.info(f"RS ANALYSIS COMPLETED!")
+    logger.info(f"Total tickers processed: {results['universe_size']}")
+    logger.info(f"Timeframes processed: {', '.join(results['timeframes_processed'])}")
+
+    # Optional: Print summary for user feedback
+    print(f"✅ RS analysis completed: {results['universe_size']} tickers, {len(results['timeframes_processed'])} timeframes")
 
     logger.info("RS analysis pipeline completed")
     return results

@@ -1,0 +1,253 @@
+//@version=6
+indicator("Multi-Ticker Sparklines Dashboard", shorttitle="Sparklines", overlay=true, max_polylines_count=50, max_labels_count=100)
+
+// =============================================================================
+// USER INPUTS
+// =============================================================================
+
+// Ticker Selection
+ticker1 = input.string("AAPL", title="Ticker 1", group="Symbols")
+ticker2 = input.string("MSFT", title="Ticker 2", group="Symbols")
+ticker3 = input.string("GOOGL", title="Ticker 3", group="Symbols")
+ticker4 = input.string("TSLA", title="Ticker 4", group="Symbols")
+ticker5 = input.string("AMZN", title="Ticker 5", group="Symbols")
+ticker6 = input.string("NVDA", title="Ticker 6", group="Symbols")
+ticker7 = input.string("META", title="Ticker 7", group="Symbols")
+ticker8 = input.string("NFLX", title="Ticker 8", group="Symbols")
+ticker9 = input.string("AMD", title="Ticker 9", group="Symbols")
+ticker10 = input.string("CRM", title="Ticker 10", group="Symbols")
+
+// Timeframe Selection
+timeframe_input = input.timeframe("1D", title="Timeframe", group="Settings")
+
+// Display Settings
+sparkline_length = input.int(20, title="Sparkline Length (bars)", minval=5, maxval=50, group="Settings")
+table_position = input.string("top_right", title="Table Position",
+    options=["top_left", "top_center", "top_right", "middle_left", "middle_center", "middle_right", "bottom_left", "bottom_center", "bottom_right"],
+    group="Settings")
+
+// Visual Settings
+show_prices = input.bool(true, title="Show Current Prices", group="Visual")
+show_change = input.bool(true, title="Show % Change", group="Visual")
+show_sparklines = input.bool(true, title="Show Sparklines", group="Visual")
+
+// Color Settings
+positive_color = input.color(color.green, title="Positive Color", group="Colors")
+negative_color = input.color(color.red, title="Negative Color", group="Colors")
+neutral_color = input.color(color.gray, title="Neutral Color", group="Colors")
+
+// =============================================================================
+// FUNCTIONS
+// =============================================================================
+
+// Convert table position string to position constant
+get_table_position(pos) =>
+    switch pos
+        "top_left" => position.top_left
+        "top_center" => position.top_center
+        "top_right" => position.top_right
+        "middle_left" => position.middle_left
+        "middle_center" => position.middle_center
+        "middle_right" => position.middle_right
+        "bottom_left" => position.bottom_left
+        "bottom_center" => position.bottom_center
+        "bottom_right" => position.bottom_right
+        => position.top_right
+
+// Get data for a specific ticker
+get_ticker_data(ticker_symbol) =>
+    current_price = request.security(ticker_symbol, timeframe_input, close)
+    previous_price = request.security(ticker_symbol, timeframe_input, close[1])
+    price_change = current_price - previous_price
+    price_change_pct = previous_price != 0 ? (price_change / previous_price) * 100 : 0
+
+    // Get historical data for sparkline
+    price_data = request.security(ticker_symbol, timeframe_input, close)
+
+    [current_price, price_change_pct, price_data]
+
+// Format price display
+format_price(price) =>
+    price_str = str.tostring(price, "#.##")
+    price_str
+
+// Format percentage change
+format_percentage(pct) =>
+    pct_str = str.tostring(math.abs(pct), "#.##") + "%"
+    prefix = pct >= 0 ? "+" : "-"
+    prefix + pct_str
+
+// Get color based on percentage change
+get_change_color(pct) =>
+    if pct > 0
+        positive_color
+    else if pct < 0
+        negative_color
+    else
+        neutral_color
+
+// Create sparkline using polyline
+create_sparkline(ticker_symbol, row_index) =>
+    if show_sparklines and barstate.islast
+        // Collect price data points
+        var price_array = array.new<float>()
+
+        // Get historical prices for sparkline
+        for i = sparkline_length - 1 to 0
+            historical_price = request.security(ticker_symbol, timeframe_input, close[i])
+            if not na(historical_price)
+                array.unshift(price_array, historical_price)
+
+        // Create polyline points if we have data
+        if array.size(price_array) > 1
+            polyline_points = array.new<chart.point>()
+
+            // Calculate sparkline dimensions
+            min_price = array.min(price_array)
+            max_price = array.max(price_array)
+            price_range = max_price - min_price
+
+            // Avoid division by zero
+            if price_range > 0
+                // Calculate sparkline position (offset from main chart)
+                x_offset = bar_index + 5
+                y_base = high + (high - low) * (2 + row_index * 0.5)  // Stack sparklines vertically
+                sparkline_height = (high - low) * 0.3  // Height of each sparkline
+
+                // Create points for polyline
+                for i = 0 to array.size(price_array) - 1
+                    price = array.get(price_array, i)
+                    normalized_price = (price - min_price) / price_range
+
+                    x = x_offset + i * 2  // Spacing between points
+                    y = y_base + normalized_price * sparkline_height
+
+                    point = chart.point.from_index(math.round(x), y)
+                    array.push(polyline_points, point)
+
+                // Create the polyline
+                if array.size(polyline_points) > 1
+                    current_price = array.get(price_array, array.size(price_array) - 1)
+                    previous_price = array.get(price_array, array.size(price_array) - 2)
+                    line_color = current_price >= previous_price ? positive_color : negative_color
+
+                    polyline.new(polyline_points, line_color=line_color, line_width=2)
+
+        // Clear the array for next use
+        array.clear(price_array)
+
+// =============================================================================
+// MAIN LOGIC
+// =============================================================================
+
+// Store ticker symbols in array for easier processing
+var ticker_symbols = array.from(ticker1, ticker2, ticker3, ticker4, ticker5,
+                                ticker6, ticker7, ticker8, ticker9, ticker10)
+
+// Create table on the last bar
+var table dashboard_table = na
+
+if barstate.islast
+    // Delete existing table
+    if not na(dashboard_table)
+        table.delete(dashboard_table)
+
+    // Create new table
+    columns = show_sparklines ? 4 : 3  // Ticker, Price, Change, [Sparkline]
+    dashboard_table := table.new(get_table_position(table_position),
+                                 columns=columns, rows=11,
+                                 bgcolor=color.white, border_width=1,
+                                 border_color=color.gray)
+
+    // Add header row
+    table.cell(dashboard_table, 0, 0, "Symbol", text_color=color.black,
+               bgcolor=color.silver, text_size=size.normal)
+
+    if show_prices
+        table.cell(dashboard_table, 1, 0, "Price", text_color=color.black,
+                   bgcolor=color.silver, text_size=size.normal)
+
+    if show_change
+        col_index = show_prices ? 2 : 1
+        table.cell(dashboard_table, col_index, 0, "Change", text_color=color.black,
+                   bgcolor=color.silver, text_size=size.normal)
+
+    if show_sparklines
+        col_index = (show_prices ? 1 : 0) + (show_change ? 1 : 0) + 1
+        table.cell(dashboard_table, col_index, 0, "Trend", text_color=color.black,
+                   bgcolor=color.silver, text_size=size.normal)
+
+    // Process each ticker
+    for i = 0 to math.min(array.size(ticker_symbols) - 1, 9)
+        ticker = array.get(ticker_symbols, i)
+
+        // Skip empty tickers
+        if ticker != ""
+            [current_price, price_change_pct, price_data] = get_ticker_data(ticker)
+
+            row = i + 1
+            col = 0
+
+            // Symbol column
+            table.cell(dashboard_table, col, row, ticker, text_color=color.black,
+                       text_size=size.small)
+            col += 1
+
+            // Price column
+            if show_prices and not na(current_price)
+                price_text = format_price(current_price)
+                table.cell(dashboard_table, col, row, price_text, text_color=color.black,
+                           text_size=size.small)
+                col += 1
+
+            // Change column
+            if show_change and not na(price_change_pct)
+                change_text = format_percentage(price_change_pct)
+                change_color = get_change_color(price_change_pct)
+                table.cell(dashboard_table, col, row, change_text, text_color=change_color,
+                           text_size=size.small)
+                col += 1
+
+            // Sparkline column (text representation)
+            if show_sparklines
+                // Create a simple text-based sparkline representation
+                sparkline_text = price_change_pct > 2 ? "📈" : price_change_pct < -2 ? "📉" : "➡️"
+                table.cell(dashboard_table, col, row, sparkline_text, text_color=get_change_color(price_change_pct),
+                           text_size=size.normal)
+
+                // Create actual sparkline chart (this will appear on the main chart)
+                create_sparkline(ticker, i)
+
+// =============================================================================
+// LABELS AND ANNOTATIONS
+// =============================================================================
+
+// Add title label
+if barstate.islast
+    title_text = "Multi-Ticker Sparklines (" + timeframe_input + ")"
+    label.new(bar_index + 2, high, title_text, style=label.style_label_down,
+              color=color.blue, textcolor=color.white, size=size.normal)
+
+// =============================================================================
+// ALERTS
+// =============================================================================
+
+// Alert when any ticker has significant movement
+var alert_threshold = 5.0  // 5% change threshold
+
+for i = 0 to array.size(ticker_symbols) - 1
+    ticker = array.get(ticker_symbols, i)
+    if ticker != ""
+        [current_price, price_change_pct, price_data] = get_ticker_data(ticker)
+
+        if math.abs(price_change_pct) > alert_threshold
+            alert_message = ticker + " moved " + format_percentage(price_change_pct) +
+                           " to $" + format_price(current_price)
+            alert(alert_message, alert.freq_once_per_bar)
+
+// =============================================================================
+// PLOTTING (for debugging)
+// =============================================================================
+
+// Plot a reference line (invisible) to help with chart scaling
+plot(na, title="Reference", display=display.none)

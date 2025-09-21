@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sparkline Test - Working Version</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-sparklines/2.1.2/jquery.sparkline.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .sparkline-test {
+            margin: 15px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: #f9f9f9;
+        }
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        .badge-green { background: #27ae60; color: white; }
+        .badge-red { background: #e74c3c; color: white; }
+        .badge-blue { background: #3498db; color: white; }
+        .chart-container {
+            text-align: center;
+            margin: 10px 0;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .status { color: #666; font-size: 12px; margin-top: 5px; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Sparkline Test - Working Version</h1>
+
+    <div class="test-container">
+        <h2>Library Status Check</h2>
+        <div id="status-check">Checking libraries...</div>
+    </div>
+
+    <div class="test-container">
+        <h2>Simple Tests</h2>
+
+        <div class="sparkline-test">
+            <div class="badge badge-green">+5.2%</div>
+            <div class="chart-container">
+                <span id="test1" data-values="[10,12,11,15,18,16,20,22,19,24]"></span>
+            </div>
+            <div class="status">Upward trend test</div>
+        </div>
+
+        <div class="sparkline-test">
+            <div class="badge badge-red">-3.1%</div>
+            <div class="chart-container">
+                <span id="test2" data-values="[24,22,20,18,15,13,12,10,9,8]"></span>
+            </div>
+            <div class="status">Downward trend test</div>
+        </div>
+
+        <div class="sparkline-test">
+            <div class="badge badge-blue">+0.1%</div>
+            <div class="chart-container">
+                <span id="test3" data-values="[100,102,98,101,99,103,97,100,101,100]"></span>
+            </div>
+            <div class="status">Sideways trend test</div>
+        </div>
+    </div>
+
+    <div class="test-container">
+        <h2>Real Stock Data Test</h2>
+
+        <div class="sparkline-test">
+            <strong>AAPL - 1 Week</strong>
+            <div class="badge badge-green">+2.5%</div>
+            <div class="chart-container">
+                <span id="real-test" data-values="[125.66,125.21,125.22,128.48,128.75]"></span>
+            </div>
+            <div class="status">Real data from our project</div>
+        </div>
+
+        <div class="sparkline-test">
+            <strong>Sample - 1 Month</strong>
+            <div class="badge badge-red">-4.2%</div>
+            <div class="chart-container">
+                <span id="month-test" data-values="[120,118,122,119,125,123,121,119,117,115,118,120,122,119,116,114,118,121,119,115,112,115]"></span>
+            </div>
+            <div class="status">Monthly trend simulation</div>
+        </div>
+    </div>
+
+    <div class="test-container">
+        <h2>Debug Log</h2>
+        <div id="debug-log" style="background: #f0f0f0; padding: 10px; font-family: monospace; font-size: 12px; white-space: pre-wrap; max-height: 200px; overflow-y: auto;"></div>
+    </div>
+
+    <script>
+        function log(message) {
+            console.log(message);
+            $('#debug-log').append(new Date().toLocaleTimeString() + ': ' + message + '\n');
+            $('#debug-log').scrollTop($('#debug-log')[0].scrollHeight);
+        }
+
+        $(document).ready(function() {
+            log('🚀 Starting sparkline tests...');
+
+            // Check jQuery
+            if (typeof jQuery === 'undefined') {
+                $('#status-check').html('❌ jQuery not loaded').css('color', 'red');
+                log('❌ jQuery missing');
+                return;
+            }
+
+            // Check jQuery Sparkline
+            if (typeof $.fn.sparkline === 'undefined') {
+                $('#status-check').html('❌ jQuery Sparkline not loaded').css('color', 'red');
+                log('❌ jQuery Sparkline missing');
+                return;
+            }
+
+            $('#status-check').html('✅ All libraries loaded successfully!').css('color', 'green');
+            log('✅ Libraries: jQuery ' + $.fn.jquery + ', Sparkline available');
+
+            // Test configurations
+            const configs = {
+                positive: {
+                    type: 'line',
+                    width: '120',
+                    height: '40',
+                    lineColor: '#27ae60',
+                    fillColor: 'rgba(39, 174, 96, 0.15)',
+                    spotRadius: 2,
+                    lineWidth: 2
+                },
+                negative: {
+                    type: 'line',
+                    width: '120',
+                    height: '40',
+                    lineColor: '#e74c3c',
+                    fillColor: 'rgba(231, 76, 60, 0.15)',
+                    spotRadius: 2,
+                    lineWidth: 2
+                },
+                neutral: {
+                    type: 'line',
+                    width: '120',
+                    height: '40',
+                    lineColor: '#3498db',
+                    fillColor: 'rgba(52, 152, 219, 0.15)',
+                    spotRadius: 2,
+                    lineWidth: 2
+                }
+            };
+
+            // Test 1: Positive trend
+            try {
+                const data1 = $('#test1').data('values');
+                log('Test 1 data: ' + JSON.stringify(data1));
+                $('#test1').sparkline(data1, configs.positive);
+                log('✅ Test 1 (positive) successful');
+            } catch (e) {
+                log('❌ Test 1 failed: ' + e.message);
+            }
+
+            // Test 2: Negative trend
+            try {
+                const data2 = $('#test2').data('values');
+                log('Test 2 data: ' + JSON.stringify(data2));
+                $('#test2').sparkline(data2, configs.negative);
+                log('✅ Test 2 (negative) successful');
+            } catch (e) {
+                log('❌ Test 2 failed: ' + e.message);
+            }
+
+            // Test 3: Neutral trend
+            try {
+                const data3 = $('#test3').data('values');
+                log('Test 3 data: ' + JSON.stringify(data3));
+                $('#test3').sparkline(data3, configs.neutral);
+                log('✅ Test 3 (neutral) successful');
+            } catch (e) {
+                log('❌ Test 3 failed: ' + e.message);
+            }
+
+            // Real test: AAPL data
+            try {
+                const realData = $('#real-test').data('values');
+                log('Real test data: ' + JSON.stringify(realData));
+                $('#real-test').sparkline(realData, configs.positive);
+                log('✅ Real test successful');
+            } catch (e) {
+                log('❌ Real test failed: ' + e.message);
+            }
+
+            // Month test
+            try {
+                const monthData = $('#month-test').data('values');
+                log('Month test data length: ' + monthData.length);
+                $('#month-test').sparkline(monthData, configs.negative);
+                log('✅ Month test successful');
+            } catch (e) {
+                log('❌ Month test failed: ' + e.message);
+            }
+
+            log('🎉 All tests completed!');
+
+            // Add a test to see if sparklines are actually visible
+            setTimeout(function() {
+                const canvasCount = $('canvas').length;
+                log(`📊 Canvas elements found: ${canvasCount}`);
+                if (canvasCount > 0) {
+                    log('✅ Sparklines are rendering as canvas elements!');
+                } else {
+                    log('❌ No canvas elements found - sparklines may not be rendering');
+                }
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

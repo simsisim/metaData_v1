@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historical Price Sparkline Charts - First 100 Tickers</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <!-- Custom CSS -->
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --success-color: #27ae60;
+            --danger-color: #e74c3c;
+            --warning-color: #f39c12;
+            --info-color: #3498db;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            color: #2c3e50;
+        }
+
+        .header-section {
+            background: linear-gradient(135deg, var(--primary-color), var(--info-color));
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+        }
+
+        .header-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .header-subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .stats-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 1rem;
+        }
+
+        .stats-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .stats-label {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+
+        .controls-section {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .sparkline-table-container {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .sparkline-table {
+            margin-bottom: 0;
+        }
+
+        .sparkline-table th {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 600;
+            border: none;
+            padding: 1rem 0.75rem;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .sparkline-table td {
+            padding: 0.75rem;
+            vertical-align: middle;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .ticker-name {
+            font-weight: bold;
+            color: var(--primary-color);
+            background-color: #f8f9fa;
+            width: 80px;
+            text-align: center;
+        }
+
+        .sparkline-cell {
+            text-align: center;
+            width: 140px;
+            position: relative;
+            padding: 0.5rem 0.25rem;
+        }
+
+        .sparkline-container {
+            display: block;
+            margin: 8px 0 4px 0;
+            min-height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sparkline-chart {
+            display: block;
+            margin: 0 auto;
+        }
+
+        .performance-badge {
+            font-size: 0.75rem;
+            padding: 3px 8px;
+            border-radius: 4px;
+            margin-bottom: 5px;
+            display: inline-block;
+            font-weight: 600;
+        }
+
+        .no-chart-message {
+            font-size: 0.65rem;
+            color: #7f8c8d;
+            font-style: italic;
+            margin-top: 5px;
+        }
+
+        .badge-bullish {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .badge-bearish {
+            background-color: var(--danger-color);
+            color: white;
+        }
+
+        .badge-neutral {
+            background-color: #95a5a6;
+            color: white;
+        }
+
+        .current-price {
+            font-size: 0.8rem;
+            color: #7f8c8d;
+            margin-top: 3px;
+        }
+
+        .search-box {
+            border-radius: 25px;
+            border: 2px solid #e9ecef;
+            padding: 0.5rem 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: var(--info-color);
+            box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            border-radius: 25px;
+            padding: 0.5rem 1.5rem;
+        }
+
+        .btn-primary:hover {
+            background-color: #34495e;
+            border-color: #34495e;
+        }
+
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .tooltip-custom {
+            background-color: rgba(44, 62, 80, 0.95);
+            color: white;
+            padding: 0.5rem;
+            border-radius: 5px;
+            font-size: 0.8rem;
+            max-width: 200px;
+        }
+
+        .table-responsive {
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .footer-section {
+            margin-top: 3rem;
+            padding: 2rem 0;
+            background-color: var(--primary-color);
+            color: white;
+            text-align: center;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .header-title {
+                font-size: 2rem;
+            }
+
+            .sparkline-table th,
+            .sparkline-table td {
+                padding: 0.5rem 0.25rem;
+                font-size: 0.85rem;
+            }
+
+            .sparkline-cell {
+                width: 100px;
+            }
+        }
+
+        /* Animation for loading */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header Section -->
+    <div class="header-section">
+        <div class="container">
+            <div class="row">
+                <div class="col-12 text-center">
+                    <h1 class="header-title">
+                        <i class="fas fa-chart-line"></i>
+                        Historical Price Sparkline Charts
+                    </h1>
+                    <p class="header-subtitle">
+                        Interactive visualization of price trends across multiple timeframes • First 100 Tickers
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-fluid">
+        <!-- Statistics Section -->
+        <div class="row mb-4">
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="stats-card text-center">
+                    <div class="stats-number" id="total-tickers">{{TOTAL_TICKERS}}</div>
+                    <div class="stats-label">Total Tickers</div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="stats-card text-center">
+                    <div class="stats-number text-success" id="bullish-count">{{BULLISH_COUNT}}</div>
+                    <div class="stats-label">Bullish (1Y)</div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="stats-card text-center">
+                    <div class="stats-number text-danger" id="bearish-count">{{BEARISH_COUNT}}</div>
+                    <div class="stats-label">Bearish (1Y)</div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="stats-card text-center">
+                    <div class="stats-number" id="last-updated">{{LAST_UPDATED}}</div>
+                    <div class="stats-label">Last Updated</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Controls Section -->
+        <div class="controls-section">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="fas fa-search"></i>
+                        </span>
+                        <input type="text"
+                               class="form-control search-box"
+                               id="ticker-search"
+                               placeholder="Search tickers (e.g., AAPL, MSFT, TSLA...)">
+                    </div>
+                </div>
+                <div class="col-md-6 text-md-end mt-3 mt-md-0">
+                    <button class="btn btn-primary" onclick="resetFilters()">
+                        <i class="fas fa-refresh"></i> Reset Filters
+                    </button>
+                    <button class="btn btn-outline-primary ms-2" onclick="exportData()">
+                        <i class="fas fa-download"></i> Export Data
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Spinner -->
+        <div class="loading-spinner" id="loading-spinner">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2">Generating sparkline charts...</p>
+        </div>
+
+        <!-- Main Table -->
+        <div class="sparkline-table-container fade-in">
+            <div class="table-responsive">
+                <table class="table table-hover sparkline-table" id="sparkline-table">
+                    <thead>
+                        <tr>
+                            <th class="ticker-header">
+                                <i class="fas fa-tag"></i> Ticker
+                            </th>
+                            <th class="sortable" data-timeframe="1d">
+                                <i class="fas fa-clock"></i> 1 Day
+                                <small class="d-block">Latest Session</small>
+                            </th>
+                            <th class="sortable" data-timeframe="1w">
+                                <i class="fas fa-calendar-week"></i> 1 Week
+                                <small class="d-block">5 Days</small>
+                            </th>
+                            <th class="sortable" data-timeframe="1m">
+                                <i class="fas fa-calendar-alt"></i> 1 Month
+                                <small class="d-block">~22 Days</small>
+                            </th>
+                            <th class="sortable" data-timeframe="3m">
+                                <i class="fas fa-calendar"></i> Quarter
+                                <small class="d-block">~66 Days</small>
+                            </th>
+                            <th class="sortable" data-timeframe="6m">
+                                <i class="fas fa-calendar-check"></i> Half Year
+                                <small class="d-block">~132 Days</small>
+                            </th>
+                            <th class="sortable" data-timeframe="1y">
+                                <i class="fas fa-calendar-plus"></i> Year
+                                <small class="d-block">~252 Days</small>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="sparkline-tbody">
+                        {{TABLE_ROWS}}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer-section">
+        <div class="container">
+            <p class="mb-0">
+                <i class="fas fa-chart-area"></i>
+                Historical Price Sparkline Charts • Generated: {{GENERATION_DATE}}
+                • Data Source: Daily Market Data
+            </p>
+        </div>
+    </div>
+
+    <!-- JavaScript Libraries -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-sparklines/2.1.2/jquery.sparkline.min.js"></script>
+
+    <!-- Custom JavaScript -->
+    <script>
+        // Global variables
+        let originalTableData = [];
+        let currentSortField = null;
+        let currentSortDirection = 'asc';
+
+        // Sparkline configuration
+        const sparklineConfig = {
+            type: 'line',
+            width: '120',
+            height: '40',
+            lineColor: '#3498db',
+            fillColor: 'rgba(52, 152, 219, 0.1)',
+            spotColor: '#27ae60',
+            minSpotColor: '#e74c3c',
+            maxSpotColor: '#27ae60',
+            highlightSpotColor: '#f39c12',
+            highlightLineColor: '#f39c12',
+            spotRadius: 2,
+            lineWidth: 2,
+            chartRangeMin: undefined,
+            chartRangeMax: undefined,
+            tooltipFormat: '<span style="background: rgba(0,0,0,0.8); color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px;">Day {{offset}} • ${{y}}</span>'
+        };
+
+        // Initialize when document is ready
+        $(document).ready(function() {
+            console.log('🚀 Initializing Sparkline Charts...');
+
+            // Check if jQuery Sparkline is loaded
+            if (typeof $.fn.sparkline === 'undefined') {
+                console.error('❌ jQuery Sparkline library not loaded!');
+                $('.sparkline-container').html('<div class="no-chart-message">Chart library not loaded</div>');
+                return;
+            }
+
+            console.log('✅ jQuery Sparkline library loaded successfully');
+
+            // Hide loading spinner
+            $('#loading-spinner').hide();
+
+            // Initialize sparklines
+            initializeSparklines();
+
+            // Setup search functionality
+            setupSearch();
+
+            // Setup sorting
+            setupSorting();
+
+            // Setup tooltips
+            setupTooltips();
+
+            console.log('✅ Sparkline Charts initialized successfully!');
+        });
+
+        function initializeSparklines() {
+            console.log('📈 Generating sparkline charts...');
+            let chartsGenerated = 0;
+            let chartsSkipped = 0;
+
+            $('.sparkline').each(function() {
+                const $this = $(this);
+                const $container = $this.closest('.sparkline-container');
+                const data = $this.data('values');  // jQuery auto-parses JSON arrays
+                const timeframe = $this.data('timeframe');
+                const performance = $this.data('performance') || 0;
+
+                console.log(`Processing ${timeframe}:`, data, `performance=${performance}`);
+
+                // Simple validation - jQuery already parsed the JSON for us
+                if (!data || !Array.isArray(data) || data.length === 0) {
+                    console.warn(`No valid data for ${timeframe}`);
+                    $container.html('<div class="no-chart-message">No data</div>');
+                    chartsSkipped++;
+                    return;
+                }
+
+                // Handle 1D case (single point)
+                if (timeframe === '1d' || data.length === 1) {
+                    $container.html(`<div class="no-chart-message">$${data[0]?.toFixed(2) || 'N/A'}</div>`);
+                    chartsSkipped++;
+                    return;
+                }
+
+                // Configure sparkline - use working test file approach
+                let config = {
+                    type: 'line',
+                    width: '120',
+                    height: '40',
+                    lineColor: '#3498db',
+                    fillColor: 'rgba(52, 152, 219, 0.15)',
+                    spotRadius: 2,
+                    lineWidth: 2
+                };
+
+                // Set colors based on performance
+                if (performance > 0) {
+                    config.lineColor = '#27ae60';
+                    config.fillColor = 'rgba(39, 174, 96, 0.15)';
+                } else if (performance < 0) {
+                    config.lineColor = '#e74c3c';
+                    config.fillColor = 'rgba(231, 76, 60, 0.15)';
+                }
+
+                // Set dimensions based on timeframe
+                switch(timeframe) {
+                    case '1w':
+                        config.width = '80';
+                        config.height = '35';
+                        break;
+                    case '1m':
+                        config.width = '100';
+                        config.height = '40';
+                        break;
+                    case '3m':
+                        config.width = '120';
+                        config.height = '40';
+                        break;
+                    case '6m':
+                        config.width = '130';
+                        config.height = '45';
+                        break;
+                    case '1y':
+                        config.width = '140';
+                        config.height = '45';
+                        break;
+                }
+
+                try {
+                    // Generate sparkline - exact same approach as working test file
+                    $this.sparkline(data, config);
+                    chartsGenerated++;
+                    console.log(`✅ Generated ${timeframe} chart: ${data.length} points`);
+                } catch (error) {
+                    console.error(`Failed to generate ${timeframe} chart:`, error);
+                    $container.html('<div class="no-chart-message">Chart error</div>');
+                    chartsSkipped++;
+                }
+            });
+
+            console.log(`✅ Sparkline generation complete: ${chartsGenerated} charts created, ${chartsSkipped} skipped`);
+        }
+
+        function setupSearch() {
+            $('#ticker-search').on('input', function() {
+                const searchTerm = $(this).val().toLowerCase();
+
+                $('#sparkline-tbody tr').each(function() {
+                    const ticker = $(this).find('.ticker-name').text().toLowerCase();
+
+                    if (ticker.includes(searchTerm)) {
+                        $(this).show();
+                    } else {
+                        $(this).hide();
+                    }
+                });
+
+                updateVisibleStats();
+            });
+        }
+
+        function setupSorting() {
+            $('.sortable').on('click', function() {
+                const timeframe = $(this).data('timeframe');
+                sortTableByPerformance(timeframe);
+
+                // Update header indicators
+                $('.sortable').removeClass('sorted-asc sorted-desc');
+                if (currentSortDirection === 'asc') {
+                    $(this).addClass('sorted-asc');
+                } else {
+                    $(this).addClass('sorted-desc');
+                }
+            });
+        }
+
+        function setupTooltips() {
+            // Initialize Bootstrap tooltips
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        }
+
+        function sortTableByPerformance(timeframe) {
+            const tbody = $('#sparkline-tbody');
+            const rows = tbody.find('tr').get();
+
+            currentSortField = timeframe;
+            currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+
+            rows.sort(function(a, b) {
+                const aPerf = parseFloat($(a).find(`[data-timeframe="${timeframe}"]`).data('performance')) || 0;
+                const bPerf = parseFloat($(b).find(`[data-timeframe="${timeframe}"]`).data('performance')) || 0;
+
+                if (currentSortDirection === 'asc') {
+                    return aPerf - bPerf;
+                } else {
+                    return bPerf - aPerf;
+                }
+            });
+
+            tbody.empty().append(rows);
+
+            // Reinitialize sparklines after reordering
+            setTimeout(initializeSparklines, 100);
+        }
+
+        function resetFilters() {
+            $('#ticker-search').val('');
+            $('#sparkline-tbody tr').show();
+            updateVisibleStats();
+        }
+
+        function updateVisibleStats() {
+            const visibleRows = $('#sparkline-tbody tr:visible').length;
+            $('#total-tickers').text(visibleRows);
+        }
+
+        function exportData() {
+            // Simple CSV export functionality
+            let csvContent = "Ticker,1D_Return,1W_Return,1M_Return,3M_Return,6M_Return,1Y_Return\\n";
+
+            $('#sparkline-tbody tr:visible').each(function() {
+                const ticker = $(this).find('.ticker-name').text();
+                const returns = [];
+
+                $(this).find('.sparkline').each(function() {
+                    returns.push($(this).data('performance') || 0);
+                });
+
+                csvContent += ticker + "," + returns.join(",") + "\\n";
+            });
+
+            // Download CSV
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", "sparkline_data.csv");
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // CSS for sorting indicators
+        const style = document.createElement('style');
+        style.textContent = `
+            .sortable { cursor: pointer; }
+            .sortable:hover { background-color: rgba(255,255,255,0.1); }
+            .sorted-asc::after { content: ' ↑'; }
+            .sorted-desc::after { content: ' ↓'; }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Simplified Sparkline Logic</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-sparklines/2.1.2/jquery.sparkline.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .sparkline-cell {
+            text-align: center;
+            width: 140px;
+            position: relative;
+            padding: 0.5rem 0.25rem;
+            border: 1px solid #ddd;
+            margin: 10px;
+            display: inline-block;
+        }
+        .sparkline-container {
+            display: block;
+            margin: 8px 0 4px 0;
+            min-height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .performance-badge {
+            font-size: 0.75rem;
+            padding: 3px 8px;
+            border-radius: 4px;
+            margin-bottom: 5px;
+            display: inline-block;
+            font-weight: 600;
+        }
+        .badge-bullish { background-color: #27ae60; color: white; }
+        .badge-bearish { background-color: #e74c3c; color: white; }
+        .badge-neutral { background-color: #95a5a6; color: white; }
+        .no-chart-message {
+            font-size: 0.65rem;
+            color: #7f8c8d;
+            font-style: italic;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 Test Simplified Sparkline Logic</h1>
+    <p>This tests the exact same logic as the main report, with simplified data parsing</p>
+
+    <div class="test-container">
+        <h2>Library Status</h2>
+        <div id="status-check">Checking...</div>
+    </div>
+
+    <div class="test-container">
+        <h2>Sparkline Tests with Main Report Structure</h2>
+
+        <!-- 1D Test (should show price) -->
+        <div class="sparkline-cell">
+            <div class="performance-badge badge-neutral">0.0%</div>
+            <div class="sparkline-container">
+                <span class="sparkline"
+                      data-values="[128.75]"
+                      data-timeframe="1d"
+                      data-performance="0">
+                </span>
+            </div>
+        </div>
+
+        <!-- 1W Test (should show chart) -->
+        <div class="sparkline-cell">
+            <div class="performance-badge badge-bullish">+2.5%</div>
+            <div class="sparkline-container">
+                <span class="sparkline"
+                      data-values="[125.66,125.21,125.22,128.48,128.75]"
+                      data-timeframe="1w"
+                      data-performance="2.46">
+                </span>
+            </div>
+        </div>
+
+        <!-- 1M Test (should show chart) -->
+        <div class="sparkline-cell">
+            <div class="performance-badge badge-bearish">-3.2%</div>
+            <div class="sparkline-container">
+                <span class="sparkline"
+                      data-values="[130,128,125,122,120,118,125,127,124,126,128,130,129,127,125,124,126,128,125,122,125,128]"
+                      data-timeframe="1m"
+                      data-performance="-3.2">
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <div class="test-container">
+        <h2>Debug Log</h2>
+        <div id="debug-log" style="background: #f0f0f0; padding: 10px; font-family: monospace; font-size: 12px; white-space: pre-wrap; max-height: 200px; overflow-y: auto;"></div>
+    </div>
+
+    <script>
+        function log(message) {
+            console.log(message);
+            $('#debug-log').append(new Date().toLocaleTimeString() + ': ' + message + '\n');
+            $('#debug-log').scrollTop($('#debug-log')[0].scrollHeight);
+        }
+
+        $(document).ready(function() {
+            log('🚀 Starting simplified sparkline test...');
+
+            // Check libraries
+            if (typeof jQuery === 'undefined') {
+                $('#status-check').html('❌ jQuery not loaded').css('color', 'red');
+                return;
+            }
+
+            if (typeof $.fn.sparkline === 'undefined') {
+                $('#status-check').html('❌ jQuery Sparkline not loaded').css('color', 'red');
+                return;
+            }
+
+            $('#status-check').html('✅ All libraries loaded successfully!').css('color', 'green');
+            log('✅ Libraries loaded');
+
+            // Use EXACT same logic as main report
+            initializeSparklines();
+        });
+
+        // EXACT COPY of simplified logic from main report
+        function initializeSparklines() {
+            console.log('📈 Generating sparkline charts...');
+            let chartsGenerated = 0;
+            let chartsSkipped = 0;
+
+            $('.sparkline').each(function() {
+                const $this = $(this);
+                const $container = $this.closest('.sparkline-container');
+                const data = $this.data('values');  // jQuery auto-parses JSON arrays
+                const timeframe = $this.data('timeframe');
+                const performance = $this.data('performance') || 0;
+
+                console.log(`Processing ${timeframe}:`, data, `performance=${performance}`);
+                log(`Processing ${timeframe}: ${JSON.stringify(data)} (${typeof data})`);
+
+                // Simple validation - jQuery already parsed the JSON for us
+                if (!data || !Array.isArray(data) || data.length === 0) {
+                    console.warn(`No valid data for ${timeframe}`);
+                    $container.html('<div class="no-chart-message">No data</div>');
+                    chartsSkipped++;
+                    return;
+                }
+
+                // Handle 1D case (single point)
+                if (timeframe === '1d' || data.length === 1) {
+                    $container.html(`<div class="no-chart-message">$${data[0]?.toFixed(2) || 'N/A'}</div>`);
+                    chartsSkipped++;
+                    log(`Skipped ${timeframe}: single point`);
+                    return;
+                }
+
+                // Configure sparkline - use working test file approach
+                let config = {
+                    type: 'line',
+                    width: '120',
+                    height: '40',
+                    lineColor: '#3498db',
+                    fillColor: 'rgba(52, 152, 219, 0.15)',
+                    spotRadius: 2,
+                    lineWidth: 2
+                };
+
+                // Set colors based on performance
+                if (performance > 0) {
+                    config.lineColor = '#27ae60';
+                    config.fillColor = 'rgba(39, 174, 96, 0.15)';
+                } else if (performance < 0) {
+                    config.lineColor = '#e74c3c';
+                    config.fillColor = 'rgba(231, 76, 60, 0.15)';
+                }
+
+                // Set dimensions based on timeframe
+                switch(timeframe) {
+                    case '1w':
+                        config.width = '80';
+                        config.height = '35';
+                        break;
+                    case '1m':
+                        config.width = '100';
+                        config.height = '40';
+                        break;
+                    case '3m':
+                        config.width = '120';
+                        config.height = '40';
+                        break;
+                    case '6m':
+                        config.width = '130';
+                        config.height = '45';
+                        break;
+                    case '1y':
+                        config.width = '140';
+                        config.height = '45';
+                        break;
+                }
+
+                try {
+                    // Generate sparkline - exact same approach as working test file
+                    $this.sparkline(data, config);
+                    chartsGenerated++;
+                    console.log(`✅ Generated ${timeframe} chart: ${data.length} points`);
+                    log(`✅ Generated ${timeframe} chart: ${data.length} points`);
+                } catch (error) {
+                    console.error(`Failed to generate ${timeframe} chart:`, error);
+                    $container.html('<div class="no-chart-message">Chart error</div>');
+                    chartsSkipped++;
+                    log(`❌ Failed ${timeframe}: ${error.message}`);
+                }
+            });
+
+            console.log(`✅ Sparkline generation complete: ${chartsGenerated} charts created, ${chartsSkipped} skipped`);
+            log(`✅ Final result: ${chartsGenerated} charts created, ${chartsSkipped} skipped`);
+
+            // Check if any canvas elements were created
+            setTimeout(function() {
+                const canvasCount = $('canvas').length;
+                log(`📊 Canvas elements found: ${canvasCount}`);
+                if (canvasCount > 0) {
+                    log('✅ SUCCESS: Sparklines are rendering as canvas elements!');
+                } else {
+                    log('❌ ISSUE: No canvas elements found');
+                }
+            }, 1000);
+        }
+    </script>
+</body>
+</html>

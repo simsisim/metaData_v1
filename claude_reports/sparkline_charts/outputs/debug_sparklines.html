@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Sparklines</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery-sparkline@2.1.3/jquery.sparkline.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .debug-section {
+            background: white;
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .sparkline-test {
+            display: inline-block;
+            margin: 10px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            background: #f9f9f9;
+        }
+        .status {
+            color: #666;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Sparkline Debugging Tool</h1>
+
+    <div class="debug-section">
+        <h2>Library Loading Test</h2>
+        <div id="library-status">Checking jQuery and Sparkline libraries...</div>
+    </div>
+
+    <div class="debug-section">
+        <h2>Simple Sparkline Tests</h2>
+
+        <div class="sparkline-test">
+            <strong>Test 1:</strong> Basic line
+            <br><span id="test1"></span>
+            <div class="status">Data: [5,6,7,2,0,-4,-2,4]</div>
+        </div>
+
+        <div class="sparkline-test">
+            <strong>Test 2:</strong> Stock-like data
+            <br><span id="test2"></span>
+            <div class="status">Data: Stock prices [100-120]</div>
+        </div>
+
+        <div class="sparkline-test">
+            <strong>Test 3:</strong> HTML inline
+            <br><span class="inline-sparkline">8,4,0,0,1,5,9,10,4</span>
+            <div class="status">Data: Inline HTML method</div>
+        </div>
+
+        <div class="sparkline-test">
+            <strong>Test 4:</strong> Data attribute
+            <br><span class="data-sparkline" data-values="[10,15,12,18,22,19,25,28,24,30]"></span>
+            <div class="status">Data: Via data-values attribute</div>
+        </div>
+    </div>
+
+    <div class="debug-section">
+        <h2>Real Data Test (First ticker from our project)</h2>
+        <div class="sparkline-test">
+            <strong>Ticker A - 1 Year:</strong>
+            <br><span id="real-test"
+                     data-values="[126.54,127.38,125.8,122.54,125.98,126.02,126.17,121.39,120.52,119.34,116.84,120.67,121.97,122.58,121.69,119.77,120.24,121.46,120.0,119.39,118.47,116.2,116.49,113.81,115.75,109.44,102.78,103.37,99.08,106.83,99.74,102.49,104.97,102.9,102.48,102.26,100.05,102.59,104.78,106.8,106.06,106.65,107.23,107.37,106.24,108.4,108.14,105.02,107.29,108.47,106.71,115.31,115.18,111.29,112.16,113.53,113.2,113.24,108.68,109.45,108.3,111.03,110.65,113.04,111.68,110.82,112.52,114.7,113.7,115.56,116.49,120.27,119.47,118.66,116.83,118.77,115.85,115.28,115.32,115.89,117.39,118.37,119.17,118.92,117.76,120.45,120.66,121.38,119.25,121.01,121.3,124.17,123.28,120.08,112.94,113.43,116.36,113.99,112.04,116.19,119.47,120.35,120.18,119.54,119.84,118.05,114.81,113.5,114.84,114.89,113.23,113.98,114.62,114.13,117.32,120.29,118.87,119.2,118.15,120.11,119.11,117.15,121.63,119.15,118.3,118.69,124.96,125.66,125.21,125.22,128.48,128.75]"></span>
+            <div class="status">Real ticker data (252 data points)</div>
+        </div>
+    </div>
+
+    <div class="debug-section">
+        <h2>Debug Log</h2>
+        <div id="debug-log" style="background: #f0f0f0; padding: 10px; font-family: monospace; font-size: 12px; white-space: pre-wrap;"></div>
+    </div>
+
+    <script>
+        function log(message) {
+            console.log(message);
+            $('#debug-log').append(new Date().toLocaleTimeString() + ': ' + message + '\n');
+        }
+
+        $(document).ready(function() {
+            log('🚀 Starting sparkline debug tests...');
+
+            // Check if libraries are loaded
+            if (typeof jQuery === 'undefined') {
+                $('#library-status').html('❌ jQuery not loaded!').css('color', 'red');
+                log('❌ jQuery not loaded');
+                return;
+            }
+
+            if (typeof jQuery.fn.sparkline === 'undefined') {
+                $('#library-status').html('❌ jQuery Sparkline plugin not loaded!').css('color', 'red');
+                log('❌ jQuery Sparkline plugin not loaded');
+                return;
+            }
+
+            $('#library-status').html('✅ All libraries loaded successfully!').css('color', 'green');
+            log('✅ Libraries loaded: jQuery ' + jQuery.fn.jquery + ', Sparkline available');
+
+            // Test 1: Basic sparkline
+            try {
+                $('#test1').sparkline([5,6,7,2,0,-4,-2,4], {
+                    type: 'line',
+                    width: '100',
+                    height: '30',
+                    lineColor: '#3498db',
+                    fillColor: 'rgba(52, 152, 219, 0.2)'
+                });
+                log('✅ Test 1 successful');
+            } catch (e) {
+                log('❌ Test 1 failed: ' + e.message);
+            }
+
+            // Test 2: Stock-like data
+            try {
+                const stockData = [100,102,98,105,110,108,112,115,118,120,119,122,125,123,128];
+                $('#test2').sparkline(stockData, {
+                    type: 'line',
+                    width: '120',
+                    height: '40',
+                    lineColor: '#27ae60',
+                    fillColor: 'rgba(39, 174, 96, 0.2)',
+                    spotRadius: 2
+                });
+                log('✅ Test 2 successful');
+            } catch (e) {
+                log('❌ Test 2 failed: ' + e.message);
+            }
+
+            // Test 3: HTML inline method
+            try {
+                $('.inline-sparkline').sparkline('html', {
+                    type: 'line',
+                    width: '100',
+                    height: '30',
+                    lineColor: '#e74c3c',
+                    fillColor: 'rgba(231, 76, 60, 0.2)'
+                });
+                log('✅ Test 3 (inline) successful');
+            } catch (e) {
+                log('❌ Test 3 failed: ' + e.message);
+            }
+
+            // Test 4: Data attribute method
+            try {
+                $('.data-sparkline').each(function() {
+                    const data = $(this).data('values');
+                    log('Data attribute value: ' + JSON.stringify(data));
+                    $(this).sparkline(data, {
+                        type: 'line',
+                        width: '120',
+                        height: '40',
+                        lineColor: '#9b59b6',
+                        fillColor: 'rgba(155, 89, 182, 0.2)'
+                    });
+                });
+                log('✅ Test 4 (data attribute) successful');
+            } catch (e) {
+                log('❌ Test 4 failed: ' + e.message);
+            }
+
+            // Test 5: Real project data
+            try {
+                const realData = $('#real-test').data('values');
+                log('Real data length: ' + (realData ? realData.length : 'undefined'));
+                $('#real-test').sparkline(realData, {
+                    type: 'line',
+                    width: '200',
+                    height: '50',
+                    lineColor: '#f39c12',
+                    fillColor: 'rgba(243, 156, 18, 0.2)',
+                    spotRadius: 1
+                });
+                log('✅ Real data test successful');
+            } catch (e) {
+                log('❌ Real data test failed: ' + e.message);
+            }
+
+            log('🎉 All tests completed!');
+        });
+    </script>
+</body>
+</html>

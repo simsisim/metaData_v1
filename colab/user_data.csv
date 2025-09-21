@@ -611,12 +611,12 @@ RS_composite_method,market_cap_weighted,Sector/industry composite method (equal_
 RS_min_group_size,3,Minimum number of stocks required for sector/industry composite
 # PERCENTILE UNIVERSE CONFIGURATION,,
 RS_percentile_universe_stocks,NASDAQ100,Universe for stock percentiles: all | sector | industry | ticker_choice
-RS_percentile_universe_sectors,all; SP500,Universe for sector percentiles: all | ticker_choice  | NASADQ100  
-RS_percentile_universe_industries,ticker_choice; NASDAQ100;SP500,Universe for industry percentiles: all | ticker_choice | SP500
+RS_percentile_universe_sectors,all,Universe for sector percentiles: all | ticker_choice  | NASADQ100  
+RS_percentile_universe_industries,all,Universe for industry percentiles: all | ticker_choice | SP500
 # TIMEFRAME CONFIGURATION,,
 RS_daily_enable,TRUE,Enable RS calculation for daily timeframe
-RS_weekly_enable,TRUE,Enable RS calculation for weekly timeframe
-RS_monthly_enable,TRUE,Enable RS calculation for monthly timeframe
+RS_weekly_enable,FALSE,Enable RS calculation for weekly timeframe
+RS_monthly_enable,FALSE,Enable RS calculation for monthly timeframe
 # PERIOD CONFIGURATION,,
 # Daily timeframe parameters,,
 daily_daily_periods,1;3;5,Daily data: RS calculation periods (semicolon separated - 1d;3d;5d;10d;15d)

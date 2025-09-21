@@ -282,32 +282,33 @@ class IBDRelativeStrengthCalculator(RSCalculatorBase):
         else:
             return pd.DataFrame()
     
-    def save_rs_results(self, results, level='stocks', choice=0):
+    def save_rs_results(self, results, level='stocks', choice=0, benchmark_ticker='SPY'):
         """
-        Save RS results to CSV file.
-        
+        Save RS results to CSV file with benchmark ticker in filename.
+
         Args:
             results: RSResults object with calculated data
             level: Analysis level ('stocks', 'sectors', 'industries')
             choice: User ticker choice number
-            
+            benchmark_ticker: Benchmark ticker symbol for filename
+
         Returns:
             List containing path to summary file
         """
         saved_files = []
         # Extract data date from the summary DataFrame instead of metadata
         date_str = None
-        
+
         # Create summary DataFrame with all periods
         if results.rs_values:
             summary_df = self._create_summary_dataframe(results)
             if not summary_df.empty:
                 summary_file = self.save_results(
                     summary_df, level, self.method_name,
-                    results.timeframe, choice, None
+                    results.timeframe, choice, benchmark_ticker
                 )
                 saved_files.append(summary_file)
-        
+
         return saved_files
     
     def _create_summary_dataframe(self, results):

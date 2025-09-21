@@ -297,13 +297,23 @@ class UserConfiguration:
     rs_percentile_universe_stocks: str = "ticker_choice"
     rs_percentile_universe_sectors: str = "all"
     rs_percentile_universe_industries: str = "all"
+
+    # New mapping-based percentile configuration (preferred)
+    rs_percentile_mapping_stocks: str = ""
+    rs_percentile_mapping_sectors: str = ""
+    rs_percentile_mapping_industries: str = ""
     # Daily timeframe parameters
     rs_daily_enable: bool = True
     # Weekly timeframe parameters  
     rs_weekly_enable: bool = True
     # Monthly timeframe parameters
     rs_monthly_enable: bool = True
-    
+
+    # MOVING AVERAGE RS CONFIGURATION
+    rs_ma_enable: bool = False
+    rs_ma_method: str = "20;50"
+    rs_method_for_per: str = "IBD"
+
     # TECHNICAL INDICATORS CONFIGURATION
     indicators_enable: bool = True
     indicators_config_file: str = "data/indicators/ticker_indicators_config.csv"
@@ -1036,13 +1046,23 @@ def read_user_data(file_path: str = 'user_data.csv') -> UserConfiguration:
             'RS_percentile_universe_stocks': ('rs_percentile_universe_stocks', str),
             'RS_percentile_universe_sectors': ('rs_percentile_universe_sectors', str),
             'RS_percentile_universe_industries': ('rs_percentile_universe_industries', str),
+
+            # New mapping-based percentile configuration
+            'RS_percentile_mapping_stocks': ('rs_percentile_mapping_stocks', str),
+            'RS_percentile_mapping_sectors': ('rs_percentile_mapping_sectors', str),
+            'RS_percentile_mapping_industries': ('rs_percentile_mapping_industries', str),
             # Daily timeframe parameters
             'RS_daily_enable': ('rs_daily_enable', parse_boolean),
             # Weekly timeframe parameters
             'RS_weekly_enable': ('rs_weekly_enable', parse_boolean),
             # Monthly timeframe parameters
             'RS_monthly_enable': ('rs_monthly_enable', parse_boolean),
-            
+
+            # Moving Average RS Configuration
+            'RS_ma_enable': ('rs_ma_enable', parse_boolean),
+            'RS_ma_method': ('rs_ma_method', str),
+            'RS_method_for_PER': ('rs_method_for_per', str),
+
             # Technical Indicators Configuration
             'INDICATORS_enable': ('indicators_enable', parse_boolean),
             'INDICATORS_config_file': ('indicators_config_file', str),

@@ -94,14 +94,39 @@ class RSFileCombiner:
             'industries_weekly': []
         }
         
-        # Pattern to match RS files: rs_ibd_{level}_{timeframe}_{choice}_{date}_{period}period.csv
-        pattern = re.compile(r'rs_ibd_(\w+)_(\w+)_(\d+)_(\d+)_(\d+)period\.csv')
-        
-        for file_path in self.rs_dir.glob('rs_ibd_*.csv'):
-            match = pattern.match(file_path.name)
-            if match:
-                level, timeframe, choice, date, period = match.groups()
-                
+        # Pattern to match RS files: rs_{benchmark}_{method}_{level}_{timeframe}_{choice}_{date}.csv
+        # Updated pattern for new naming convention with benchmark ticker
+        new_pattern = re.compile(r'rs_(\w+)_(\w+)_(\w+)_(\w+)_(\d+)_(\d+)\.csv')
+
+        # Legacy pattern for old naming convention: rs_ibd_{level}_{timeframe}_{choice}_{date}_{period}period.csv
+        legacy_pattern = re.compile(r'rs_ibd_(\w+)_(\w+)_(\d+)_(\d+)_(\d+)period\.csv')
+
+        # Check both new and legacy patterns
+        for file_path in self.rs_dir.glob('rs_*.csv'):
+            # Try new pattern first: rs_{benchmark}_{method}_{level}_{timeframe}_{choice}_{date}.csv
+            new_match = new_pattern.match(file_path.name)
+            if new_match:
+                benchmark, method, level, timeframe, choice, date = new_match.groups()
+
+                # Only include files for the specified ticker choice
+                if int(choice) == ticker_choice:
+                    category = f"{level}_{timeframe}"
+                    if category in rs_files:
+                        rs_files[category].append({
+                            'path': file_path,
+                            'level': level,
+                            'timeframe': timeframe,
+                            'benchmark': benchmark,
+                            'method': method,
+                            'date': date
+                        })
+                continue
+
+            # Try legacy pattern: rs_ibd_{level}_{timeframe}_{choice}_{date}_{period}period.csv
+            legacy_match = legacy_pattern.match(file_path.name)
+            if legacy_match:
+                level, timeframe, choice, date, period = legacy_match.groups()
+
                 # Only include files for the specified ticker choice
                 if int(choice) == ticker_choice:
                     category = f"{level}_{timeframe}"

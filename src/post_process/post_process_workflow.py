@@ -15,14 +15,34 @@ This module does not modify existing files - it only creates new processed files
 import pandas as pd
 import os
 import logging
+import signal
+import time
+import gc
 from typing import Dict, List, Optional, Any
+
+try:
+    import psutil
+    PSUTIL_AVAILABLE = True
+except ImportError:
+    PSUTIL_AVAILABLE = False
 from pathlib import Path
 from datetime import datetime
 
 from .return_file_info import get_latest_file
 from .generate_post_process_pdfs import generate_post_process_pdfs, extract_template_from_config, should_generate_pdf, is_pdf_enabled
+from .multi_file_processor import MultiFileProcessor, determine_processing_mode
 
 logger = logging.getLogger(__name__)
+
+
+class TimeoutError(Exception):
+    """Custom timeout exception."""
+    pass
+
+
+def timeout_handler(signum, frame):
+    """Signal handler for timeout."""
+    raise TimeoutError("Operation timed out")
 
 
 class PostProcessWorkflow:
@@ -30,18 +50,20 @@ class PostProcessWorkflow:
     Handles the complete post-processing workflow for multiple files.
     """
 
-    def __init__(self, config_path: str = "user_data_pp.csv", base_path: str = "."):
+    def __init__(self, config_path: str = "user_data_pp.csv", base_path: str = ".", timeout_seconds: int = 300):
         """
         Initialize the workflow with configuration.
 
         Args:
             config_path: Path to the configuration CSV file
             base_path: Base directory path for file resolution
+            timeout_seconds: Maximum time to allow for complete workflow (default: 5 minutes)
         """
         self.config_path = config_path
         self.base_path = base_path
         self.config_df = None
         self.processed_files = {}
+        self.timeout_seconds = timeout_seconds
 
     def load_configuration(self) -> bool:
         """
@@ -66,14 +88,83 @@ class PostProcessWorkflow:
                 logger.error(f"Missing required columns in config: {missing_columns}")
                 return False
 
-            # Skip comment rows (rows starting with #)
-            self.config_df = self.config_df[~self.config_df['Filename'].astype(str).str.startswith('#')]
+            # Filter out comment rows and empty rows more comprehensively
+            mask = (
+                ~self.config_df['Filename'].astype(str).str.startswith('#') &  # Comment rows
+                ~self.config_df['Filename'].isna() &                          # Completely empty rows
+                (self.config_df['Filename'].astype(str).str.strip() != '') &  # Blank string rows
+                (self.config_df['Filename'].astype(str) != 'nan')             # String 'nan' rows
+            )
+
+            logger.debug(f"Before filtering: {len(self.config_df)} rows")
+            self.config_df = self.config_df[mask]
+            logger.debug(f"After filtering: {len(self.config_df)} rows")
+
+            # Validate configuration for potential issues
+            if not self._validate_configuration():
+                return False
 
             logger.info(f"Loaded configuration with {len(self.config_df)} operations")
             return True
 
         except Exception as e:
             logger.error(f"Error loading configuration: {e}")
+            return False
+
+    def _validate_configuration(self) -> bool:
+        """
+        Validate configuration for potential infinite loop issues.
+
+        Returns:
+            bool: True if configuration is valid, False otherwise
+        """
+        try:
+            # Check for excessive OR conditions that could cause issues
+            if 'Logic' in self.config_df.columns:
+                or_conditions = self.config_df[self.config_df['Logic'].astype(str).str.upper() == 'OR']
+                if len(or_conditions) > 100:  # Reasonable limit
+                    logger.warning(f"Configuration has {len(or_conditions)} OR conditions - this might be excessive")
+
+            # Check for malformed file_id groups
+            if 'File_id' in self.config_df.columns:
+                file_id_groups = self.config_df.groupby('File_id').size()
+                large_groups = file_id_groups[file_id_groups > 50]  # Reasonable limit per file_id
+                if not large_groups.empty:
+                    logger.warning(f"Large file_id groups detected: {dict(large_groups)}")
+
+            # Check for missing critical values in actual data rows only
+            # Only validate rows that should contain operation data
+            data_rows = self.config_df[self.config_df['Filename'].notna() &
+                                     (self.config_df['Filename'].astype(str).str.strip() != '')]
+
+            if len(data_rows) == 0:
+                logger.error("No valid data rows found in configuration")
+                return False
+
+            # Count rows missing essential operation data
+            missing_action = data_rows[data_rows['Action'].isna()].shape[0]
+            missing_both = data_rows[(data_rows['Action'].isna()) & (data_rows['Column'].isna())].shape[0]
+
+            logger.debug(f"Data rows: {len(data_rows)}, Missing Action: {missing_action}, Missing both Action&Column: {missing_both}")
+
+            # Allow some flexibility for rows that might be metadata-only or sorting operations
+            if missing_both > len(data_rows) * 0.8:  # More than 80% completely empty
+                logger.error(f"Too many data rows missing critical values: {missing_both}/{len(data_rows)}")
+                return False
+
+            # Check for potential circular references in filenames
+            filenames = self.config_df['Filename'].dropna().unique()
+            if 'Source_File' in self.config_df.columns:
+                source_files = self.config_df['Source_File'].dropna().unique()
+                overlap = set(filenames) & set(source_files)
+                if overlap:
+                    logger.debug(f"Files that are both sources and targets: {overlap}")
+
+            logger.debug("Configuration validation passed")
+            return True
+
+        except Exception as e:
+            logger.error(f"Error validating configuration: {e}")
             return False
 
     def apply_filters(self, df: pd.DataFrame, filter_ops: pd.DataFrame) -> pd.DataFrame:
@@ -94,7 +185,19 @@ class PostProcessWorkflow:
         current_mask = pd.Series([True] * len(df), index=df.index)
         pending_or_masks = []
 
+        # Add safety counter to prevent infinite loops
+        max_iterations = len(filter_ops) * 2  # Allow some buffer
+        iteration_count = 0
+
+        logger.debug(f"Starting filter processing with {len(filter_ops)} operations on {len(df)} rows")
+
         for _, row in filter_ops.iterrows():
+            iteration_count += 1
+            if iteration_count > max_iterations:
+                logger.error(f"Filter processing exceeded maximum iterations ({max_iterations}). Breaking to prevent infinite loop.")
+                break
+
+            logger.debug(f"Processing filter iteration {iteration_count}: {row.get('Column', 'N/A')} {row.get('Condition', 'N/A')} {row.get('Value', 'N/A')}")
             col = row['Column']
             condition = row['Condition']
             value = row['Value']
@@ -147,38 +250,51 @@ class PostProcessWorkflow:
                     continue
 
                 # Apply logic
-                if pd.isna(logic) or logic.upper() == 'AND':
+                logic_str = str(logic).upper().strip() if pd.notna(logic) else 'AND'
+                logger.debug(f"Applying logic: {logic_str}, pending OR masks: {len(pending_or_masks)}")
+
+                if logic_str == 'AND' or pd.isna(logic):
                     # Process any pending OR operations first
                     if pending_or_masks:
+                        logger.debug(f"Processing {len(pending_or_masks)} pending OR masks")
                         or_combined = pd.Series([False] * len(df), index=df.index)
-                        for or_mask in pending_or_masks:
+                        for i, or_mask in enumerate(pending_or_masks):
                             or_combined = or_combined | or_mask
+                            logger.debug(f"Combined OR mask {i+1}/{len(pending_or_masks)}")
                         current_mask = current_mask & or_combined
                         pending_or_masks = []
+                        logger.debug("Cleared pending OR masks")
 
                     # Apply AND logic
                     current_mask = current_mask & condition_mask
+                    logger.debug(f"Applied AND logic, current mask sum: {current_mask.sum()}")
 
-                elif logic.upper() == 'OR':
+                elif logic_str == 'OR':
                     # Collect OR conditions
                     pending_or_masks.append(condition_mask)
+                    logger.debug(f"Added OR condition to pending list (now {len(pending_or_masks)} pending)")
 
-                logger.debug(f"Applied filter: {col} {condition} {value} ({condition_mask.sum()} matches)")
+                logger.debug(f"Applied filter: {col} {condition} {value} ({condition_mask.sum()} matches, current total: {current_mask.sum()})")
 
             except Exception as e:
                 logger.warning(f"Error applying filter {col} {condition} {value}: {e}")
                 continue
 
         # Process any remaining OR operations
+        logger.debug(f"Final processing: {len(pending_or_masks)} pending OR masks remaining")
         if pending_or_masks:
+            logger.debug("Processing final pending OR masks")
             or_combined = pd.Series([False] * len(df), index=df.index)
-            for or_mask in pending_or_masks:
+            for i, or_mask in enumerate(pending_or_masks):
                 or_combined = or_combined | or_mask
+                logger.debug(f"Final OR mask {i+1}/{len(pending_or_masks)} processed")
             current_mask = current_mask & or_combined
+            logger.debug("Final OR masks applied")
 
         # Apply final mask
         filtered_df = df[current_mask]
         logger.info(f"Filter result: {len(df)} -> {len(filtered_df)} rows")
+        logger.debug(f"Filter processing completed after {iteration_count} iterations")
         return filtered_df
 
     def apply_sorts(self, df: pd.DataFrame, sort_ops: pd.DataFrame) -> pd.DataFrame:
@@ -405,11 +521,65 @@ class PostProcessWorkflow:
                     logger.warning(f"PDF generation failed for {logical_filename} (file_id: {file_id}): {pdf_error}")
                     # Continue processing - CSV is still successful
 
+            # Memory cleanup: explicitly delete DataFrame and force garbage collection
+            memory_before = df.memory_usage(deep=True).sum() / 1024 / 1024  # MB
+            del df
+            gc.collect()
+            logger.debug(f"Memory cleanup: Released {memory_before:.2f} MB for {logical_filename} (file_id: {file_id})")
+
             return str(output_path)
 
         except Exception as e:
             logger.error(f"Error processing {logical_filename} (file_id: {file_id}): {e}")
             return None
+
+    def process_multi_file_group(self, file_id: str) -> Optional[str]:
+        """
+        Process a file_id with multiple source files through multi-file intersection workflow.
+
+        Args:
+            file_id: File ID that requires multi-file processing
+
+        Returns:
+            Path to processed multi-file result, or None if failed
+        """
+        try:
+            logger.info(f"Starting multi-file processing for File_id: {file_id}")
+
+            # Create multi-file processor
+            processor = MultiFileProcessor(self.config_df, file_id, self.base_path)
+
+            # Execute multi-file workflow (loads, filters, intersects, merges)
+            result_path = processor.process()
+
+            if result_path:
+                logger.info(f"Multi-file processing completed: {result_path}")
+                return result_path
+            else:
+                logger.error(f"Multi-file processing failed for File_id: {file_id}")
+                return None
+
+        except Exception as e:
+            logger.error(f"Error in multi-file processing for File_id {file_id}: {e}")
+            return None
+
+    def _get_memory_usage(self) -> float:
+        """
+        Get current memory usage of the process in MB.
+
+        Returns:
+            Memory usage in megabytes
+        """
+        if not PSUTIL_AVAILABLE:
+            return 0.0
+
+        try:
+            process = psutil.Process()
+            memory_info = process.memory_info()
+            return memory_info.rss / 1024 / 1024  # Convert bytes to MB
+        except Exception as e:
+            logger.warning(f"Could not get memory usage: {e}")
+            return 0.0
 
     def _is_generation_enabled(self, group_config: pd.DataFrame) -> bool:
         """
@@ -467,46 +637,92 @@ class PostProcessWorkflow:
         """
         results = {}
 
+        # Set up timeout protection
+        if hasattr(signal, 'SIGALRM'):  # Unix-like systems only
+            signal.signal(signal.SIGALRM, timeout_handler)
+            signal.alarm(self.timeout_seconds)
+            logger.info(f"Set workflow timeout to {self.timeout_seconds} seconds")
+
+        start_time = time.time()
+
+        # Initial memory monitoring
+        initial_memory = self._get_memory_usage()
+        logger.info(f"Starting workflow - Initial memory usage: {initial_memory:.2f} MB")
+
         try:
             # 1. Load configuration
             if not self.load_configuration():
                 return results
 
-            # 2. Get unique filename + file_id combinations to process
+            # 2. Get unique file_ids to process (changed from filename+file_id pairs)
             if 'File_id' in self.config_df.columns:
-                # Group by Filename + File_id
-                all_file_groups = self.config_df.groupby(['Filename', 'File_id']).size().index.tolist()
+                # Get all unique file_ids first
+                all_file_ids = self.config_df['File_id'].dropna().unique()
 
                 # Filter by Generation flag if column exists
                 if 'Generation' in self.config_df.columns:
-                    enabled_groups = []
-                    for logical_filename, file_id in all_file_groups:
-                        group_config = self.config_df[
-                            (self.config_df['Filename'] == logical_filename) &
-                            (self.config_df['File_id'].astype(str) == str(file_id))
+                    enabled_file_ids = []
+                    for file_id in all_file_ids:
+                        file_id_config = self.config_df[
+                            self.config_df['File_id'].astype(str) == str(file_id)
                         ]
 
-                        # Check Generation flag (hierarchical below POST_PROCESS)
-                        generation_enabled = self._is_generation_enabled(group_config)
+                        # Check Generation flag for this file_id
+                        generation_enabled = self._is_generation_enabled(file_id_config)
                         if generation_enabled:
-                            enabled_groups.append((logical_filename, file_id))
+                            enabled_file_ids.append(file_id)
                         else:
-                            logger.info(f"Skipping {logical_filename}_f{file_id} - Generation=FALSE")
+                            logger.info(f"Skipping File_id {file_id} - Generation=FALSE")
 
-                    file_groups = enabled_groups
+                    file_ids_to_process = enabled_file_ids
                 else:
-                    file_groups = all_file_groups
+                    file_ids_to_process = all_file_ids
 
-                logger.info(f"Processing {len(file_groups)} file groups: {file_groups}")
+                logger.info(f"Processing {len(file_ids_to_process)} file_ids: {list(file_ids_to_process)}")
 
-                # 3. Process each file group
-                for logical_filename, file_id in file_groups:
-                    processed_path = self.process_file_group(logical_filename, str(file_id))
-                    if processed_path:
-                        group_key = f"{logical_filename}_f{file_id}"
-                        results[group_key] = processed_path
+                # 3. Process each file_id with mode detection
+                max_file_ids = len(file_ids_to_process) * 2  # Safety limit
+                process_count = 0
+
+                for file_id in file_ids_to_process:
+                    process_count += 1
+                    if process_count > max_file_ids:
+                        logger.error(f"File_id processing exceeded safety limit ({max_file_ids}). Breaking to prevent infinite loop.")
+                        break
+
+                    # Determine processing mode for this file_id
+                    processing_mode = determine_processing_mode(self.config_df, str(file_id))
+                    logger.info(f"Processing File_id {file_id} ({process_count}/{len(file_ids_to_process)}): {processing_mode} mode")
+
+                    if processing_mode == "multi_file":
+                        # Multi-file processing: process entire file_id as one operation
+                        processed_path = self.process_multi_file_group(str(file_id))
+                        if processed_path:
+                            group_key = f"multi_file_f{file_id}"
+                            results[group_key] = processed_path
+                        else:
+                            logger.error(f"Failed to process multi-file File_id: {file_id}")
+
+                        # Force garbage collection after multi-file processing
+                        gc.collect()
+
                     else:
-                        logger.error(f"Failed to process: {logical_filename}, file_id: {file_id}")
+                        # Single-file processing: process each filename separately (existing logic)
+                        file_id_config = self.config_df[
+                            self.config_df['File_id'].astype(str) == str(file_id)
+                        ]
+                        unique_filenames = file_id_config['Filename'].dropna().unique()
+
+                        for logical_filename in unique_filenames:
+                            processed_path = self.process_file_group(logical_filename, str(file_id))
+                            if processed_path:
+                                group_key = f"{logical_filename}_f{file_id}"
+                                results[group_key] = processed_path
+                            else:
+                                logger.error(f"Failed to process: {logical_filename}, file_id: {file_id}")
+
+                        # Force garbage collection after processing all files for this file_id
+                        gc.collect()
             else:
                 # Fallback: process by filename only (backward compatibility)
                 logical_filenames = self.config_df['Filename'].unique()
@@ -519,12 +735,27 @@ class PostProcessWorkflow:
                     else:
                         logger.error(f"Failed to process: {logical_filename}")
 
-            logger.info(f"Workflow completed. Processed {len(results)} file groups successfully.")
+            elapsed_time = time.time() - start_time
+            final_memory = self._get_memory_usage()
+            memory_change = final_memory - initial_memory
+            logger.info(f"Workflow completed in {elapsed_time:.2f} seconds. Processed {len(results)} file groups successfully.")
+            logger.info(f"Final memory usage: {final_memory:.2f} MB (change: {memory_change:+.2f} MB)")
+            return results
+
+        except TimeoutError:
+            elapsed_time = time.time() - start_time
+            logger.error(f"Workflow timed out after {elapsed_time:.2f} seconds. This prevented an infinite loop.")
             return results
 
         except Exception as e:
-            logger.error(f"Workflow execution failed: {e}")
+            elapsed_time = time.time() - start_time
+            logger.error(f"Workflow execution failed after {elapsed_time:.2f} seconds: {e}")
             return results
+
+        finally:
+            # Clean up timeout alarm
+            if hasattr(signal, 'SIGALRM'):
+                signal.alarm(0)  # Cancel any pending alarm
 
 
 def run_post_processing(config_path: str = "user_data_pp.csv", base_path: str = ".") -> Dict[str, str]:

@@ -26,6 +26,7 @@ from src.pvb_screener_processor import PVBScreenerProcessor
 from src.run_screeners import run_screeners
 from src.models import run_models
 from src.percentage_movers import run_movers_analysis
+from src.market_pulse.market_pulse_manager import run_market_pulse_analysis
 
 logger = logging.getLogger(__name__)
 
@@ -1144,6 +1145,72 @@ def run_all_market_breadth(config: Config, user_config: UserConfiguration, timef
     return results_summary
 
 
+def run_all_market_pulse(config: Config, user_config: UserConfiguration, timeframes: List[str]) -> dict:
+    """
+    Run market pulse analysis for all timeframes.
+    Positioned after market breadth analysis to provide comprehensive market context.
+    """
+    if not user_config.market_pulse_enable:
+        print(f"\n⏭️  Market pulse analysis disabled - skipping")
+        return {}
+
+    print(f"\n" + "="*60)
+    print("📊 MARKET PULSE ANALYSIS - ALL TIMEFRAMES")
+    print("="*60)
+
+    results_summary = {}
+    total_processed = 0
+
+    for timeframe in timeframes:
+        # Market Pulse currently only supports daily timeframe
+        if timeframe != 'daily':
+            print(f"⏭️  Market pulse only supports daily timeframe, skipping {timeframe}")
+            continue
+
+        print(f"\n📊 Processing {timeframe.upper()} timeframe...")
+
+        try:
+            # Run market pulse analysis
+            market_pulse_results = run_market_pulse_analysis(
+                config=config,
+                user_config=user_config,
+                timeframe=timeframe
+            )
+
+            if market_pulse_results:
+                processed_count = 0
+
+                # Count processed components
+                for component_name, component_results in market_pulse_results.items():
+                    if isinstance(component_results, dict) and component_results.get('success'):
+                        processed_count += 1
+                        print(f"  ✅ {component_name}: processed successfully")
+                    elif isinstance(component_results, dict):
+                        print(f"  ⚠️  {component_name}: {component_results.get('message', 'unknown issue')}")
+                    else:
+                        print(f"  📊 {component_name}: results available")
+                        processed_count += 1
+
+                if processed_count > 0:
+                    print(f"✅ Market pulse analysis completed for {timeframe}")
+                    print(f"  • Components processed: {processed_count}")
+                    results_summary[timeframe] = processed_count
+                    total_processed += processed_count
+                else:
+                    print(f"⚠️  No market pulse components processed for {timeframe}")
+            else:
+                print(f"⚠️  No market pulse results generated for {timeframe}")
+
+        except Exception as e:
+            print(f"❌ Market pulse analysis error for {timeframe}: {e}")
+            logger.error(f"Market pulse analysis failed for {timeframe}: {e}")
+
+    print(f"\n✅ MARKET PULSE ANALYSIS COMPLETED!")
+    print(f"📊 Total components processed: {total_processed}")
+    print(f"🕒 Timeframes processed: {', '.join(results_summary.keys())}")
+    return results_summary
+
+
 def run_all_additional_calculations(config: Config, user_config: UserConfiguration, timeframes: List[str], clean_file_path: str) -> dict:
     """
     Run additional calculations (technical indicators, models) for all timeframes.
@@ -1382,79 +1449,6 @@ def main() -> None:
     
     print(f"📊 Universe files directory: {config.directories['RESULTS_DIR'] / 'ticker_universes'}")
     
-    # RELATIVE STRENGTH ANALYSIS (moved before timeframe processing)
-    print(f"\n" + "="*60)
-    print("RELATIVE STRENGTH (RS) ANALYSIS")
-    print("="*60)
-    
-    # Import RS processing module
-    from src.rs_processor import run_rs_analysis
-    
-    # Run RS analysis if enabled - pass filtered timeframes
-    rs_results = run_rs_analysis(
-        ticker_list=tickers_df['ticker'].tolist(),
-        config=config,
-        user_config=user_config,
-        ticker_choice=user_config.ticker_choice,
-        timeframes=timeframes_to_process
-    )
-    
-    if rs_results.get('status') == 'skipped':
-        print(f"⏭️  RS analysis skipped: {rs_results['reason']}")
-    else:
-        # RS analysis completion output is now handled by the processor itself
-        # Just show final summary details
-        print(f"📊 Benchmark: {rs_results['benchmark_ticker']}")
-        print(f"📁 Files created: {len(rs_results['files_created'])}")
-
-        if rs_results['errors']:
-            print(f"⚠️  Errors encountered: {len(rs_results['errors'])}")
-            for error in rs_results['errors'][:3]:  # Show first 3 errors
-                print(f"   • {error}")
-
-        # Show group statistics if available
-        if 'summary' in rs_results and rs_results['summary']['group_statistics']:
-            group_stats = rs_results['summary']['group_statistics']
-            print(f"📈 Sector composites: {group_stats['sector_count']} sectors")
-            print(f"🏭 Industry composites: {group_stats['industry_count']} industries")
-
-        # RS files now contain only RS values - percentiles handled separately
-        print(f"✅ RS files generated containing RS values and returns")
-        print(f"📁 RS files contain all periods and benchmarks combined")
-    
-    # PERCENTILE (PER) ANALYSIS - Separate from RS analysis
-    print(f"\n" + "="*60)
-    print("PERCENTILE (PER) ANALYSIS")
-    print("="*60)
-    
-    # Import PER processing module
-    from src.per_processor import run_per_analysis
-    
-    # Run PER analysis if RS analysis was successful
-    if rs_results.get('status') != 'skipped':
-        per_results = run_per_analysis(
-            config=config,
-            user_config=user_config,
-            ticker_choice=user_config.ticker_choice
-        )
-        
-        if per_results.get('status') == 'skipped':
-            print(f"⏭️  PER analysis skipped: {per_results['reason']}")
-        else:
-            print(f"✅ PER analysis completed")
-            print(f"📊 Benchmarks: {per_results['benchmark_tickers']}")
-            print(f"🕒 Timeframes processed: {', '.join(per_results['timeframes_processed'])}")
-            print(f"📁 Files created: {len(per_results['files_created'])}")
-            
-            if per_results['errors']:
-                print(f"⚠️  Errors encountered: {len(per_results['errors'])}")
-                for error in per_results['errors'][:3]:  # Show first 3 errors
-                    print(f"   • {error}")
-            
-            print(f"\n✅ PER files generated with multi-universe percentile rankings")
-            print(f"📁 PER files contain percentiles for different universe configurations")
-    else:
-        print(f"⏭️  PER analysis skipped: RS analysis was not performed")
     
     # NEW GROUPED CALCULATION STRUCTURE
     # =====================================
@@ -1516,6 +1510,40 @@ def main() -> None:
 
         # 3. Market Breadth Analysis - All timeframes (positioned after stage analysis)
         market_breadth_results = run_all_market_breadth(config, user_config, timeframes_to_process)
+        # 4. Market Pulse Analysis - All timeframes (positioned after market breadth analysis)
+        market_pulse_results = run_all_market_pulse(config, user_config, timeframes_to_process)
+
+        # 5. RELATIVE STRENGTH ANALYSIS (moved inside BASIC conditional block)
+        print(f"\n" + "="*60)
+        print("RELATIVE STRENGTH (RS) ANALYSIS")
+        print("="*60)
+
+        # Import RS processing module
+        from src.rs_processor import run_rs_analysis
+
+        # Run RS analysis if enabled - pass filtered timeframes
+        rs_results = run_rs_analysis(
+            ticker_list=tickers_df['ticker'].tolist(),
+            config=config,
+            user_config=user_config,
+            ticker_choice=user_config.ticker_choice,
+            timeframes=timeframes_to_process
+        )
+
+        # 6. PERCENTILE (PER) ANALYSIS (moved inside BASIC conditional block)
+        print(f"\n" + "="*60)
+        print("PERCENTILE (PER) ANALYSIS")
+        print("="*60)
+
+        # Import PER processing module
+        from src.per_processor import run_per_analysis
+
+        # Run PER analysis - it will automatically find and process RS files
+        per_results = run_per_analysis(
+            config=config,
+            user_config=user_config,
+            ticker_choice=user_config.ticker_choice
+        )
 
         print(f"✅ BASIC CALCULATIONS PHASE COMPLETED")
     else:
@@ -1523,6 +1551,9 @@ def main() -> None:
         basic_calc_results = {}
         stage_analysis_results = {}
         market_breadth_results = {}
+        market_pulse_results = {}
+        rs_results = {}
+        per_results = {}
 
     # ============================
     # PHASE 2: SCREENERS
@@ -1563,6 +1594,7 @@ def main() -> None:
     print("="*60)
     print(f"✅ Basic Calculations: {sum(basic_calc_results.values())} total tickers processed")
     print(f"✅ Market Breadth Analysis: {sum(market_breadth_results.values())} total matrices processed")
+    print(f"✅ Market Pulse Analysis: {sum(market_pulse_results.values())} total components processed")
     print(f"✅ Stage Analysis: {sum(stage_analysis_results.values())} total tickers processed")
     print(f"✅ PVB Screener: {sum(pvb_screener_results.values())} total tickers processed")
     print(f"✅ ATR1 Screener: {sum(atr1_screener_results.values())} total tickers processed")

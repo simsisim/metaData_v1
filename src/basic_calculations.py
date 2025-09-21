@@ -8,6 +8,7 @@ Includes price momentum, volume analysis, returns, and risk metrics.
 
 import pandas as pd
 import numpy as np
+import gc
 from pathlib import Path
 from datetime import datetime
 import logging
@@ -1048,7 +1049,12 @@ def combine_daily_weekly_calculations(config, user_config):
         combined_df.to_csv(combined_file, index=False)
         logger.info(f"Combined calculations saved: {combined_file}")
         logger.info(f"Combined file contains {len(combined_df)} tickers with {len(combined_df.columns)} total columns")
-        
+
+        # Memory cleanup after CSV write
+        del combined_df
+        gc.collect()
+        logger.debug("Memory cleaned up after combined calculations CSV write")
+
         return str(combined_file)
         
     except Exception as e:
@@ -1307,7 +1313,13 @@ def save_basic_calculations_matrix(config, user_config, timeframe):
     output_file.parent.mkdir(parents=True, exist_ok=True)
     
     matrix_df.to_csv(output_file, index=False, float_format='%.2f')
-    
+
+    # Memory cleanup after CSV write - free accumulated results data
+    del matrix_df
+    del basic_calculations.all_results[timeframe]
+    gc.collect()
+    logger.debug(f"Memory cleaned up after {timeframe} matrix CSV write and results cleared")
+
     # Print results summary
     successful_calculations = len([t for t in results_data if 'error' not in results_data[t]])
     

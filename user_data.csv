@@ -32,7 +32,7 @@ TW_intraday_folder_colab,/content/drive/MyDrive/_invest2024/run_python/metaData_
 # ---------------------------,,
 YF_hist_data,TRUE,Load historical OHLCV data via YFinance
 YF_daily_data,TRUE,Load daily (1d) historical data
-YF_weekly_data,TRUE,Load weekly (1wk) historical data  
+YF_weekly_data,FALSE,Load weekly (1wk) historical data  
 YF_monthly_data,FALSE,Load monthly (1mo) historical data
 TW_intraday_data,FALSE,Process intraday data from TradingView source
 TW_intraday_file,intraday_data.csv,File name for intraday data input
@@ -79,22 +79,26 @@ batch_size,100,Global batch size for data processing and calculations
 ,,
 # RELATIVE STRENGTH (RS) CONFIGURATION - MULTI-BENCHMARK,,
 # ==========================================================,,
-RS_enable_stocks,FALSE,Enable RS calculation for individual stocks
-RS_enable_sectors,FALSE,Enable RS calculation for sectors  
-RS_enable_industries,FALSE,Enable RS calculation for industries
+RS_enable_stocks,TRUE,Enable RS calculation for individual stocks
+RS_enable_sectors,TRUE,Enable RS calculation for sectors  
+RS_enable_industries,TRUE,Enable RS calculation for industries
 # MULTI-BENCHMARK CONFIGURATION,,
-RS_benchmark_tickers,QQQ,Benchmark tickers for RS calculations (semicolon separated)
+RS_benchmark_tickers,QQQ; SPY,Benchmark tickers for RS calculations (semicolon separated)
 # COMPOSITE CONFIGURATION,,
 RS_composite_method,market_cap_weighted,Sector/industry composite method (equal_weighted or market_cap_weighted)
 RS_min_group_size,3,Minimum number of stocks required for sector/industry composite
 # PERCENTILE UNIVERSE CONFIGURATION,,
-RS_percentile_universe_stocks,NASDAQ100,Universe for stock percentiles: all | sector | industry | ticker_choice
-RS_percentile_universe_sectors,all; SP500,Universe for sector percentiles: all | ticker_choice  | NASADQ100  
-RS_percentile_universe_industries,ticker_choice; NASDAQ100;SP500,Universe for industry percentiles: all | ticker_choice | SP500
+RS_percentile_universe_stocks,QQQ:NASDAQ100,Universe for stock percentiles: all | sector | industry | ticker_choice
+RS_percentile_universe_sectors,QQQ:NASDAQ100,Universe for sector percentiles: all | ticker_choice  | NASADQ100  
+RS_percentile_universe_industries,QQQ:NASDAQ100,Universe for industry percentiles: all | ticker_choice | SP500
 # TIMEFRAME CONFIGURATION,,
-RS_daily_enable,FALSE,Enable RS calculation for daily timeframe
-RS_weekly_enable,FALSE,Enable RS calculation for weekly timeframe
+RS_daily_enable,TRUE,Enable RS calculation for daily timeframe
+RS_weekly_enable,TRUE,Enable RS calculation for weekly timeframe
 RS_monthly_enable,FALSE,Enable RS calculation for monthly timeframe
+# MOVING AVERAGE RS CONFIGURATION,,
+RS_ma_enable,TRUE,Enable Moving Average RS calculations (parallel to IBD)
+RS_ma_method,20;50,Moving Average periods for RS calculation (semicolon separated)
+RS_method_for_PER,IBD,Which RS method(s) to use for percentile calculations (IBD | MA | both)
 # PERIOD CONFIGURATION,,
 # Daily timeframe parameters,,
 daily_daily_periods,1;3;5,Daily data: RS calculation periods (semicolon separated - 1d;3d;5d;10d;15d)
@@ -134,7 +138,7 @@ RTI_output_dir,results/screeners/rti,Output directory for Range Tightening Indic
 Basic_calculation_file,basic_calculations.csv,DEPRECATED: Use BASIC_CALCULATION_output_dir instead
 # TIMEFRAME CONFIGURATION (CPU-intensive calculation control),,
 Basic_calc_daily_enable,TRUE,Enable basic calculations for daily timeframe
-Basic_calc_weekly_enable,FALSE,Enable basic calculations for weekly timeframe  
+Basic_calc_weekly_enable,TRUE,Enable basic calculations for weekly timeframe  
 Basic_calc_monthly_enable,FALSE,Enable basic calculations for monthly timeframe
 # Daily Period Percent Change Configuration,,
 daily_daily_periods,1;3;5,Daily data: daily percent change periods (semicolon separated - 2d;3d;5d)
@@ -162,7 +166,7 @@ stage_daily_atr_threshold_low,4,Daily: ATR low volatility threshold percentage
 stage_daily_atr_threshold_high,7,Daily: ATR high volatility threshold percentage
 stage_daily_ma_convergence_threshold,1,Daily: MA convergence threshold for Launch Pad detection (%)
 # Weekly stage analysis,,
-stage_analysis_weekly_enabled,FALSE,Enable weekly stage analysis calculations
+stage_analysis_weekly_enabled,TRUE,Enable weekly stage analysis calculations
 stage_weekly_ema_fast_period,10,Weekly: Fast EMA period for stage analysis
 stage_weekly_sma_medium_period,20,Weekly: Medium SMA period for stage analysis
 stage_weekly_sma_slow_period,50,Weekly: Slow SMA period for stage analysis
@@ -179,7 +183,7 @@ stage_monthly_atr_period,14,Monthly: ATR calculation period for stage analysis
 stage_monthly_atr_threshold_low,4,Monthly: ATR low volatility threshold percentage
 stage_monthly_atr_threshold_high,7,Monthly: ATR high volatility threshold percentage
 stage_monthly_ma_convergence_threshold,1,Monthly: MA convergence threshold for Launch Pad detection (%)
-stage_analysis_report_enable,FALSE,enable complete pdf generation after stage analysis
+stage_analysis_report_enable,TRUE,enable complete pdf generation after stage analysis
 #,,
 # MARKET BREADTH ANALYSIS CONFIGURATION,,
 # =======================================,,
@@ -256,7 +260,7 @@ MARKET_BREADTH_force_file,TRUE,Use latest available breadth file even if dates d
 ,,
 # MARKET PULSE CONFIGURATION,,
 # ===========================,,GMI+GMI2 only works on daily
-MARKET_PULSE_enable,FALSE,Enable Market Pulse analysis for major indexes (SPY QQQ IWM DJI)
+MARKET_PULSE_enable,TRUE,Enable Market Pulse analysis for major indexes (SPY QQQ IWM DJI)
 MARKET_PULSE_gmi_enable,TRUE,Enable GMI (General Market Index) analysis - daily calculation only
 MARKET_PULSE_gmi_threshold,3,GMI score threshold for bullish/bearish signals (0-4 scale)
 MARKET_PULSE_gmi_confirmation_days,2,Number of days required for GMI signal confirmation
@@ -301,13 +305,13 @@ MARKET_PULSE_ma_cycles_cycle_mode,Sharp,Cycle detection mode (Sharp or Smoothed)
 MARKET_PULSE_ma_cycles_smoothed_candles,3,Number of candles for smoothed cycle confirmation
 ,,
 ,,
-#MARKET_PULSE_ftd_dd_enable,FALSE,Enable FTD & DD (Follow-Through Day & Distribution Day) analysis
+#MARKET_PULSE_ftd_dd_enable,TRUE,Enable FTD & DD (Follow-Through Day & Distribution Day) analysis
 #MARKET_PULSE_dd_threshold,0.2,Minimum decline percentage for Distribution Day detection (0.2%)
 #MARKET_PULSE_ftd_threshold,1.5,Minimum gain percentage for Follow-Through Day detection (1.5%)
 #MARKET_PULSE_ftd_optimal_days_min,4,Minimum days from market bottom for optimal FTD (O'Neil methodology)
 #MARKET_PULSE_ftd_optimal_days_max,7,Maximum days from market bottom for optimal FTD (O'Neil methodology)
 #MARKET_PULSE_dd_lookback_period,25,Lookback period for Distribution Day counting and analysis
-#MARKET_PULSE_net_highs_lows_enable,FALSE,Enable Net New Highs/Lows market breadth analysis
+#MARKET_PULSE_net_highs_lows_enable,TRUE,Enable Net New Highs/Lows market breadth analysis
 #MARKET_PULSE_breadth_threshold_healthy,2,Net new highs percentage threshold for healthy market breadth (>2%)
 #MARKET_PULSE_breadth_threshold_unhealthy,-2,Net new lows percentage threshold for unhealthy market breadth (>2%)
 ,,
