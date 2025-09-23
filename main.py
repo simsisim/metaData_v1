@@ -27,6 +27,7 @@ from src.run_screeners import run_screeners
 from src.models import run_models
 from src.percentage_movers import run_movers_analysis
 from src.market_pulse.market_pulse_manager import run_market_pulse_analysis
+from src.sustainability_ratios import run_sr_analysis
 
 logger = logging.getLogger(__name__)
 
@@ -1461,59 +1462,66 @@ def main() -> None:
         print(f"\n🔥 EXECUTING BASIC CALCULATIONS PHASE")
         print("="*60)
 
-        # 1. Basic Calculations - All timeframes, all batches
+        # 1. SUSTAINABILITY RATIOS (SR) ANALYSIS - Multi-panel charts and intermarket ratios
+        sr_results = run_sr_analysis(config, user_config, timeframes_to_process)
+
+        # 2. Basic Calculations - All timeframes, all batches
         basic_calc_results = run_all_basic_calculations(config, user_config, timeframes_to_process, clean_file)
 
-        # 2. Stage Analysis - All timeframes, all batches
-        stage_analysis_results = run_all_stage_analysis(config, user_config, timeframes_to_process, clean_file)
+        # 3. Stage Analysis - All timeframes, all batches
+        if user_config.enable_stage_analysis:
+            stage_analysis_results = run_all_stage_analysis(config, user_config, timeframes_to_process, clean_file)
 
-        # 2.5. Stage Analysis Reports - Generate PDF reports for stage analysis results
-        if user_config.stage_analysis_report_enable and sum(stage_analysis_results.values()) > 0:
-            try:
-                print(f"\n📄 GENERATING STAGE ANALYSIS REPORTS...")
-                from src.report_generators.stage_analysis_report_generator import process_stage_analysis_csv
+            # 3.5. Stage Analysis Reports - Generate PDF reports for stage analysis results
+            if user_config.stage_analysis_report_enable and sum(stage_analysis_results.values()) > 0:
+                try:
+                    print(f"\n📄 GENERATING STAGE ANALYSIS REPORTS...")
+                    from src.report_generators.stage_analysis_report_generator import process_stage_analysis_csv
 
-                stage_dir = config.directories['RESULTS_DIR'] / 'stage_analysis'
-                reports_dir = config.directories['RESULTS_DIR'] / 'reports'
-                reports_dir.mkdir(parents=True, exist_ok=True)
+                    stage_dir = config.directories['RESULTS_DIR'] / 'stage_analysis'
+                    reports_dir = config.directories['RESULTS_DIR'] / 'reports'
+                    reports_dir.mkdir(parents=True, exist_ok=True)
 
-                # Generate reports for each stage analysis CSV file
-                csv_files = list(stage_dir.glob('stage_analysis_*.csv'))
-                reports_generated = 0
+                    # Generate reports for each stage analysis CSV file
+                    csv_files = list(stage_dir.glob('stage_analysis_*.csv'))
+                    reports_generated = 0
 
-                for csv_file in csv_files:
-                    try:
-                        print(f"  🎯 Processing: {csv_file.name}")
-                        png_path, pdf_path = process_stage_analysis_csv(str(csv_file))
+                    for csv_file in csv_files:
+                        try:
+                            print(f"  🎯 Processing: {csv_file.name}")
+                            png_path, pdf_path = process_stage_analysis_csv(str(csv_file))
 
-                        if Path(pdf_path).exists():
-                            reports_generated += 1
-                            pdf_size = Path(pdf_path).stat().st_size / 1024
-                            print(f"  ✅ Generated: {Path(pdf_path).name} ({pdf_size:.1f} KB)")
-                        else:
-                            print(f"  ❌ Failed: {csv_file.name}")
+                            if Path(pdf_path).exists():
+                                reports_generated += 1
+                                pdf_size = Path(pdf_path).stat().st_size / 1024
+                                print(f"  ✅ Generated: {Path(pdf_path).name} ({pdf_size:.1f} KB)")
+                            else:
+                                print(f"  ❌ Failed: {csv_file.name}")
 
-                    except Exception as e:
-                        print(f"  ❌ Error processing {csv_file.name}: {e}")
-                        logger.error(f"Stage analysis report generation failed for {csv_file}: {e}")
-                        continue
+                        except Exception as e:
+                            print(f"  ❌ Error processing {csv_file.name}: {e}")
+                            logger.error(f"Stage analysis report generation failed for {csv_file}: {e}")
+                            continue
 
-                print(f"📄 STAGE ANALYSIS REPORTS COMPLETED: {reports_generated} reports generated")
+                    print(f"📄 STAGE ANALYSIS REPORTS COMPLETED: {reports_generated} reports generated")
 
-            except Exception as e:
-                print(f"❌ Stage analysis report generation error: {e}")
-                logger.error(f"Stage analysis report generation failed: {e}")
-        elif sum(stage_analysis_results.values()) > 0:
-            print(f"\n📄 Stage analysis PDF/PNG generation disabled in configuration")
+                except Exception as e:
+                    print(f"❌ Stage analysis report generation error: {e}")
+                    logger.error(f"Stage analysis report generation failed: {e}")
+            elif sum(stage_analysis_results.values()) > 0:
+                print(f"\n📄 Stage analysis PDF/PNG generation disabled in configuration")
+            else:
+                print(f"\n📄 No stage analysis results available for report generation")
         else:
-            print(f"\n📄 No stage analysis results available for report generation")
+            print(f"\n⏭️  Stage analysis disabled - skipping")
+            stage_analysis_results = {}
 
-        # 3. Market Breadth Analysis - All timeframes (positioned after stage analysis)
+        # 4. Market Breadth Analysis - All timeframes (positioned after stage analysis)
         market_breadth_results = run_all_market_breadth(config, user_config, timeframes_to_process)
-        # 4. Market Pulse Analysis - All timeframes (positioned after market breadth analysis)
+        # 5. Market Pulse Analysis - All timeframes (positioned after market breadth analysis)
         market_pulse_results = run_all_market_pulse(config, user_config, timeframes_to_process)
 
-        # 5. RELATIVE STRENGTH ANALYSIS (moved inside BASIC conditional block)
+        # 6. RELATIVE STRENGTH ANALYSIS (moved inside BASIC conditional block)
         print(f"\n" + "="*60)
         print("RELATIVE STRENGTH (RS) ANALYSIS")
         print("="*60)
@@ -1530,7 +1538,7 @@ def main() -> None:
             timeframes=timeframes_to_process
         )
 
-        # 6. PERCENTILE (PER) ANALYSIS (moved inside BASIC conditional block)
+        # 7. PERCENTILE (PER) ANALYSIS (moved inside BASIC conditional block)
         print(f"\n" + "="*60)
         print("PERCENTILE (PER) ANALYSIS")
         print("="*60)

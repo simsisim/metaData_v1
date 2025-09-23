@@ -341,13 +341,13 @@ class PostProcessWorkflow:
         else:
             return df
 
-    def generate_output_filename(self, logical_filename: str, physical_path: str, file_ops: pd.DataFrame, file_id: str = None) -> str:
+    def generate_output_filename(self, logical_filename: str, physical_path, file_ops: pd.DataFrame, file_id: str = None) -> str:
         """
         Generate output filename based on output_id or auto-generate from conditions.
 
         Args:
             logical_filename: Logical filename for operations lookup
-            physical_path: Physical file path to extract original filename
+            physical_path: Physical file path (str) or enhanced matrix (dict) to extract original filename
             file_ops: DataFrame containing operations for this file
             file_id: File ID for unique output naming
 
@@ -409,13 +409,205 @@ class PostProcessWorkflow:
 
         # Extract original filename without extension from physical path
         from pathlib import Path
-        original_filename = Path(physical_path).stem  # Gets filename without .csv extension
+
+        if isinstance(physical_path, dict):
+            # Enhanced matrix case - generate filename from logical name and routing
+            routing_options = self._extract_routing_options(logical_filename, file_id)
+            base_name = logical_filename.replace('/', '_')
+
+            if routing_options:
+                # Sanitize routing pattern for filename
+                pattern_safe = routing_options.replace('*', '').replace('.', '_').replace('/', '_')
+                pattern_safe = re.sub(r'[^a-zA-Z0-9_-]', '_', pattern_safe)
+                pattern_safe = re.sub(r'_+', '_', pattern_safe).strip('_')
+                original_filename = f"{base_name}_route_{pattern_safe}"
+            else:
+                original_filename = f"{base_name}_multi"
+        else:
+            # Single file case - original behavior
+            original_filename = Path(physical_path).stem  # Gets filename without .csv extension
 
         # Include file_id in filename if provided
         if file_id is not None and str(file_id).strip() != '':
             return f"{original_filename}_pp_f{file_id}_{output_id}.csv"
         else:
             return f"{original_filename}_pp_{output_id}.csv"
+
+    def _extract_routing_options(self, logical_filename: str, file_id: str) -> Optional[str]:
+        """
+        Extract template_routing_options from configuration for a given file and file_id.
+
+        Args:
+            logical_filename: Logical filename to look up
+            file_id: File ID for this processing group
+
+        Returns:
+            Template routing options string, or None if not specified
+        """
+        try:
+            # Get configuration for this file + file_id combination
+            if 'File_id' in self.config_df.columns:
+                # Handle both integer and float File_id values by comparing as numbers
+                file_config = self.config_df[
+                    (self.config_df['Filename'] == logical_filename) &
+                    (self.config_df['File_id'] == float(file_id))
+                ].copy()
+            else:
+                # Fallback for configs without File_id column
+                file_config = self.config_df[self.config_df['Filename'] == logical_filename].copy()
+
+            if file_config.empty:
+                logger.debug(f"No configuration found for {logical_filename}, file_id: {file_id}")
+                return None
+
+            # Check if template_routing_options column exists
+            if 'template_routing_options' not in file_config.columns:
+                logger.debug(f"No template_routing_options column in configuration")
+                return None
+
+            # Get the first non-null routing option (all rows for same file_id should have same routing)
+            routing_options = file_config['template_routing_options'].dropna()
+            if not routing_options.empty:
+                routing_option = routing_options.iloc[0]
+                if routing_option and str(routing_option).strip():
+                    logger.info(f"Using routing options '{routing_option}' for {logical_filename} (file_id: {file_id})")
+                    return str(routing_option).strip()
+
+            logger.debug(f"No routing options specified for {logical_filename}, file_id: {file_id}")
+            return None
+
+        except Exception as e:
+            logger.warning(f"Error extracting routing options for {logical_filename}, file_id {file_id}: {e}")
+            return None
+
+    def _process_multi_directory_data(self, physical_path: Dict, template_routing_options: Optional[str]) -> pd.DataFrame:
+        """
+        Process multi-directory data, handling both simple dictionaries and enhanced matrices.
+
+        Args:
+            physical_path: Dictionary containing file paths (simple or enhanced matrix)
+            template_routing_options: Routing options for context
+
+        Returns:
+            Combined DataFrame
+        """
+        combined_df = None
+        total_files_loaded = 0
+
+        for dir_name, path_data in physical_path.items():
+            if isinstance(path_data, dict):
+                # Enhanced matrix: path_data is a dictionary of classification -> file_path
+                logger.info(f"Processing enhanced matrix for {dir_name}: {len(path_data)} classifications")
+
+                for classification, file_path in path_data.items():
+                    logger.info(f"Loading {dir_name}.{classification}: {file_path}")
+                    df_temp = pd.read_csv(file_path)
+
+                    # Create comprehensive prefix
+                    prefix = f"{dir_name}_{classification}"
+
+                    if combined_df is None:
+                        combined_df = df_temp.copy()
+                        # Detect primary key column for merging
+                        primary_key = self._detect_primary_key_column(combined_df)
+
+                        # Add source prefix to columns (except primary key)
+                        new_columns = {}
+                        for col in combined_df.columns:
+                            if primary_key and col.lower() != primary_key.lower():
+                                new_columns[col] = f"{prefix}_{col}"
+                        combined_df = combined_df.rename(columns=new_columns)
+                    else:
+                        # Merge with existing dataframe
+                        merge_df = df_temp.copy()
+
+                        # Detect primary key columns
+                        combined_primary_key = self._detect_primary_key_column(combined_df)
+                        merge_primary_key = self._detect_primary_key_column(merge_df)
+
+                        # Add source prefix to columns (except primary key)
+                        new_columns = {}
+                        for col in merge_df.columns:
+                            if merge_primary_key and col.lower() != merge_primary_key.lower():
+                                new_columns[col] = f"{prefix}_{col}"
+                        merge_df = merge_df.rename(columns=new_columns)
+
+                        # Merge on primary key column
+                        if combined_primary_key and merge_primary_key and combined_primary_key == merge_primary_key:
+                            combined_df = pd.merge(combined_df, merge_df, on=combined_primary_key, how='outer')
+                            logger.info(f"Successfully merged {prefix} data on '{combined_primary_key}' column")
+                        else:
+                            logger.warning(f"Cannot merge {prefix} data - primary key mismatch: '{combined_primary_key}' vs '{merge_primary_key}'")
+
+                    total_files_loaded += 1
+
+            else:
+                # Simple dictionary: path_data is a file path string
+                logger.info(f"Loading {dir_name}: {path_data}")
+                df_temp = pd.read_csv(path_data)
+
+                if combined_df is None:
+                    combined_df = df_temp.copy()
+                    # Detect primary key column for merging
+                    primary_key = self._detect_primary_key_column(combined_df)
+
+                    # Add source prefix to columns (except primary key)
+                    new_columns = {}
+                    for col in combined_df.columns:
+                        if primary_key and col.lower() != primary_key.lower():
+                            new_columns[col] = f"{dir_name}_{col}"
+                    combined_df = combined_df.rename(columns=new_columns)
+                else:
+                    # Merge with existing dataframe
+                    merge_df = df_temp.copy()
+
+                    # Detect primary key columns
+                    combined_primary_key = self._detect_primary_key_column(combined_df)
+                    merge_primary_key = self._detect_primary_key_column(merge_df)
+
+                    # Add source prefix to columns (except primary key)
+                    new_columns = {}
+                    for col in merge_df.columns:
+                        if merge_primary_key and col.lower() != merge_primary_key.lower():
+                            new_columns[col] = f"{dir_name}_{col}"
+                    merge_df = merge_df.rename(columns=new_columns)
+
+                    # Merge on primary key column
+                    if combined_primary_key and merge_primary_key and combined_primary_key == merge_primary_key:
+                        combined_df = pd.merge(combined_df, merge_df, on=combined_primary_key, how='outer')
+                        logger.info(f"Successfully merged {dir_name} data on '{combined_primary_key}' column")
+                    else:
+                        logger.warning(f"Cannot merge {dir_name} data - primary key mismatch: '{combined_primary_key}' vs '{merge_primary_key}'")
+
+                total_files_loaded += 1
+
+        if combined_df is not None:
+            logger.info(f"Combined multi-directory dataset: {total_files_loaded} files -> {len(combined_df)} rows, {len(combined_df.columns)} columns")
+            if template_routing_options:
+                logger.info(f"Applied routing filter '{template_routing_options}' during file selection")
+
+        return combined_df if combined_df is not None else pd.DataFrame()
+
+    def _detect_primary_key_column(self, df: pd.DataFrame) -> Optional[str]:
+        """
+        Detect the primary key column for merging dataframes.
+
+        Args:
+            df: DataFrame to analyze
+
+        Returns:
+            Column name to use for merging, or None if not found
+        """
+        # Priority order for primary key detection
+        primary_key_candidates = ['ticker', 'Symbol', 'symbol', 'stock_symbol', 'Ticker', 'TICKER']
+
+        for candidate in primary_key_candidates:
+            if candidate in df.columns:
+                logger.debug(f"Found primary key column: {candidate}")
+                return candidate
+
+        logger.warning(f"No primary key column found. Available columns: {list(df.columns)[:5]}...")
+        return None
 
     def process_file_group(self, logical_filename: str, file_id: str) -> Optional[str]:
         """
@@ -429,22 +621,33 @@ class PostProcessWorkflow:
             Path to processed file, or None if failed
         """
         try:
-            # 1. Resolve logical filename to physical path
-            physical_path = get_latest_file(logical_filename, self.base_path)
+            # 0. Extract template routing options from configuration
+            template_routing_options = self._extract_routing_options(logical_filename, file_id)
+
+            # 1. Resolve logical filename to physical path(s) with routing options
+            physical_path = get_latest_file(logical_filename, self.base_path, template_routing_options)
             if not physical_path:
                 logger.error(f"Could not resolve file: {logical_filename}")
                 return None
 
-            # 2. Load the data file
-            logger.info(f"Loading: {physical_path}")
-            df = pd.read_csv(physical_path)
+            # 2. Load the data file(s) - handle single files, multi-directory dictionaries, and enhanced matrices
+            if isinstance(physical_path, dict):
+                # Multi-directory case: can be simple dict or enhanced matrix
+                logger.info(f"Loading multi-directory dataset: {logical_filename}")
+                combined_df = self._process_multi_directory_data(physical_path, template_routing_options)
+                df = combined_df
+            else:
+                # Single directory case: load single CSV file
+                logger.info(f"Loading: {physical_path}")
+                df = pd.read_csv(physical_path)
+
             original_rows = len(df)
 
             # 3. Get operations for this file + file_id combination
             if 'File_id' in self.config_df.columns:
                 file_ops = self.config_df[
                     (self.config_df['Filename'] == logical_filename) &
-                    (self.config_df['File_id'].astype(str) == str(file_id))
+                    (self.config_df['File_id'] == float(file_id))
                 ].copy()
             else:
                 # Fallback for configs without File_id column
@@ -471,8 +674,14 @@ class PostProcessWorkflow:
             if not sort_ops.empty:
                 df = self.apply_sorts(df, sort_ops)
 
-            # 7. Generate output filename
-            output_filename = self.generate_output_filename(logical_filename, physical_path, file_ops, file_id)
+            # 7. Generate output filename - handle multi-directory case
+            if isinstance(physical_path, dict):
+                # For multi-directory, use the first file path for filename generation
+                first_file_path = list(physical_path.values())[0]
+                output_filename = self.generate_output_filename(logical_filename, first_file_path, file_ops, file_id)
+            else:
+                output_filename = self.generate_output_filename(logical_filename, physical_path, file_ops, file_id)
+
             output_path = Path(self.base_path) / "results" / "post_process" / output_filename
 
             # Create output directory if it doesn't exist
@@ -499,11 +708,23 @@ class PostProcessWorkflow:
                     template_name = extract_template_from_config(file_ops)
                     logger.info(f"Generating PDF (PDF_enable=TRUE) with template '{template_name}' for {logical_filename} (file_id: {file_id})")
 
-                    # Create rich metadata context
+                    # Create rich metadata context - handle multi-directory case
+                    if isinstance(physical_path, dict):
+                        physical_path_info = {
+                            'type': 'multi_directory',
+                            'sources': physical_path,
+                            'source_count': len(physical_path)
+                        }
+                    else:
+                        physical_path_info = {
+                            'type': 'single_file',
+                            'path': physical_path
+                        }
+
                     metadata = {
                         'original_filename': logical_filename,
                         'file_id': file_id,
-                        'physical_path': physical_path,
+                        'physical_path': physical_path_info,
                         'original_rows': original_rows,
                         'filtered_rows': len(df),
                         'filter_operations': filter_ops.to_dict('records') if not filter_ops.empty else [],
@@ -664,7 +885,7 @@ class PostProcessWorkflow:
                     enabled_file_ids = []
                     for file_id in all_file_ids:
                         file_id_config = self.config_df[
-                            self.config_df['File_id'].astype(str) == str(file_id)
+                            self.config_df['File_id'] == float(file_id)
                         ]
 
                         # Check Generation flag for this file_id
@@ -709,7 +930,7 @@ class PostProcessWorkflow:
                     else:
                         # Single-file processing: process each filename separately (existing logic)
                         file_id_config = self.config_df[
-                            self.config_df['File_id'].astype(str) == str(file_id)
+                            self.config_df['File_id'] == float(file_id)
                         ]
                         unique_filenames = file_id_config['Filename'].dropna().unique()
 

@@ -136,7 +136,25 @@ class UserConfiguration:
     monthly_monthly_periods: str = "2;3;6"
     # Monthly RS periods
     RS_monthly_periods: str = "1;3;6"
-    
+
+    # SUSTAINABILITY RATIOS (SR) CONFIGURATION
+    sr_enable: bool = False
+    sr_output_dir: str = "results/sustainability_ratios"
+    sr_panel_config_file: str = "SR_EB/user_data_panel.csv"
+    sr_timeframes: str = "daily"  # Legacy setting - use sr_timeframe_* settings instead
+    # New granular timeframe controls
+    sr_timeframe_daily: bool = True
+    sr_timeframe_weekly: bool = False
+    sr_timeframe_monthly: bool = False
+    # Chart display range control
+    sr_chart_display: int = 66  # Number of historical data points to show on charts
+    sr_chart_generation: bool = True
+    sr_intermarket_ratios: bool = True
+    sr_market_breadth: bool = True
+    sr_save_detailed_results: bool = True
+    sr_dashboard_style: str = "multi_panel"
+    sr_lookback_days: int = 252
+
     # Screeners
     screener_output_file: str = "screener_results.csv"
     screener_criteria_file: str = "screener_criteria.csv"
@@ -239,6 +257,9 @@ class UserConfiguration:
     atr2_monthly_sma_period: int = 4
     atr2_monthly_percentile_period: int = 6
     
+    # STAGE ANALYSIS CONFIGURATION - Global
+    enable_stage_analysis: bool = False
+
     # STAGE ANALYSIS CONFIGURATION - Daily
     stage_analysis_daily_enabled: bool = True
     stage_daily_ema_fast_period: int = 10
@@ -896,7 +917,25 @@ def read_user_data(file_path: str = 'user_data.csv') -> UserConfiguration:
             'monthly_monthly_periods': ('monthly_monthly_periods', str),
             # Monthly RS periods
             'RS_monthly_periods': ('RS_monthly_periods', str),
-            
+
+            # SUSTAINABILITY RATIOS (SR) CONFIGURATION
+            'SR_enable': ('sr_enable', parse_boolean),
+            'SR_output_dir': ('sr_output_dir', str),
+            'SR_panel_config_file': ('sr_panel_config_file', str),
+            'SR_timeframes': ('sr_timeframes', str),
+            # New granular timeframe controls
+            'SR_timeframe_daily': ('sr_timeframe_daily', parse_boolean),
+            'SR_timeframe_weekly': ('sr_timeframe_weekly', parse_boolean),
+            'SR_timeframe_monthly': ('sr_timeframe_monthly', parse_boolean),
+            # Chart display range control
+            'SR_chart_display': ('sr_chart_display', int),
+            'SR_chart_generation': ('sr_chart_generation', parse_boolean),
+            'SR_intermarket_ratios': ('sr_intermarket_ratios', parse_boolean),
+            'SR_market_breadth': ('sr_market_breadth', parse_boolean),
+            'SR_save_detailed_results': ('sr_save_detailed_results', parse_boolean),
+            'SR_dashboard_style': ('sr_dashboard_style', str),
+            'SR_lookback_days': ('sr_lookback_days', int),
+
             # Screeners
             'screener_output_file': ('screener_output_file', str),
             'screener_criteria_file': ('screener_criteria_file', str),
@@ -988,6 +1027,9 @@ def read_user_data(file_path: str = 'user_data.csv') -> UserConfiguration:
             'ATR2_monthly_sma_period': ('atr2_monthly_sma_period', int),
             'ATR2_monthly_percentile_period': ('atr2_monthly_percentile_period', int),
             
+            # Stage Analysis Configuration - Global
+            'enable_stage_analysis': ('enable_stage_analysis', parse_boolean),
+
             # Stage Analysis Configuration - Daily
             'stage_analysis_daily_enabled': ('stage_analysis_daily_enabled', parse_boolean),
             'stage_daily_ema_fast_period': ('stage_daily_ema_fast_period', int),

@@ -101,6 +101,7 @@ class Config:
             "STAGE_ANALYSIS_DIR": self._resolve_user_directory(user_config.stage_analysis_output_dir),
             "RS_DIR": self._resolve_user_directory(user_config.rs_output_dir),
             "PER_DIR": self._resolve_user_directory(user_config.per_output_dir),
+            "SR_output_dir": self._resolve_user_directory(user_config.sr_output_dir),
 
             # User-configurable screener output directories
             "PVB_SCREENER_DIR": self._resolve_user_directory(user_config.pvb_TWmodel_output_dir),

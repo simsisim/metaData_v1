@@ -132,8 +132,16 @@ class RSPERPDFBuilder:
             )
         }
 
-        # Merge with default styles
-        all_styles = dict(styles)
+        # Create dictionary with both default and custom styles
+        # Use a safer approach to merge styles
+        all_styles = {}
+
+        # Add default styles by name
+        for style_name in ['Normal', 'Title', 'Heading1', 'Heading2', 'Heading3', 'Bullet', 'Code']:
+            if style_name in styles:
+                all_styles[style_name] = styles[style_name]
+
+        # Add custom styles
         all_styles.update(custom_styles)
 
         return all_styles

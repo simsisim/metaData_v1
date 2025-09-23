@@ -156,6 +156,7 @@ class RSPERDataLoader:
     def _validate_data_structure(self, rs_data: Dict, per_data: Dict) -> None:
         """Validate that required columns exist for all timeframes."""
         validation_errors = []
+        validation_warnings = []
 
         # Check RS data for required timeframe columns
         for dataset_name, df in rs_data.items():
@@ -166,7 +167,15 @@ class RSPERDataLoader:
                         missing_cols.append(f"{tf}({col_name})")
 
                 if missing_cols:
-                    validation_errors.append(f"{dataset_name} missing timeframes: {', '.join(missing_cols)}")
+                    # MA files may have different structure - treat as warning, not error
+                    if 'ma_' in dataset_name:
+                        validation_warnings.append(f"{dataset_name} missing timeframes: {', '.join(missing_cols)} (MA files may have different structure)")
+                        # Remove MA dataset from rs_data to prevent merge issues
+                        rs_data[dataset_name] = None
+                        logger.warning(f"Excluding {dataset_name} due to incompatible column structure")
+                    else:
+                        # IBD files should have the correct structure
+                        validation_errors.append(f"{dataset_name} missing timeframes: {', '.join(missing_cols)}")
 
         # Check PER data for required percentile columns
         for dataset_name, df in per_data.items():
@@ -179,6 +188,11 @@ class RSPERDataLoader:
                 if missing_cols:
                     validation_errors.append(f"{dataset_name} missing percentile columns: {', '.join(missing_cols)}")
 
+        # Log warnings for informational purposes
+        for warning in validation_warnings:
+            logger.warning(warning)
+
+        # Only raise error for critical validation failures (IBD/PER files)
         if validation_errors:
             error_msg = "Data validation failed:\n" + "\n".join(validation_errors)
             logger.error(error_msg)

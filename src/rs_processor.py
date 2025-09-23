@@ -168,47 +168,28 @@ class RSProcessor:
             'composite_indices': None
         }
 
-        # 1. STOCK-LEVEL RS ANALYSIS - COMBINED ALL BENCHMARKS
+        # 1. STOCK-LEVEL RS ANALYSIS - SEPARATE FILES PER BENCHMARK
         if getattr(self.user_config, 'rs_enable_stocks', True):
-            # Initialize combined results container
-            from .rs_base import RSResults
-            combined_stock_results = RSResults('ibd', 'stocks', timeframe)
-            combined_stock_results.metadata['benchmark_tickers'] = ';'.join(benchmark_tickers)
-            combined_stock_results.metadata['universe_size'] = len(ticker_list)
-
-            # Process each benchmark and collect results
-            all_benchmark_data = {}
+            # Process each benchmark separately and save individual files (like MA method)
             for benchmark_ticker in benchmark_tickers:
                 try:
                     logger.info(f"Processing RS vs {benchmark_ticker} benchmark")
                     stock_results = self.ibd_calculator.process_universe(
                         ticker_list, timeframe, benchmark_ticker, batch_size
                     )
-                    
+
                     if stock_results.rs_values:
-                        # Store results for this benchmark
-                        all_benchmark_data[benchmark_ticker] = stock_results.rs_values
-                        logger.info(f"Stock RS vs {benchmark_ticker} completed: {len(stock_results.rs_values)} period sets")
+                        # Save separate file for this benchmark
+                        stock_files = self.ibd_calculator.save_rs_results(
+                            stock_results, 'stocks', str(ticker_choice), benchmark_ticker
+                        )
+                        timeframe_results['files_created'].extend(stock_files)
+                        logger.info(f"Stock RS vs {benchmark_ticker} completed: {len(stock_files)} files created")
                     else:
                         logger.warning(f"No stock RS results generated for {benchmark_ticker}")
-                        
+
                 except Exception as e:
                     logger.error(f"Error in stock RS analysis vs {benchmark_ticker}: {e}")
-            
-            # Combine all benchmark results into single wide DataFrame per period
-            if all_benchmark_data:
-                combined_results = self._combine_benchmark_results(all_benchmark_data)
-                combined_stock_results.rs_values = combined_results
-                
-                # Save combined results (single file per timeframe)
-                if combined_results:
-                    # Use first benchmark ticker for naming combined files
-                    first_benchmark = benchmark_tickers[0] if benchmark_tickers else 'SPY'
-                    stock_files = self.ibd_calculator.save_rs_results(
-                        combined_stock_results, 'stocks', str(ticker_choice), first_benchmark
-                    )
-                    timeframe_results['files_created'].extend(stock_files)
-                    logger.info(f"Combined stock RS completed: {len(stock_files)} files created for all benchmarks")
 
         # 1B. MA STOCK-LEVEL RS ANALYSIS (PARALLEL TO IBD)
         if self.ma_calculator and getattr(self.user_config, 'rs_enable_stocks', True):

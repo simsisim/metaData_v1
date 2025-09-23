@@ -1,0 +1,4 @@
+timeframe,Panel_1,Panel_2,Panel_1_index,Panel_2_index
+daily,QQQ+EMA(20)+EMA(50),SPY,,
+daily,SPY,QQQ,A_TLT+EMA(10),B_QQQ+RSI(14)+EMA(20)
+daily,PRICE_for_(QQQ)+EMA(20)_for_(QQQ),RATIO_for_(SPY_QQQ),,

@@ -38,9 +38,9 @@ TW_intraday_data,FALSE,Process intraday data from TradingView source
 TW_intraday_file,intraday_data.csv,File name for intraday data input
 ,,
 # GLOBAL STRUCTURE FLAGS,,
-BASIC,FALSE,Execute data processing and core calculations phase
+BASIC,TRUE,Execute data processing and core calculations phase
 SCREENERS,FALSE,Execute screening and analysis phase
-POST_PROCESS,TRUE,Execute post-processing and report generation phase
+POST_PROCESS,FALSE,Execute post-processing and report generation phase
 ,,
 # FINANCIAL DATA ENRICHMENT,,
 # --------------------------,,
@@ -88,12 +88,12 @@ RS_benchmark_tickers,QQQ; SPY,Benchmark tickers for RS calculations (semicolon s
 RS_composite_method,market_cap_weighted,Sector/industry composite method (equal_weighted or market_cap_weighted)
 RS_min_group_size,3,Minimum number of stocks required for sector/industry composite
 # PERCENTILE UNIVERSE CONFIGURATION,,
-RS_percentile_universe_stocks,QQQ:NASDAQ100,Universe for stock percentiles: all | sector | industry | ticker_choice
+RS_percentile_universe_stocks,QQQ:NASDAQ100; SPY:SP500,Universe for stock percentiles: all | sector | industry | ticker_choice
 RS_percentile_universe_sectors,QQQ:NASDAQ100,Universe for sector percentiles: all | ticker_choice  | NASADQ100  
 RS_percentile_universe_industries,QQQ:NASDAQ100,Universe for industry percentiles: all | ticker_choice | SP500
 # TIMEFRAME CONFIGURATION,,
 RS_daily_enable,TRUE,Enable RS calculation for daily timeframe
-RS_weekly_enable,TRUE,Enable RS calculation for weekly timeframe
+RS_weekly_enable,FALSE,Enable RS calculation for weekly timeframe
 RS_monthly_enable,FALSE,Enable RS calculation for monthly timeframe
 # MOVING AVERAGE RS CONFIGURATION,,
 RS_ma_enable,TRUE,Enable Moving Average RS calculations (parallel to IBD)
@@ -137,8 +137,8 @@ RTI_output_dir,results/screeners/rti,Output directory for Range Tightening Indic
 # =================================,,
 Basic_calculation_file,basic_calculations.csv,DEPRECATED: Use BASIC_CALCULATION_output_dir instead
 # TIMEFRAME CONFIGURATION (CPU-intensive calculation control),,
-Basic_calc_daily_enable,TRUE,Enable basic calculations for daily timeframe
-Basic_calc_weekly_enable,TRUE,Enable basic calculations for weekly timeframe  
+Basic_calc_daily_enable,FALSE,Enable basic calculations for daily timeframe
+Basic_calc_weekly_enable,FALSE,Enable basic calculations for weekly timeframe  
 Basic_calc_monthly_enable,FALSE,Enable basic calculations for monthly timeframe
 # Daily Period Percent Change Configuration,,
 daily_daily_periods,1;3;5,Daily data: daily percent change periods (semicolon separated - 2d;3d;5d)
@@ -152,12 +152,30 @@ weekly_monthly_periods,4;8,Weekly data: monthly percent change periods (semicolo
 # Monthly Period Percent Change Configuration,,
 monthly_monthly_periods,2;3;6,Monthly data: monthly percent change periods (months back)
 ,,
+# SUSTAINABILITY RATIOS (SR) CONFIGURATION,,
+# ==========================================,,
+SR_enable,FALSE,Enable Sustainability Ratios analysis module
+SR_output_dir,results/sustainability_ratios,Output directory for Sustainability Ratios results
+SR_panel_config_file,SR_EB/user_data_panel.csv,Path to panel configuration CSV file
+SR_timeframes,daily,Timeframes for SR analysis (semicolon separated: daily;weekly;monthly)
+SR_timeframe_daily,TRUE,Enable daily timeframe for SR analysis
+SR_timeframe_weekly,FALSE,Enable weekly timeframe for SR analysis
+SR_timeframe_monthly,FALSE,Enable monthly timeframe for SR analysis
+SR_chart_display,66,Number of historical data points to show on charts
+SR_chart_generation,TRUE,Enable chart generation for SR dashboard
+SR_intermarket_ratios,TRUE,Enable intermarket ratios calculation (QQQ:SPY XLY:XLP etc)
+SR_market_breadth,TRUE,Enable market breadth indicators calculation
+SR_save_detailed_results,TRUE,Save detailed CSV results for all SR components
+SR_dashboard_style,multi_panel,Dashboard style (multi_panel market_timing comprehensive)
+SR_lookback_days,252,Default lookback period for SR calculations (trading days)
+,,
 # STAGE ANALYSIS CONFIGURATION,,
 # ==============================,,
+enable_stage_analysis,FALSE,Enable stage analysis module globally
 stage_analysis_min_price,1,stage_analysis_min_price
 stage_analysis_min_vol,10000,stage_analysis_min_vol
 # Daily stage analysis,,
-stage_analysis_daily_enabled,TRUE,Enable daily stage analysis calculations
+stage_analysis_daily_enabled,FALSE,Enable daily stage analysis calculations
 stage_daily_ema_fast_period,10,Daily: Fast EMA period for stage analysis
 stage_daily_sma_medium_period,20,Daily: Medium SMA period for stage analysis
 stage_daily_sma_slow_period,50,Daily: Slow SMA period for stage analysis
@@ -166,7 +184,7 @@ stage_daily_atr_threshold_low,4,Daily: ATR low volatility threshold percentage
 stage_daily_atr_threshold_high,7,Daily: ATR high volatility threshold percentage
 stage_daily_ma_convergence_threshold,1,Daily: MA convergence threshold for Launch Pad detection (%)
 # Weekly stage analysis,,
-stage_analysis_weekly_enabled,TRUE,Enable weekly stage analysis calculations
+stage_analysis_weekly_enabled,FALSE,Enable weekly stage analysis calculations
 stage_weekly_ema_fast_period,10,Weekly: Fast EMA period for stage analysis
 stage_weekly_sma_medium_period,20,Weekly: Medium SMA period for stage analysis
 stage_weekly_sma_slow_period,50,Weekly: Slow SMA period for stage analysis
@@ -187,7 +205,7 @@ stage_analysis_report_enable,TRUE,enable complete pdf generation after stage ana
 #,,
 # MARKET BREADTH ANALYSIS CONFIGURATION,,
 # =======================================,,
-MARKET_BREADTH_enable,TRUE,Enable comprehensive market breadth analysis (A/D line new H/L MA breadth)
+MARKET_BREADTH_enable,FALSE,Enable comprehensive market breadth analysis (A/D line new H/L MA breadth)
 ,,
 # TIMEFRAME CONFIGURATION,,
 MARKET_BREADTH_daily_enable,TRUE,Enable daily market breadth calculations
@@ -260,7 +278,7 @@ MARKET_BREADTH_force_file,TRUE,Use latest available breadth file even if dates d
 ,,
 # MARKET PULSE CONFIGURATION,,
 # ===========================,,GMI+GMI2 only works on daily
-MARKET_PULSE_enable,TRUE,Enable Market Pulse analysis for major indexes (SPY QQQ IWM DJI)
+MARKET_PULSE_enable,FALSE,Enable Market Pulse analysis for major indexes (SPY QQQ IWM DJI)
 MARKET_PULSE_gmi_enable,TRUE,Enable GMI (General Market Index) analysis - daily calculation only
 MARKET_PULSE_gmi_threshold,3,GMI score threshold for bullish/bearish signals (0-4 scale)
 MARKET_PULSE_gmi_confirmation_days,2,Number of days required for GMI signal confirmation

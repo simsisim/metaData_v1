@@ -1,0 +1,168 @@
+2025-09-22 12:16:49,674 - __main__ - INFO - ================================================================================
+2025-09-22 12:16:49,674 - __main__ - INFO - EMA FAILURE REPRODUCTION TEST
+2025-09-22 12:16:49,674 - __main__ - INFO - ================================================================================
+2025-09-22 12:16:49,674 - __main__ - INFO - Goal: Reproduce 'only a red line, a red label that says QQQ'
+2025-09-22 12:16:49,674 - __main__ - INFO - ================================================================================
+2025-09-22 12:16:49,674 - __main__ - INFO - 
+🔧 TESTING REAL SYSTEM EMA CALCULATION
+2025-09-22 12:16:49,674 - __main__ - INFO - ============================================================
+2025-09-22 12:16:49,674 - __main__ - INFO - 📊 Creating realistic QQQ data (60 days)
+2025-09-22 12:16:49,676 - __main__ - INFO - ✅ QQQ data created:
+2025-09-22 12:16:49,676 - __main__ - INFO -    Date range: 2025-07-24 12:16:49.674668 to 2025-09-22 12:16:49.674668
+2025-09-22 12:16:49,676 - __main__ - INFO -    Price range: $248.85 to $367.47
+2025-09-22 12:16:49,676 - __main__ - INFO -    Data shape: (61, 5)
+2025-09-22 12:16:49,676 - __main__ - INFO - 🧪 Testing calculate_bundled_indicator('EMA(QQQ,10)', ticker_data, 'QQQ')
+2025-09-22 12:16:49,679 - __main__ - INFO - 📊 REAL SYSTEM RESULTS:
+2025-09-22 12:16:49,679 - __main__ - INFO -    ✅ Overlay data generated successfully
+2025-09-22 12:16:49,679 - __main__ - INFO -    Generated columns: ['EMA_ema', 'EMA_price', 'EMA_signals']
+2025-09-22 12:16:49,679 - __main__ - INFO -       EMA_ema: <class 'pandas.core.series.Series'> with 61 points
+2025-09-22 12:16:49,679 - __main__ - INFO -       Range: 256.85 to 358.27
+2025-09-22 12:16:49,679 - __main__ - INFO -       EMA_price: <class 'pandas.core.series.Series'> with 61 points
+2025-09-22 12:16:49,679 - __main__ - INFO -       Range: 248.85 to 367.47
+2025-09-22 12:16:49,679 - __main__ - INFO -       EMA_signals: <class 'pandas.core.series.Series'> with 61 points
+2025-09-22 12:16:49,679 - __main__ - INFO -       Range: -1.00 to 1.00
+2025-09-22 12:16:49,679 - __main__ - INFO - 
+📊 CREATING FAILING PANEL DATA
+2025-09-22 12:16:49,679 - __main__ - INFO - ============================================================
+2025-09-22 12:16:49,679 - __main__ - INFO - ⚠️  Real system generated overlay data - simulating failure instead
+2025-09-22 12:16:49,679 - __main__ - INFO - 📊 FAILING PANEL DATA STRUCTURE:
+2025-09-22 12:16:49,679 - __main__ - INFO -    Reason: Simulated EMA calculation failure
+2025-09-22 12:16:49,679 - __main__ - INFO -    Data keys: ['Close', 'metadata']
+2025-09-22 12:16:49,679 - __main__ - INFO -    Has EMA_ema column: False
+2025-09-22 12:16:49,680 - __main__ - INFO -    Has any overlay data: False
+2025-09-22 12:16:49,680 - __main__ - INFO -    Close data points: 61
+2025-09-22 12:16:49,680 - __main__ - INFO -    Close range: $248.85 - $367.47
+2025-09-22 12:16:49,680 - __main__ - INFO - 
+📋 CHART ANALYSIS
+2025-09-22 12:16:49,680 - __main__ - INFO - ============================================================
+2025-09-22 12:16:49,680 - __main__ - INFO - 🎯 EXPECTED CHART BEHAVIOR:
+2025-09-22 12:16:49,680 - __main__ - INFO -    Based on missing EMA_ema column:
+2025-09-22 12:16:49,680 - __main__ - INFO -    1. Only 'Close' data series is available
+2025-09-22 12:16:49,680 - __main__ - INFO -    2. plot_overlay_chart() will only find the main series
+2025-09-22 12:16:49,680 - __main__ - INFO -    3. No indicator columns will be detected
+2025-09-22 12:16:49,680 - __main__ - INFO -    4. Only one line will be plotted: QQQ (blue -> red in overlay mode)
+2025-09-22 12:16:49,680 - __main__ - INFO -    5. Legend will show only: 'QQQ'
+2025-09-22 12:16:49,680 - __main__ - INFO -    6. No EMA overlay line or label
+2025-09-22 12:16:49,680 - __main__ - INFO - 
+🔍 BUNDLED FORMAT PROCESSING:
+2025-09-22 12:16:49,680 - __main__ - INFO -    Data source: 'QQQ + EMA(QQQ, 10)'
+2025-09-22 12:16:49,680 - __main__ - INFO -    is_bundled_format() will return: True
+2025-09-22 12:16:49,680 - __main__ - INFO -    extract_base_ticker_from_bundled() will return: 'QQQ'
+2025-09-22 12:16:49,680 - __main__ - INFO -    extract_overlay_info_from_bundled() will return: ['EMA(10)']
+2025-09-22 12:16:49,680 - __main__ - INFO -    But no EMA_ema column exists in data!
+2025-09-22 12:16:49,680 - __main__ - INFO - 
+🎨 OVERLAY DETECTION LOGIC:
+2025-09-22 12:16:49,680 - __main__ - INFO -    Enhanced overlay detection will scan for indicator columns
+2025-09-22 12:16:49,680 - __main__ - INFO -    is_indicator_column() will check each column
+2025-09-22 12:16:49,680 - __main__ - INFO -    Only 'Close' and 'metadata' exist
+2025-09-22 12:16:49,680 - __main__ - INFO -    'Close' is not an indicator -> no overlays plotted
+2025-09-22 12:16:49,680 - __main__ - INFO -    Result: Single line chart
+2025-09-22 12:16:49,680 - __main__ - INFO - 
+✅ CONCLUSION:
+2025-09-22 12:16:49,680 - __main__ - INFO -    This perfectly reproduces the user's issue:
+2025-09-22 12:16:49,680 - __main__ - INFO -    'only a red line, a red label that says QQQ'
+2025-09-22 12:16:49,680 - __main__ - INFO - 
+🎨 GENERATING REPRODUCTION CHART
+2025-09-22 12:16:49,681 - __main__ - INFO - ============================================================
+2025-09-22 12:16:49,681 - __main__ - INFO - 📊 Panel structure:
+2025-09-22 12:16:49,681 - __main__ - INFO -    Panel: User_Issue_Panel
+2025-09-22 12:16:49,681 - __main__ - INFO -    Data source: 'QQQ + EMA(QQQ, 10)'
+2025-09-22 12:16:49,681 - __main__ - INFO -    Is bundled: True
+2025-09-22 12:16:49,681 - __main__ - INFO -    Result keys: ['Close', 'metadata']
+2025-09-22 12:16:49,681 - __main__ - INFO - 🎯 Calling create_multi_panel_chart
+2025-09-22 12:16:49,681 - src.sustainability_ratios.sr_dashboard_generator - INFO - 🚀 FUNCTION CALL: create_multi_panel_chart()
+2025-09-22 12:16:49,681 - src.sustainability_ratios.sr_dashboard_generator - INFO -    panel_results keys: ['User_Issue_Panel']
+2025-09-22 12:16:49,681 - src.sustainability_ratios.sr_dashboard_generator - INFO -    output_path: user_issue_reproduction.png
+2025-09-22 12:16:49,681 - src.sustainability_ratios.sr_dashboard_generator - INFO -    chart_title: USER ISSUE REPRODUCTION: Only QQQ Line (No EMA Overlay)
+2025-09-22 12:16:49,783 - src.sustainability_ratios.sr_dashboard_generator - INFO - 🚀 CALLING plot_panel for 'User_Issue_Panel' (panel 1/1)
+2025-09-22 12:16:49,783 - src.sustainability_ratios.sr_dashboard_generator - INFO - 
+🎯 plot_panel CALLED:
+2025-09-22 12:16:49,784 - src.sustainability_ratios.sr_dashboard_generator - INFO -    panel_name: 'User_Issue_Panel'
+2025-09-22 12:16:49,784 - src.sustainability_ratios.sr_dashboard_generator - INFO -    data_source: 'QQQ + EMA(QQQ, 10)'
+2025-09-22 12:16:49,784 - src.sustainability_ratios.sr_dashboard_generator - INFO -    indicator: 'EMA(QQQ, 10)'
+2025-09-22 12:16:49,784 - src.sustainability_ratios.sr_dashboard_generator - INFO -    panel_data keys: ['data_source', 'indicator', 'result', 'is_bundled', 'bundled_components']
+2025-09-22 12:16:49,784 - src.sustainability_ratios.sr_dashboard_generator - INFO -    result keys: ['Close', 'metadata']
+2025-09-22 12:16:49,784 - src.sustainability_ratios.sr_dashboard_generator - INFO -    is_bundled in panel_data: True
+2025-09-22 12:16:49,784 - src.sustainability_ratios.sr_dashboard_generator - INFO - 📊 BUNDLED FORMAT CHECK:
+2025-09-22 12:16:49,784 - src.sustainability_ratios.sr_dashboard_generator - INFO -    is_bundled_format() result: True
+2025-09-22 12:16:49,784 - src.sustainability_ratios.sr_dashboard_generator - INFO - 🔍 MAIN SERIES DETECTION:
+2025-09-22 12:16:49,784 - src.sustainability_ratios.sr_dashboard_generator - INFO -    Using BUNDLED format logic
+2025-09-22 12:16:49,784 - src.sustainability_ratios.sr_dashboard_generator - INFO -    base_ticker: 'QQQ'
+2025-09-22 12:16:49,784 - src.sustainability_ratios.sr_dashboard_generator - INFO -    ✅ Found Close price: 'Close'
+2025-09-22 12:16:49,784 - src.sustainability_ratios.sr_dashboard_generator - INFO - 🚀 CALLING plot_overlay_chart (chart_type='overlay', indicator='EMA(QQQ, 10)')
+2025-09-22 12:16:49,784 - src.sustainability_ratios.sr_dashboard_generator - INFO - 🎯 plot_overlay_chart CALLED:
+2025-09-22 12:16:49,784 - src.sustainability_ratios.sr_dashboard_generator - INFO -    data_source: 'QQQ + EMA(QQQ, 10)'
+2025-09-22 12:16:49,784 - src.sustainability_ratios.sr_dashboard_generator - INFO -    indicator: 'EMA(QQQ, 10)'
+2025-09-22 12:16:49,784 - src.sustainability_ratios.sr_dashboard_generator - INFO -    is_bundled: True
+2025-09-22 12:16:49,784 - src.sustainability_ratios.sr_dashboard_generator - INFO -    result keys: ['Close', 'metadata']
+2025-09-22 12:16:49,784 - src.sustainability_ratios.sr_dashboard_generator - INFO -    main_series.name: Close
+2025-09-22 12:16:49,784 - src.sustainability_ratios.sr_dashboard_generator - INFO -    main_series length: 61
+2025-09-22 12:16:49,784 - src.sustainability_ratios.sr_dashboard_generator - INFO - 📊 BUNDLED FORMAT DETECTED - Using enhanced logic
+2025-09-22 12:16:49,784 - src.sustainability_ratios.sr_dashboard_generator - INFO -    base_ticker: 'QQQ'
+2025-09-22 12:16:49,784 - src.sustainability_ratios.sr_dashboard_generator - INFO -    main_label: 'QQQ'
+2025-09-22 12:16:49,784 - src.sustainability_ratios.sr_dashboard_generator - INFO -    expected_overlays: ['EMA(10)']
+2025-09-22 12:16:49,784 - src.sustainability_ratios.sr_dashboard_generator - INFO - 🎨 PLOTTING MAIN SERIES:
+2025-09-22 12:16:49,784 - src.sustainability_ratios.sr_dashboard_generator - INFO -    label: 'QQQ'
+2025-09-22 12:16:49,784 - src.sustainability_ratios.sr_dashboard_generator - INFO -    color: blue (default)
+2025-09-22 12:16:49,784 - src.sustainability_ratios.sr_dashboard_generator - INFO -    data type: <class 'pandas.core.series.Series'>
+2025-09-22 12:16:49,784 - src.sustainability_ratios.sr_dashboard_generator - INFO -    data length: 61
+2025-09-22 12:16:49,784 - src.sustainability_ratios.sr_dashboard_generator - INFO -    data range: 248.85 to 367.47
+2025-09-22 12:16:49,784 - src.sustainability_ratios.sr_dashboard_generator - INFO -    data index type: <class 'pandas.core.indexes.datetimes.DatetimeIndex'>
+2025-09-22 12:16:49,785 - src.sustainability_ratios.sr_dashboard_generator - INFO -    first 3 values: [353.47699907107864, 355.449692642755, 365.84572971084464]
+2025-09-22 12:16:49,785 - src.sustainability_ratios.sr_dashboard_generator - INFO -    last 3 values: [251.67578191281385, 259.6590223594189, 265.5637589859788]
+2025-09-22 12:16:49,785 - src.sustainability_ratios.sr_dashboard_generator - INFO -    has NaN values: False
+2025-09-22 12:16:49,785 - src.sustainability_ratios.sr_dashboard_generator - INFO -    NaN count: 0
+2025-09-22 12:16:49,786 - src.sustainability_ratios.sr_dashboard_generator - INFO - ✅ Main series plotted: 1 lines created
+2025-09-22 12:16:49,786 - src.sustainability_ratios.sr_dashboard_generator - INFO - 🔍 OVERLAY DETECTION STARTING:
+2025-09-22 12:16:49,786 - src.sustainability_ratios.sr_dashboard_generator - INFO -    is_bundled: True
+2025-09-22 12:16:49,786 - src.sustainability_ratios.sr_dashboard_generator - INFO - 📊 ENHANCED OVERLAY DETECTION (Bundled Format)
+2025-09-22 12:16:49,786 - src.sustainability_ratios.sr_dashboard_generator - INFO - 
+   🔎 Checking column: 'Close'
+2025-09-22 12:16:49,786 - src.sustainability_ratios.sr_dashboard_generator - INFO -       is_metadata: False
+2025-09-22 12:16:49,786 - src.sustainability_ratios.sr_dashboard_generator - INFO -       is_series: True
+2025-09-22 12:16:49,786 - src.sustainability_ratios.sr_dashboard_generator - INFO -       is_indicator_column: False
+2025-09-22 12:16:49,786 - src.sustainability_ratios.sr_dashboard_generator - INFO -       key != main_series.name: False ('Close' != 'Close')
+2025-09-22 12:16:49,786 - src.sustainability_ratios.sr_dashboard_generator - INFO -       ❌ Failed basic checks
+2025-09-22 12:16:49,786 - src.sustainability_ratios.sr_dashboard_generator - INFO - 
+   🔎 Checking column: 'metadata'
+2025-09-22 12:16:49,787 - src.sustainability_ratios.sr_dashboard_generator - INFO -       ❌ Skipped: metadata or not series
+2025-09-22 12:16:49,787 - src.sustainability_ratios.sr_dashboard_generator - INFO - 
+🎨 FINAL CHART ASSEMBLY:
+2025-09-22 12:16:49,787 - src.sustainability_ratios.sr_dashboard_generator - INFO -    Total overlays plotted: 0
+2025-09-22 12:16:49,788 - src.sustainability_ratios.sr_dashboard_generator - INFO - ✅ Legend created successfully
+2025-09-22 12:16:49,788 - src.sustainability_ratios.sr_dashboard_generator - INFO - ✅ Grid enabled successfully
+2025-09-22 12:16:49,788 - src.sustainability_ratios.sr_dashboard_generator - INFO - ✅ Chart info retrieval successful
+2025-09-22 12:16:49,788 - src.sustainability_ratios.sr_dashboard_generator - INFO - 📊 FINAL CHART RESULTS:
+2025-09-22 12:16:49,788 - src.sustainability_ratios.sr_dashboard_generator - INFO -    Total lines on chart: 1
+2025-09-22 12:16:49,789 - src.sustainability_ratios.sr_dashboard_generator - INFO -    Legend labels: ['QQQ']
+2025-09-22 12:16:49,789 - src.sustainability_ratios.sr_dashboard_generator - INFO -    Legend visible: True
+2025-09-22 12:16:49,789 - src.sustainability_ratios.sr_dashboard_generator - INFO -    Legend entries count: 1
+2025-09-22 12:16:49,789 - src.sustainability_ratios.sr_dashboard_generator - INFO -    Line 1: 'QQQ'
+2025-09-22 12:16:49,789 - src.sustainability_ratios.sr_dashboard_generator - INFO -      color: blue
+2025-09-22 12:16:49,789 - src.sustainability_ratios.sr_dashboard_generator - INFO -      linewidth: 1.5
+2025-09-22 12:16:49,789 - src.sustainability_ratios.sr_dashboard_generator - INFO -      alpha: 0.8
+2025-09-22 12:16:49,789 - src.sustainability_ratios.sr_dashboard_generator - INFO -      visible: True
+2025-09-22 12:16:49,789 - src.sustainability_ratios.sr_dashboard_generator - INFO -      data points: 61
+2025-09-22 12:16:49,789 - src.sustainability_ratios.sr_dashboard_generator - INFO - ✅ plot_overlay_chart COMPLETED SUCCESSFULLY
+2025-09-22 12:16:50,392 - src.sustainability_ratios.sr_dashboard_generator - INFO - Created multi-panel chart: user_issue_reproduction.png
+2025-09-22 12:16:50,392 - __main__ - INFO - 📊 CHART GENERATION RESULTS:
+2025-09-22 12:16:50,392 - __main__ - INFO -    Chart generated: True
+2025-09-22 12:16:50,392 - __main__ - INFO -    Output path: user_issue_reproduction.png
+2025-09-22 12:16:50,392 - __main__ - INFO -    File exists: True
+2025-09-22 12:16:50,392 - __main__ - INFO -    File size: 231173 bytes
+2025-09-22 12:16:50,392 - __main__ - INFO -    ✅ SUCCESS: Chart should show only QQQ line with QQQ label
+2025-09-22 12:16:50,392 - __main__ - INFO -    Expected result: 'only a red line, a red label that says QQQ'
+2025-09-22 12:16:50,392 - __main__ - INFO - 
+================================================================================
+2025-09-22 12:16:50,392 - __main__ - INFO - REPRODUCTION TEST COMPLETE
+2025-09-22 12:16:50,392 - __main__ - INFO - ================================================================================
+2025-09-22 12:16:50,392 - __main__ - INFO - ✅ SUCCESS: User issue reproduced
+2025-09-22 12:16:50,393 - __main__ - INFO - 📈 Chart saved: user_issue_reproduction.png
+2025-09-22 12:16:50,393 - __main__ - INFO - 📄 Log saved: ema_failure_reproduction.log
+2025-09-22 12:16:50,393 - __main__ - INFO - 
+2025-09-22 12:16:50,393 - __main__ - INFO - 🎯 Expected chart content:
+2025-09-22 12:16:50,393 - __main__ - INFO -    - Single line (QQQ price data)
+2025-09-22 12:16:50,393 - __main__ - INFO -    - Single legend entry: 'QQQ'
+2025-09-22 12:16:50,393 - __main__ - INFO -    - No EMA overlay or EMA label
+2025-09-22 12:16:50,393 - __main__ - INFO -    - This matches: 'only a red line, a red label that says QQQ'
+2025-09-22 12:16:50,393 - __main__ - INFO - ================================================================================

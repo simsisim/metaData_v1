@@ -1,0 +1,3 @@
+timeframe,Panel_1,Panel_2,Panel_1_index,Panel_2_index
+daily,QQQ,SPY,"PPO(10,20,30)_for_(QQQ)","RSI(14)_for_(SPY)"
+daily,QQQ,SPY,"PPO(QQQ,10,20,30)","RSI(SPY,14)"

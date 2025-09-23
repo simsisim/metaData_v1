@@ -1,0 +1,159 @@
+2025-09-22 12:06:31,807 - __main__ - INFO - ================================================================================
+2025-09-22 12:06:31,807 - __main__ - INFO - DEBUG CHART GENERATION TEST STARTING
+2025-09-22 12:06:31,807 - __main__ - INFO - ================================================================================
+2025-09-22 12:06:31,807 - __main__ - INFO - 🧪 STARTING DEBUG CHART GENERATION TEST
+2025-09-22 12:06:31,807 - __main__ - INFO - 🚀 Creating test data for bundled format: 'QQQ + EMA(QQQ, 10)'
+2025-09-22 12:06:31,808 - __main__ - INFO - ✅ Test data created:
+2025-09-22 12:06:31,808 - __main__ - INFO -    Date range: 2024-01-01 00:00:00 to 2024-01-10 00:00:00
+2025-09-22 12:06:31,808 - __main__ - INFO -    Data keys: ['Close', 'EMA_ema', 'EMA_price', 'EMA_signals', 'metadata']
+2025-09-22 12:06:31,808 - __main__ - INFO -    Close price range: 99.93 to 101.99
+2025-09-22 12:06:31,808 - __main__ - INFO -    EMA range: 99.99 to 101.20
+2025-09-22 12:06:31,808 - __main__ - INFO - 📊 Panel results structure:
+2025-09-22 12:06:31,808 - __main__ - INFO -    Panels: ['Panel_1']
+2025-09-22 12:06:31,808 - __main__ - INFO -    Panel_1:
+2025-09-22 12:06:31,808 - __main__ - INFO -      data_source: QQQ + EMA(QQQ, 10)
+2025-09-22 12:06:31,808 - __main__ - INFO -      indicator: EMA(QQQ, 10)
+2025-09-22 12:06:31,808 - __main__ - INFO -      is_bundled: True
+2025-09-22 12:06:31,808 - __main__ - INFO -      result keys: ['Close', 'EMA_ema', 'EMA_price', 'EMA_signals', 'metadata']
+2025-09-22 12:06:31,808 - __main__ - INFO - 🎯 CALLING create_multi_panel_chart with debug data
+2025-09-22 12:06:31,808 - __main__ - INFO -    output_path: test_debug_enhanced_chart.png
+2025-09-22 12:06:31,808 - src.sustainability_ratios.sr_dashboard_generator - INFO - 🚀 FUNCTION CALL: create_multi_panel_chart()
+2025-09-22 12:06:31,808 - src.sustainability_ratios.sr_dashboard_generator - INFO -    panel_results keys: ['Panel_1']
+2025-09-22 12:06:31,808 - src.sustainability_ratios.sr_dashboard_generator - INFO -    output_path: test_debug_enhanced_chart.png
+2025-09-22 12:06:31,808 - src.sustainability_ratios.sr_dashboard_generator - INFO -    chart_title: Debug Test: QQQ + EMA(10)
+2025-09-22 12:06:31,906 - src.sustainability_ratios.sr_dashboard_generator - INFO - 🚀 CALLING plot_panel for 'Panel_1' (panel 1/1)
+2025-09-22 12:06:31,906 - src.sustainability_ratios.sr_dashboard_generator - INFO - 
+🎯 plot_panel CALLED:
+2025-09-22 12:06:31,906 - src.sustainability_ratios.sr_dashboard_generator - INFO -    panel_name: 'Panel_1'
+2025-09-22 12:06:31,906 - src.sustainability_ratios.sr_dashboard_generator - INFO -    data_source: 'QQQ + EMA(QQQ, 10)'
+2025-09-22 12:06:31,906 - src.sustainability_ratios.sr_dashboard_generator - INFO -    indicator: 'EMA(QQQ, 10)'
+2025-09-22 12:06:31,906 - src.sustainability_ratios.sr_dashboard_generator - INFO -    panel_data keys: ['data_source', 'indicator', 'result', 'is_bundled', 'metadata']
+2025-09-22 12:06:31,906 - src.sustainability_ratios.sr_dashboard_generator - INFO -    result keys: ['Close', 'EMA_ema', 'EMA_price', 'EMA_signals', 'metadata']
+2025-09-22 12:06:31,906 - src.sustainability_ratios.sr_dashboard_generator - INFO -    is_bundled in panel_data: True
+2025-09-22 12:06:31,906 - src.sustainability_ratios.sr_dashboard_generator - INFO - 📊 BUNDLED FORMAT CHECK:
+2025-09-22 12:06:31,906 - src.sustainability_ratios.sr_dashboard_generator - INFO -    is_bundled_format() result: True
+2025-09-22 12:06:31,906 - src.sustainability_ratios.sr_dashboard_generator - INFO - 🔍 MAIN SERIES DETECTION:
+2025-09-22 12:06:31,906 - src.sustainability_ratios.sr_dashboard_generator - INFO -    Using BUNDLED format logic
+2025-09-22 12:06:31,906 - src.sustainability_ratios.sr_dashboard_generator - INFO -    base_ticker: 'QQQ'
+2025-09-22 12:06:31,906 - src.sustainability_ratios.sr_dashboard_generator - INFO -    ✅ Found Close price: 'Close'
+2025-09-22 12:06:31,906 - src.sustainability_ratios.sr_dashboard_generator - INFO - 🚀 CALLING plot_overlay_chart (chart_type='overlay', indicator='EMA(QQQ, 10)')
+2025-09-22 12:06:31,906 - src.sustainability_ratios.sr_dashboard_generator - INFO - 🎯 plot_overlay_chart CALLED:
+2025-09-22 12:06:31,907 - src.sustainability_ratios.sr_dashboard_generator - INFO -    data_source: 'QQQ + EMA(QQQ, 10)'
+2025-09-22 12:06:31,907 - src.sustainability_ratios.sr_dashboard_generator - INFO -    indicator: 'EMA(QQQ, 10)'
+2025-09-22 12:06:31,907 - src.sustainability_ratios.sr_dashboard_generator - INFO -    is_bundled: True
+2025-09-22 12:06:31,907 - src.sustainability_ratios.sr_dashboard_generator - INFO -    result keys: ['Close', 'EMA_ema', 'EMA_price', 'EMA_signals', 'metadata']
+2025-09-22 12:06:31,907 - src.sustainability_ratios.sr_dashboard_generator - INFO -    main_series.name: Close
+2025-09-22 12:06:31,907 - src.sustainability_ratios.sr_dashboard_generator - INFO -    main_series length: 10
+2025-09-22 12:06:31,907 - src.sustainability_ratios.sr_dashboard_generator - INFO - 📊 BUNDLED FORMAT DETECTED - Using enhanced logic
+2025-09-22 12:06:31,907 - src.sustainability_ratios.sr_dashboard_generator - INFO -    base_ticker: 'QQQ'
+2025-09-22 12:06:31,907 - src.sustainability_ratios.sr_dashboard_generator - INFO -    main_label: 'QQQ'
+2025-09-22 12:06:31,907 - src.sustainability_ratios.sr_dashboard_generator - INFO -    expected_overlays: ['EMA(10)']
+2025-09-22 12:06:31,907 - src.sustainability_ratios.sr_dashboard_generator - INFO - 🎨 PLOTTING MAIN SERIES:
+2025-09-22 12:06:31,907 - src.sustainability_ratios.sr_dashboard_generator - INFO -    label: 'QQQ'
+2025-09-22 12:06:31,907 - src.sustainability_ratios.sr_dashboard_generator - INFO -    color: blue (default)
+2025-09-22 12:06:31,907 - src.sustainability_ratios.sr_dashboard_generator - INFO -    data type: <class 'pandas.core.series.Series'>
+2025-09-22 12:06:31,907 - src.sustainability_ratios.sr_dashboard_generator - INFO -    data length: 10
+2025-09-22 12:06:31,907 - src.sustainability_ratios.sr_dashboard_generator - INFO -    data range: 99.93 to 101.99
+2025-09-22 12:06:31,907 - src.sustainability_ratios.sr_dashboard_generator - INFO -    data index type: <class 'pandas.core.indexes.datetimes.DatetimeIndex'>
+2025-09-22 12:06:31,907 - src.sustainability_ratios.sr_dashboard_generator - INFO -    first 3 values: [100.0, 99.93086784941441, 100.25471211846475]
+2025-09-22 12:06:31,907 - src.sustainability_ratios.sr_dashboard_generator - INFO -    last 3 values: [101.95540565316264, 101.72066846019517, 101.99194848198815]
+2025-09-22 12:06:31,907 - src.sustainability_ratios.sr_dashboard_generator - INFO -    has NaN values: False
+2025-09-22 12:06:31,907 - src.sustainability_ratios.sr_dashboard_generator - INFO -    NaN count: 0
+2025-09-22 12:06:31,908 - src.sustainability_ratios.sr_dashboard_generator - INFO - ✅ Main series plotted: 1 lines created
+2025-09-22 12:06:31,908 - src.sustainability_ratios.sr_dashboard_generator - INFO - 🔍 OVERLAY DETECTION STARTING:
+2025-09-22 12:06:31,908 - src.sustainability_ratios.sr_dashboard_generator - INFO -    is_bundled: True
+2025-09-22 12:06:31,908 - src.sustainability_ratios.sr_dashboard_generator - INFO - 📊 ENHANCED OVERLAY DETECTION (Bundled Format)
+2025-09-22 12:06:31,908 - src.sustainability_ratios.sr_dashboard_generator - INFO - 
+   🔎 Checking column: 'Close'
+2025-09-22 12:06:31,908 - src.sustainability_ratios.sr_dashboard_generator - INFO -       is_metadata: False
+2025-09-22 12:06:31,908 - src.sustainability_ratios.sr_dashboard_generator - INFO -       is_series: True
+2025-09-22 12:06:31,908 - src.sustainability_ratios.sr_dashboard_generator - INFO -       is_indicator_column: False
+2025-09-22 12:06:31,908 - src.sustainability_ratios.sr_dashboard_generator - INFO -       key != main_series.name: False ('Close' != 'Close')
+2025-09-22 12:06:31,908 - src.sustainability_ratios.sr_dashboard_generator - INFO -       ❌ Failed basic checks
+2025-09-22 12:06:31,909 - src.sustainability_ratios.sr_dashboard_generator - INFO - 
+   🔎 Checking column: 'EMA_ema'
+2025-09-22 12:06:31,909 - src.sustainability_ratios.sr_dashboard_generator - INFO -       is_metadata: False
+2025-09-22 12:06:31,909 - src.sustainability_ratios.sr_dashboard_generator - INFO -       is_series: True
+2025-09-22 12:06:31,909 - src.sustainability_ratios.sr_dashboard_generator - INFO -       is_indicator_column: True
+2025-09-22 12:06:31,909 - src.sustainability_ratios.sr_dashboard_generator - INFO -       key != main_series.name: True ('EMA_ema' != 'Close')
+2025-09-22 12:06:31,909 - src.sustainability_ratios.sr_dashboard_generator - INFO -       ✅ Passed basic checks
+2025-09-22 12:06:31,909 - src.sustainability_ratios.sr_dashboard_generator - INFO -       overlay_label: 'EMA(10)'
+2025-09-22 12:06:31,909 - src.sustainability_ratios.sr_dashboard_generator - INFO -       indicator_type: 'EMA'
+2025-09-22 12:06:31,909 - src.sustainability_ratios.sr_dashboard_generator - INFO -       plotted_indicators: set()
+2025-09-22 12:06:31,909 - src.sustainability_ratios.sr_dashboard_generator - INFO -       ends_with_ema: True
+2025-09-22 12:06:31,909 - src.sustainability_ratios.sr_dashboard_generator - INFO -       ends_with_sma: False
+2025-09-22 12:06:31,909 - src.sustainability_ratios.sr_dashboard_generator - INFO -       ends_with_ppo: False
+2025-09-22 12:06:31,909 - src.sustainability_ratios.sr_dashboard_generator - INFO -       ends_with_rsi: False
+2025-09-22 12:06:31,909 - src.sustainability_ratios.sr_dashboard_generator - INFO -       ends_with_macd: False
+2025-09-22 12:06:31,909 - src.sustainability_ratios.sr_dashboard_generator - INFO -       equals_type: False
+2025-09-22 12:06:31,909 - src.sustainability_ratios.sr_dashboard_generator - INFO -       ✅ PRIMARY INDICATOR - WILL PLOT
+2025-09-22 12:06:31,909 - src.sustainability_ratios.sr_dashboard_generator - INFO -       🎨 PLOTTING OVERLAY:
+2025-09-22 12:06:31,909 - src.sustainability_ratios.sr_dashboard_generator - INFO -          label: 'EMA(10)'
+2025-09-22 12:06:31,909 - src.sustainability_ratios.sr_dashboard_generator - INFO -          color: red
+2025-09-22 12:06:31,909 - src.sustainability_ratios.sr_dashboard_generator - INFO -          data type: <class 'pandas.core.series.Series'>
+2025-09-22 12:06:31,909 - src.sustainability_ratios.sr_dashboard_generator - INFO -          data length: 10
+2025-09-22 12:06:31,909 - src.sustainability_ratios.sr_dashboard_generator - INFO -          data range: 99.99 to 101.20
+2025-09-22 12:06:31,909 - src.sustainability_ratios.sr_dashboard_generator - INFO -          data index type: <class 'pandas.core.indexes.datetimes.DatetimeIndex'>
+2025-09-22 12:06:31,909 - src.sustainability_ratios.sr_dashboard_generator - INFO -          first 3 values: [100.0, 99.98743051807534, 100.03602717269159]
+2025-09-22 12:06:31,909 - src.sustainability_ratios.sr_dashboard_generator - INFO -          last 3 values: [100.87007183234594, 101.02472576468216, 101.20058444055597]
+2025-09-22 12:06:31,909 - src.sustainability_ratios.sr_dashboard_generator - INFO -          has NaN values: False
+2025-09-22 12:06:31,909 - src.sustainability_ratios.sr_dashboard_generator - INFO -          NaN count: 0
+2025-09-22 12:06:31,909 - src.sustainability_ratios.sr_dashboard_generator - INFO -          overlay #1
+2025-09-22 12:06:31,910 - src.sustainability_ratios.sr_dashboard_generator - INFO -          ✅ Overlay plotted: 1 lines created
+2025-09-22 12:06:31,910 - src.sustainability_ratios.sr_dashboard_generator - INFO - 
+   🔎 Checking column: 'EMA_price'
+2025-09-22 12:06:31,910 - src.sustainability_ratios.sr_dashboard_generator - INFO -       is_metadata: False
+2025-09-22 12:06:31,910 - src.sustainability_ratios.sr_dashboard_generator - INFO -       is_series: True
+2025-09-22 12:06:31,910 - src.sustainability_ratios.sr_dashboard_generator - INFO -       is_indicator_column: True
+2025-09-22 12:06:31,910 - src.sustainability_ratios.sr_dashboard_generator - INFO -       key != main_series.name: True ('EMA_price' != 'Close')
+2025-09-22 12:06:31,910 - src.sustainability_ratios.sr_dashboard_generator - INFO -       ✅ Passed basic checks
+2025-09-22 12:06:31,910 - src.sustainability_ratios.sr_dashboard_generator - INFO -       overlay_label: 'EMA(10)'
+2025-09-22 12:06:31,910 - src.sustainability_ratios.sr_dashboard_generator - INFO -       indicator_type: 'EMA'
+2025-09-22 12:06:31,910 - src.sustainability_ratios.sr_dashboard_generator - INFO -       plotted_indicators: {'EMA'}
+2025-09-22 12:06:31,910 - src.sustainability_ratios.sr_dashboard_generator - INFO -       ❌ Already plotted indicator type 'EMA'
+2025-09-22 12:06:31,910 - src.sustainability_ratios.sr_dashboard_generator - INFO - 
+   🔎 Checking column: 'EMA_signals'
+2025-09-22 12:06:31,910 - src.sustainability_ratios.sr_dashboard_generator - INFO -       is_metadata: False
+2025-09-22 12:06:31,910 - src.sustainability_ratios.sr_dashboard_generator - INFO -       is_series: True
+2025-09-22 12:06:31,910 - src.sustainability_ratios.sr_dashboard_generator - INFO -       is_indicator_column: True
+2025-09-22 12:06:31,910 - src.sustainability_ratios.sr_dashboard_generator - INFO -       key != main_series.name: True ('EMA_signals' != 'Close')
+2025-09-22 12:06:31,910 - src.sustainability_ratios.sr_dashboard_generator - INFO -       ✅ Passed basic checks
+2025-09-22 12:06:31,910 - src.sustainability_ratios.sr_dashboard_generator - INFO -       overlay_label: 'EMA(10)'
+2025-09-22 12:06:31,910 - src.sustainability_ratios.sr_dashboard_generator - INFO -       indicator_type: 'EMA'
+2025-09-22 12:06:31,910 - src.sustainability_ratios.sr_dashboard_generator - INFO -       plotted_indicators: {'EMA'}
+2025-09-22 12:06:31,910 - src.sustainability_ratios.sr_dashboard_generator - INFO -       ❌ Already plotted indicator type 'EMA'
+2025-09-22 12:06:31,910 - src.sustainability_ratios.sr_dashboard_generator - INFO - 
+   🔎 Checking column: 'metadata'
+2025-09-22 12:06:31,910 - src.sustainability_ratios.sr_dashboard_generator - INFO -       ❌ Skipped: metadata or not series
+2025-09-22 12:06:31,910 - src.sustainability_ratios.sr_dashboard_generator - INFO - 
+🎨 FINAL CHART ASSEMBLY:
+2025-09-22 12:06:31,910 - src.sustainability_ratios.sr_dashboard_generator - INFO -    Total overlays plotted: 1
+2025-09-22 12:06:31,912 - src.sustainability_ratios.sr_dashboard_generator - INFO - ✅ Legend created successfully
+2025-09-22 12:06:31,912 - src.sustainability_ratios.sr_dashboard_generator - INFO - ✅ Grid enabled successfully
+2025-09-22 12:06:31,912 - src.sustainability_ratios.sr_dashboard_generator - INFO - ✅ Chart info retrieval successful
+2025-09-22 12:06:31,912 - src.sustainability_ratios.sr_dashboard_generator - INFO - 📊 FINAL CHART RESULTS:
+2025-09-22 12:06:31,912 - src.sustainability_ratios.sr_dashboard_generator - INFO -    Total lines on chart: 2
+2025-09-22 12:06:31,912 - src.sustainability_ratios.sr_dashboard_generator - INFO -    Legend labels: ['QQQ', 'EMA(10)']
+2025-09-22 12:06:31,912 - src.sustainability_ratios.sr_dashboard_generator - INFO -    Legend visible: True
+2025-09-22 12:06:31,912 - src.sustainability_ratios.sr_dashboard_generator - INFO -    Legend entries count: 2
+2025-09-22 12:06:31,912 - src.sustainability_ratios.sr_dashboard_generator - INFO -    Line 1: 'QQQ'
+2025-09-22 12:06:31,912 - src.sustainability_ratios.sr_dashboard_generator - INFO -      color: blue
+2025-09-22 12:06:31,912 - src.sustainability_ratios.sr_dashboard_generator - INFO -      linewidth: 1.5
+2025-09-22 12:06:31,912 - src.sustainability_ratios.sr_dashboard_generator - INFO -      alpha: 0.8
+2025-09-22 12:06:31,912 - src.sustainability_ratios.sr_dashboard_generator - INFO -      visible: True
+2025-09-22 12:06:31,912 - src.sustainability_ratios.sr_dashboard_generator - INFO -      data points: 10
+2025-09-22 12:06:31,912 - src.sustainability_ratios.sr_dashboard_generator - INFO -    Line 2: 'EMA(10)'
+2025-09-22 12:06:31,912 - src.sustainability_ratios.sr_dashboard_generator - INFO -      color: red
+2025-09-22 12:06:31,912 - src.sustainability_ratios.sr_dashboard_generator - INFO -      linewidth: 1.0
+2025-09-22 12:06:31,912 - src.sustainability_ratios.sr_dashboard_generator - INFO -      alpha: 0.7
+2025-09-22 12:06:31,912 - src.sustainability_ratios.sr_dashboard_generator - INFO -      visible: True
+2025-09-22 12:06:31,912 - src.sustainability_ratios.sr_dashboard_generator - INFO -      data points: 10
+2025-09-22 12:06:31,912 - src.sustainability_ratios.sr_dashboard_generator - INFO - ✅ plot_overlay_chart COMPLETED SUCCESSFULLY
+2025-09-22 12:06:32,493 - src.sustainability_ratios.sr_dashboard_generator - INFO - Created multi-panel chart: test_debug_enhanced_chart.png
+2025-09-22 12:06:32,493 - __main__ - INFO - ✅ DEBUG CHART GENERATION SUCCESSFUL!
+2025-09-22 12:06:32,493 - __main__ - INFO -    Chart saved to: test_debug_enhanced_chart.png
+2025-09-22 12:06:32,493 - __main__ - INFO -    File exists: True
+2025-09-22 12:06:32,493 - __main__ - INFO -    File size: 215526 bytes
+2025-09-22 12:06:32,493 - __main__ - INFO - ================================================================================
+2025-09-22 12:06:32,493 - __main__ - INFO - DEBUG CHART GENERATION TEST COMPLETED
+2025-09-22 12:06:32,493 - __main__ - INFO - ================================================================================

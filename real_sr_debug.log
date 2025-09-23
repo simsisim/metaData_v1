@@ -1,0 +1,385 @@
+2025-09-22 12:24:14,878 - __main__ - INFO - STARTING REAL SR DEBUG TEST
+2025-09-22 12:24:14,878 - __main__ - INFO - ================================================================================
+2025-09-22 12:24:14,878 - __main__ - INFO - TESTING REAL SR CONFIGURATION WITH ENHANCED DEBUG LOGGING
+2025-09-22 12:24:14,878 - __main__ - INFO - ================================================================================
+2025-09-22 12:24:15,739 - __main__ - INFO - 🚀 Creating realistic QQQ test data
+2025-09-22 12:24:15,741 - __main__ - INFO - ✅ Created realistic data:
+2025-09-22 12:24:15,741 - __main__ - INFO -    Date range: 2024-01-01 00:00:00 to 2024-01-30 00:00:00
+2025-09-22 12:24:15,741 - __main__ - INFO -    Data points: 30
+2025-09-22 12:24:15,741 - __main__ - INFO -    Columns: ['Open', 'High', 'Low', 'Close', 'Volume']
+2025-09-22 12:24:15,741 - __main__ - INFO -    Price range: $320.61 to $386.11
+2025-09-22 12:24:15,741 - __main__ - INFO - 
+🎯 TESTING BUNDLED INDICATOR CALCULATION:
+2025-09-22 12:24:15,741 - __main__ - INFO -    Testing: 'EMA(QQQ, 10)' with real data structure
+2025-09-22 12:24:15,741 - __main__ - INFO -    Calling calculate_bundled_indicator:
+2025-09-22 12:24:15,741 - __main__ - INFO -      indicator_str: 'EMA(QQQ, 10)'
+2025-09-22 12:24:15,741 - __main__ - INFO -      base_ticker: 'QQQ'
+2025-09-22 12:24:15,741 - __main__ - INFO -      ticker_data keys: ['QQQ']
+2025-09-22 12:24:15,741 - src.sustainability_ratios.sr_market_data - INFO - 🚀 FUNCTION CALL: calculate_bundled_indicator()
+2025-09-22 12:24:15,741 - src.sustainability_ratios.sr_market_data - INFO -    indicator_str: 'EMA(QQQ, 10)'
+2025-09-22 12:24:15,741 - src.sustainability_ratios.sr_market_data - INFO -    base_ticker: 'QQQ'
+2025-09-22 12:24:15,741 - src.sustainability_ratios.sr_market_data - INFO -    ticker_data keys: ['QQQ']
+2025-09-22 12:24:15,741 - src.sustainability_ratios.sr_market_data - INFO - 📊 PARSING INDICATOR STRING:
+2025-09-22 12:24:15,741 - src.sustainability_ratios.sr_market_data - INFO -    parsed result: {'format_type': 'enhanced', 'prefix': None, 'position': 'main', 'indicator': 'EMA', 'parameters': {'period': 10, 'type': 'EMA'}, 'tickers': ['QQQ'], 'has_indicator': True, 'original_entry': 'EMA(QQQ, 10)', 'is_multi_ticker': False, 'original_format': 'ticker_first'}
+2025-09-22 12:24:15,741 - src.sustainability_ratios.sr_market_data - INFO - ✅ PARSING SUCCESSFUL:
+2025-09-22 12:24:15,741 - src.sustainability_ratios.sr_market_data - INFO -    indicator: 'EMA'
+2025-09-22 12:24:15,741 - src.sustainability_ratios.sr_market_data - INFO -    parameters: {'period': 10, 'type': 'EMA'}
+2025-09-22 12:24:15,741 - src.sustainability_ratios.sr_market_data - INFO -    tickers: ['QQQ']
+2025-09-22 12:24:15,741 - src.sustainability_ratios.sr_market_data - INFO - 🎯 TICKER DETERMINATION:
+2025-09-22 12:24:15,742 - src.sustainability_ratios.sr_market_data - INFO -    Using ticker from parsed: 'QQQ'
+2025-09-22 12:24:15,742 - src.sustainability_ratios.sr_market_data - INFO - ✅ TICKER DATA FOUND: 'QQQ'
+2025-09-22 12:24:15,742 - src.sustainability_ratios.sr_market_data - INFO - 📈 CALCULATING INDICATOR:
+2025-09-22 12:24:15,742 - src.sustainability_ratios.sr_market_data - INFO -    data shape: (30, 5)
+2025-09-22 12:24:15,742 - src.sustainability_ratios.sr_market_data - INFO -    data columns: ['Open', 'High', 'Low', 'Close', 'Volume']
+2025-09-22 12:24:15,742 - src.sustainability_ratios.sr_market_data - INFO -    calling calculate_indicator_for_ticker with:
+2025-09-22 12:24:15,742 - src.sustainability_ratios.sr_market_data - INFO -      indicator: 'EMA'
+2025-09-22 12:24:15,742 - src.sustainability_ratios.sr_market_data - INFO -      parameters: {'period': 10, 'type': 'EMA'}
+2025-09-22 12:24:15,742 - src.sustainability_ratios.sr_market_data - INFO -      ticker: 'QQQ'
+2025-09-22 12:24:15,742 - src.sustainability_ratios.sr_market_data - INFO - 🚀 FUNCTION CALL: calculate_indicator_for_ticker()
+2025-09-22 12:24:15,742 - src.sustainability_ratios.sr_market_data - INFO -    ticker: 'QQQ'
+2025-09-22 12:24:15,742 - src.sustainability_ratios.sr_market_data - INFO -    indicator: 'EMA'
+2025-09-22 12:24:15,742 - src.sustainability_ratios.sr_market_data - INFO -    parameters: {'period': 10, 'type': 'EMA'}
+2025-09-22 12:24:15,742 - src.sustainability_ratios.sr_market_data - INFO -    data shape: (30, 5)
+2025-09-22 12:24:15,742 - src.sustainability_ratios.sr_market_data - INFO -    data columns: ['Open', 'High', 'Low', 'Close', 'Volume']
+2025-09-22 12:24:15,742 - src.sustainability_ratios.sr_market_data - INFO - 🔧 PARAMETER CONSTRUCTION:
+2025-09-22 12:24:15,742 - src.sustainability_ratios.sr_market_data - INFO -    EMA parameters: period=10
+2025-09-22 12:24:15,742 - src.sustainability_ratios.sr_market_data - INFO -    param_string: 'EMA(10)'
+2025-09-22 12:24:15,742 - src.sustainability_ratios.sr_market_data - INFO - 📊 INDICATOR CALCULATION:
+2025-09-22 12:24:15,742 - src.sustainability_ratios.sr_market_data - INFO -    Using specialized EMA calculation function
+2025-09-22 12:24:15,742 - src.sustainability_ratios.sr_market_data - INFO -    Calling calculate_ema_for_chart(data, period=10)
+2025-09-22 12:24:15,742 - src.indicators.MAs - INFO - 🚀 FUNCTION CALL: calculate_ema_for_chart()
+2025-09-22 12:24:15,742 - src.indicators.MAs - INFO -    period: 10
+2025-09-22 12:24:15,742 - src.indicators.MAs - INFO -    price_column: 'Close'
+2025-09-22 12:24:15,742 - src.indicators.MAs - INFO -    data type: <class 'pandas.core.frame.DataFrame'>
+2025-09-22 12:24:15,742 - src.indicators.MAs - INFO -    data shape: (30, 5)
+2025-09-22 12:24:15,742 - src.indicators.MAs - INFO -    data columns: ['Open', 'High', 'Low', 'Close', 'Volume']
+2025-09-22 12:24:15,742 - src.indicators.MAs - INFO - 📊 DATA TYPE HANDLING:
+2025-09-22 12:24:15,742 - src.indicators.MAs - INFO -    Input is DataFrame
+2025-09-22 12:24:15,742 - src.indicators.MAs - INFO -    Using price column: 'Close'
+2025-09-22 12:24:15,742 - src.indicators.MAs - INFO -    Extracted price series length: 30
+2025-09-22 12:24:15,742 - src.indicators.MAs - INFO - 🔍 INPUT VALIDATION:
+2025-09-22 12:24:15,742 - src.indicators.MAs - INFO -    Required period: 10
+2025-09-22 12:24:15,742 - src.indicators.MAs - INFO -    Available data length: 30
+2025-09-22 12:24:15,742 - src.indicators.MAs - INFO - ✅ Data validation passed
+2025-09-22 12:24:15,742 - src.indicators.MAs - INFO - 📈 CALCULATING EMA:
+2025-09-22 12:24:15,742 - src.indicators.MAs - INFO -    Calling calculate_ema(price_series, period=10)
+2025-09-22 12:24:15,743 - src.indicators.MAs - INFO - 🔧 CORE EMA CALCULATION:
+2025-09-22 12:24:15,743 - src.indicators.MAs - INFO -    Input data type: <class 'pandas.core.series.Series'>
+2025-09-22 12:24:15,743 - src.indicators.MAs - INFO -    Input data length: 30
+2025-09-22 12:24:15,743 - src.indicators.MAs - INFO -    Period: 10
+2025-09-22 12:24:15,743 - src.indicators.MAs - INFO -    Calling data.ewm(span=10, adjust=False).mean()
+2025-09-22 12:24:15,743 - src.indicators.MAs - INFO - ✅ EMA CORE CALCULATION SUCCESS:
+2025-09-22 12:24:15,743 - src.indicators.MAs - INFO -    Result type: <class 'pandas.core.series.Series'>
+2025-09-22 12:24:15,743 - src.indicators.MAs - INFO -    Result length: 30
+2025-09-22 12:24:15,743 - src.indicators.MAs - INFO -    Non-null values: 30
+2025-09-22 12:24:15,743 - src.indicators.MAs - INFO -    First non-null value: 353.8269990710786
+2025-09-22 12:24:15,743 - src.indicators.MAs - INFO -    EMA calculation complete
+2025-09-22 12:24:15,743 - src.indicators.MAs - INFO -    EMA series length: 30
+2025-09-22 12:24:15,744 - src.indicators.MAs - INFO -    EMA value range: 330.3840 to 376.8836
+2025-09-22 12:24:15,744 - src.indicators.MAs - INFO -    EMA first 3 values: [353.8269990710786, 353.7134343699567, 354.51660965585984]
+2025-09-22 12:24:15,744 - src.indicators.MAs - INFO -    EMA last 3 values: [334.8665826038242, 332.55687053834816, 330.38396130770514]
+2025-09-22 12:24:15,744 - src.indicators.MAs - INFO - 📊 GENERATING SIGNALS:
+2025-09-22 12:24:15,745 - src.indicators.MAs - INFO -    Bullish crossovers: 1
+2025-09-22 12:24:15,745 - src.indicators.MAs - INFO -    Bearish crossovers: 2
+2025-09-22 12:24:15,745 - src.indicators.MAs - INFO - 🎨 BUILDING METADATA:
+2025-09-22 12:24:15,745 - src.indicators.MAs - INFO -    Metadata created: {'indicator': 'EMA', 'parameters': '(10)', 'period': 10, 'chart_type': 'overlay', 'color_scheme': {'ema': 'blue', 'price': 'black', 'signal_bullish': 'green', 'signal_bearish': 'red'}}
+2025-09-22 12:24:15,745 - src.indicators.MAs - INFO - ✅ EMA CALCULATION COMPLETE:
+2025-09-22 12:24:15,745 - src.indicators.MAs - INFO -    Result keys: ['ema', 'price', 'signals', 'metadata']
+2025-09-22 12:24:15,746 - src.indicators.MAs - INFO -    ema: <class 'pandas.core.series.Series'> (length: 30)
+2025-09-22 12:24:15,746 - src.indicators.MAs - INFO -    price: <class 'pandas.core.series.Series'> (length: 30)
+2025-09-22 12:24:15,746 - src.indicators.MAs - INFO -    signals: <class 'pandas.core.series.Series'> (length: 30)
+2025-09-22 12:24:15,746 - src.indicators.MAs - INFO -    metadata: <class 'dict'>
+2025-09-22 12:24:15,746 - src.sustainability_ratios.sr_market_data - INFO -    EMA calculation result type: <class 'dict'>
+2025-09-22 12:24:15,747 - src.sustainability_ratios.sr_market_data - INFO -    EMA calculation result: {'ema': Date
+2024-01-01    353.826999
+2024-01-02    353.713434
+2024-01-03    354.516610
+2024-01-04    357.222301
+2024-01-05    359.188681
+2024-01-06    360.551104
+2024-01-07    363.838188
+2024-01-08    367.653095
+2024-01-09    370.187392
+2024-01-10    373.083149
+2024-01-11    374.871944
+2024-01-12    375.756624
+2024-01-13    376.883614
+2024-01-14    375.217735
+2024-01-15    371.615097
+2024-01-16    368.005415
+2024-01-17    363.820450
+2024-01-18    360.853336
+2024-01-19    357.341463
+2024-01-20    352.776190
+2024-01-21    350.872050
+2024-01-22    349.095321
+2024-01-23    347.787412
+2024-01-24    345.008108
+2024-01-25    342.136376
+2024-01-26    339.979425
+2024-01-27    336.892360
+2024-01-28    334.866583
+2024-01-29    332.556871
+2024-01-30    330.383961
+Name: Close, dtype: float64, 'price': Date
+2024-01-01    353.826999
+2024-01-02    353.202393
+2024-01-03    358.130898
+2024-01-04    369.397910
+2024-01-05    368.037393
+2024-01-06    366.682007
+2024-01-07    378.630068
+2024-01-08    384.820175
+2024-01-09    381.591731
+2024-01-10    386.114051
+2024-01-11    382.921524
+2024-01-12    379.737686
+2024-01-13    381.955068
+2024-01-14    367.721281
+2024-01-15    355.403222
+2024-01-16    351.761850
+2024-01-17    344.988105
+2024-01-18    347.501324
+2024-01-19    341.538034
+2024-01-20    332.232464
+2024-01-21    342.303418
+2024-01-22    341.100042
+2024-01-23    341.901819
+2024-01-24    332.501241
+2024-01-25    329.213584
+2024-01-26    330.273142
+2024-01-27    323.000570
+2024-01-28    325.750584
+2024-01-29    322.163166
+2024-01-30    320.605870
+Name: Close, dtype: float64, 'signals': Date
+2024-01-01    0
+2024-01-02   -1
+2024-01-03    1
+2024-01-04    0
+2024-01-05    0
+2024-01-06    0
+2024-01-07    0
+2024-01-08    0
+2024-01-09    0
+2024-01-10    0
+2024-01-11    0
+2024-01-12    0
+2024-01-13    0
+2024-01-14   -1
+2024-01-15    0
+2024-01-16    0
+2024-01-17    0
+2024-01-18    0
+2024-01-19    0
+2024-01-20    0
+2024-01-21    0
+2024-01-22    0
+2024-01-23    0
+2024-01-24    0
+2024-01-25    0
+2024-01-26    0
+2024-01-27    0
+2024-01-28    0
+2024-01-29    0
+2024-01-30    0
+dtype: int64, 'metadata': {'indicator': 'EMA', 'parameters': '(10)', 'period': 10, 'chart_type': 'overlay', 'color_scheme': {'ema': 'blue', 'price': 'black', 'signal_bullish': 'green', 'signal_bearish': 'red'}}}
+2025-09-22 12:24:15,747 - src.sustainability_ratios.sr_market_data - INFO - ✅ CALCULATION SUCCESSFUL:
+2025-09-22 12:24:15,747 - src.sustainability_ratios.sr_market_data - INFO -    result type: <class 'dict'>
+2025-09-22 12:24:15,747 - src.sustainability_ratios.sr_market_data - INFO -    result is dict with keys: ['ema', 'price', 'signals', 'metadata']
+2025-09-22 12:24:15,747 - src.sustainability_ratios.sr_market_data - INFO -    Starting with base data columns: ['Open', 'High', 'Low', 'Close', 'Volume']
+2025-09-22 12:24:15,747 - src.sustainability_ratios.sr_market_data - INFO -    Processing result key: 'ema' (type: <class 'pandas.core.series.Series'>)
+2025-09-22 12:24:15,747 - src.sustainability_ratios.sr_market_data - INFO -      Added Series column: 'ema' (length: 30)
+2025-09-22 12:24:15,747 - src.sustainability_ratios.sr_market_data - INFO -    Processing result key: 'price' (type: <class 'pandas.core.series.Series'>)
+2025-09-22 12:24:15,747 - src.sustainability_ratios.sr_market_data - INFO -      Added Series column: 'price' (length: 30)
+2025-09-22 12:24:15,747 - src.sustainability_ratios.sr_market_data - INFO -    Processing result key: 'signals' (type: <class 'pandas.core.series.Series'>)
+2025-09-22 12:24:15,748 - src.sustainability_ratios.sr_market_data - INFO -      Added Series column: 'signals' (length: 30)
+2025-09-22 12:24:15,748 - src.sustainability_ratios.sr_market_data - INFO -    Processing result key: 'metadata' (type: <class 'dict'>)
+2025-09-22 12:24:15,748 - src.sustainability_ratios.sr_market_data - INFO -      Skipped non-Series/DataFrame: 'metadata' (type: <class 'dict'>)
+2025-09-22 12:24:15,748 - src.sustainability_ratios.sr_market_data - INFO -    Final result_df columns: ['Open', 'High', 'Low', 'Close', 'Volume', 'ema', 'price', 'signals']
+2025-09-22 12:24:15,748 - src.sustainability_ratios.sr_market_data - INFO -    Final result_df shape: (30, 8)
+2025-09-22 12:24:15,748 - src.sustainability_ratios.sr_market_data - INFO -    result type: <class 'pandas.core.frame.DataFrame'>
+2025-09-22 12:24:15,748 - src.sustainability_ratios.sr_market_data - INFO -    result is None: False
+2025-09-22 12:24:15,748 - src.sustainability_ratios.sr_market_data - INFO -    result shape: (30, 8)
+2025-09-22 12:24:15,748 - src.sustainability_ratios.sr_market_data - INFO -    result columns: ['Open', 'High', 'Low', 'Close', 'Volume', 'ema', 'price', 'signals']
+2025-09-22 12:24:15,748 - src.sustainability_ratios.sr_market_data - INFO - 🎨 BUILDING OVERLAY DATA:
+2025-09-22 12:24:15,748 - src.sustainability_ratios.sr_market_data - INFO -    Skipped OHLCV column: 'Open'
+2025-09-22 12:24:15,748 - src.sustainability_ratios.sr_market_data - INFO -    Skipped OHLCV column: 'High'
+2025-09-22 12:24:15,748 - src.sustainability_ratios.sr_market_data - INFO -    Skipped OHLCV column: 'Low'
+2025-09-22 12:24:15,748 - src.sustainability_ratios.sr_market_data - INFO -    Skipped OHLCV column: 'Close'
+2025-09-22 12:24:15,748 - src.sustainability_ratios.sr_market_data - INFO -    Skipped OHLCV column: 'Volume'
+2025-09-22 12:24:15,748 - src.sustainability_ratios.sr_market_data - INFO -    Added overlay column: 'ema' → 'EMA_ema'
+2025-09-22 12:24:15,748 - src.sustainability_ratios.sr_market_data - INFO -      series shape: (30,)
+2025-09-22 12:24:15,748 - src.sustainability_ratios.sr_market_data - INFO -      series range: 330.3840 to 376.8836
+2025-09-22 12:24:15,749 - src.sustainability_ratios.sr_market_data - INFO -    Added overlay column: 'price' → 'EMA_price'
+2025-09-22 12:24:15,749 - src.sustainability_ratios.sr_market_data - INFO -      series shape: (30,)
+2025-09-22 12:24:15,749 - src.sustainability_ratios.sr_market_data - INFO -      series range: 320.6059 to 386.1141
+2025-09-22 12:24:15,749 - src.sustainability_ratios.sr_market_data - INFO -    Added overlay column: 'signals' → 'EMA_signals'
+2025-09-22 12:24:15,749 - src.sustainability_ratios.sr_market_data - INFO -      series shape: (30,)
+2025-09-22 12:24:15,749 - src.sustainability_ratios.sr_market_data - INFO -      series range: -1.0000 to 1.0000
+2025-09-22 12:24:15,749 - src.sustainability_ratios.sr_market_data - INFO - ✅ OVERLAY DATA COMPLETE:
+2025-09-22 12:24:15,749 - src.sustainability_ratios.sr_market_data - INFO -    overlay_data keys: ['EMA_ema', 'EMA_price', 'EMA_signals']
+2025-09-22 12:24:15,749 - src.sustainability_ratios.sr_market_data - INFO -    total overlay columns: 3
+2025-09-22 12:24:15,749 - __main__ - INFO - 
+📊 BUNDLED INDICATOR RESULT ANALYSIS:
+2025-09-22 12:24:15,749 - __main__ - INFO - ✅ SUCCESS: Bundled indicator calculation completed
+2025-09-22 12:24:15,749 - __main__ - INFO -    Result type: <class 'dict'>
+2025-09-22 12:24:15,749 - __main__ - INFO -    Result keys: ['EMA_ema', 'EMA_price', 'EMA_signals']
+2025-09-22 12:24:15,749 - __main__ - INFO -    EMA_ema:
+2025-09-22 12:24:15,750 - __main__ - INFO -      Type: <class 'pandas.core.series.Series'>
+2025-09-22 12:24:15,750 - __main__ - INFO -      Length: 30
+2025-09-22 12:24:15,750 - __main__ - INFO -      Range: 330.3840 to 376.8836
+2025-09-22 12:24:15,750 - __main__ - INFO -    EMA_price:
+2025-09-22 12:24:15,750 - __main__ - INFO -      Type: <class 'pandas.core.series.Series'>
+2025-09-22 12:24:15,750 - __main__ - INFO -      Length: 30
+2025-09-22 12:24:15,750 - __main__ - INFO -      Range: 320.6059 to 386.1141
+2025-09-22 12:24:15,750 - __main__ - INFO -    EMA_signals:
+2025-09-22 12:24:15,750 - __main__ - INFO -      Type: <class 'pandas.core.series.Series'>
+2025-09-22 12:24:15,750 - __main__ - INFO -      Length: 30
+2025-09-22 12:24:15,750 - __main__ - INFO -      Range: -1.0000 to 1.0000
+2025-09-22 12:24:15,750 - __main__ - INFO - 
+🎨 TESTING CHART GENERATION WITH RESULT:
+2025-09-22 12:24:15,750 - __main__ - INFO - 📊 CHART GENERATION TEST:
+2025-09-22 12:24:15,750 - __main__ - INFO -    Added overlay: 'EMA_ema' → panel result
+2025-09-22 12:24:15,750 - __main__ - INFO -    Added overlay: 'EMA_price' → panel result
+2025-09-22 12:24:15,750 - __main__ - INFO -    Added overlay: 'EMA_signals' → panel result
+2025-09-22 12:24:15,750 - __main__ - INFO -    Panel data keys: ['data_source', 'indicator', 'is_bundled', 'result']
+2025-09-22 12:24:15,750 - __main__ - INFO -    Panel result keys: ['Close', 'metadata', 'EMA_ema', 'EMA_price', 'EMA_signals']
+2025-09-22 12:24:15,750 - __main__ - INFO -    Calling create_multi_panel_chart...
+2025-09-22 12:24:15,750 - src.sustainability_ratios.sr_dashboard_generator - INFO - 🚀 FUNCTION CALL: create_multi_panel_chart()
+2025-09-22 12:24:15,750 - src.sustainability_ratios.sr_dashboard_generator - INFO -    panel_results keys: ['Test_Panel']
+2025-09-22 12:24:15,750 - src.sustainability_ratios.sr_dashboard_generator - INFO -    output_path: test_real_sr_debug.png
+2025-09-22 12:24:15,750 - src.sustainability_ratios.sr_dashboard_generator - INFO -    chart_title: Real SR Debug Test
+2025-09-22 12:24:15,850 - src.sustainability_ratios.sr_dashboard_generator - INFO - 🚀 CALLING plot_panel for 'Test_Panel' (panel 1/1)
+2025-09-22 12:24:15,850 - src.sustainability_ratios.sr_dashboard_generator - INFO - 
+🎯 plot_panel CALLED:
+2025-09-22 12:24:15,850 - src.sustainability_ratios.sr_dashboard_generator - INFO -    panel_name: 'Test_Panel'
+2025-09-22 12:24:15,850 - src.sustainability_ratios.sr_dashboard_generator - INFO -    data_source: 'QQQ + EMA(QQQ, 10)'
+2025-09-22 12:24:15,850 - src.sustainability_ratios.sr_dashboard_generator - INFO -    indicator: 'EMA(QQQ, 10)'
+2025-09-22 12:24:15,850 - src.sustainability_ratios.sr_dashboard_generator - INFO -    panel_data keys: ['data_source', 'indicator', 'is_bundled', 'result']
+2025-09-22 12:24:15,850 - src.sustainability_ratios.sr_dashboard_generator - INFO -    result keys: ['Close', 'metadata', 'EMA_ema', 'EMA_price', 'EMA_signals']
+2025-09-22 12:24:15,850 - src.sustainability_ratios.sr_dashboard_generator - INFO -    is_bundled in panel_data: True
+2025-09-22 12:24:15,850 - src.sustainability_ratios.sr_dashboard_generator - INFO - 📊 BUNDLED FORMAT CHECK:
+2025-09-22 12:24:15,850 - src.sustainability_ratios.sr_dashboard_generator - INFO -    is_bundled_format() result: True
+2025-09-22 12:24:15,850 - src.sustainability_ratios.sr_dashboard_generator - INFO - 🔍 MAIN SERIES DETECTION:
+2025-09-22 12:24:15,850 - src.sustainability_ratios.sr_dashboard_generator - INFO -    Using BUNDLED format logic
+2025-09-22 12:24:15,850 - src.sustainability_ratios.sr_dashboard_generator - INFO -    base_ticker: 'QQQ'
+2025-09-22 12:24:15,850 - src.sustainability_ratios.sr_dashboard_generator - INFO -    ✅ Found Close price: 'Close'
+2025-09-22 12:24:15,850 - src.sustainability_ratios.sr_dashboard_generator - INFO - 🚀 CALLING plot_overlay_chart (chart_type='overlay', indicator='EMA(QQQ, 10)')
+2025-09-22 12:24:15,850 - src.sustainability_ratios.sr_dashboard_generator - INFO - 🎯 plot_overlay_chart CALLED:
+2025-09-22 12:24:15,850 - src.sustainability_ratios.sr_dashboard_generator - INFO -    data_source: 'QQQ + EMA(QQQ, 10)'
+2025-09-22 12:24:15,850 - src.sustainability_ratios.sr_dashboard_generator - INFO -    indicator: 'EMA(QQQ, 10)'
+2025-09-22 12:24:15,850 - src.sustainability_ratios.sr_dashboard_generator - INFO -    is_bundled: True
+2025-09-22 12:24:15,850 - src.sustainability_ratios.sr_dashboard_generator - INFO -    result keys: ['Close', 'metadata', 'EMA_ema', 'EMA_price', 'EMA_signals']
+2025-09-22 12:24:15,850 - src.sustainability_ratios.sr_dashboard_generator - INFO -    main_series.name: Close
+2025-09-22 12:24:15,851 - src.sustainability_ratios.sr_dashboard_generator - INFO -    main_series length: 30
+2025-09-22 12:24:15,851 - src.sustainability_ratios.sr_dashboard_generator - INFO - 📊 BUNDLED FORMAT DETECTED - Using enhanced logic
+2025-09-22 12:24:15,851 - src.sustainability_ratios.sr_dashboard_generator - INFO -    base_ticker: 'QQQ'
+2025-09-22 12:24:15,851 - src.sustainability_ratios.sr_dashboard_generator - INFO -    main_label: 'QQQ'
+2025-09-22 12:24:15,851 - src.sustainability_ratios.sr_dashboard_generator - INFO -    expected_overlays: ['EMA(10)']
+2025-09-22 12:24:15,851 - src.sustainability_ratios.sr_dashboard_generator - INFO - 🎨 PLOTTING MAIN SERIES:
+2025-09-22 12:24:15,851 - src.sustainability_ratios.sr_dashboard_generator - INFO -    label: 'QQQ'
+2025-09-22 12:24:15,851 - src.sustainability_ratios.sr_dashboard_generator - INFO -    color: blue (default)
+2025-09-22 12:24:15,851 - src.sustainability_ratios.sr_dashboard_generator - INFO -    data type: <class 'pandas.core.series.Series'>
+2025-09-22 12:24:15,851 - src.sustainability_ratios.sr_dashboard_generator - INFO -    data length: 30
+2025-09-22 12:24:15,851 - src.sustainability_ratios.sr_dashboard_generator - INFO -    data range: 320.61 to 386.11
+2025-09-22 12:24:15,851 - src.sustainability_ratios.sr_dashboard_generator - INFO -    data index type: <class 'pandas.core.indexes.datetimes.DatetimeIndex'>
+2025-09-22 12:24:15,851 - src.sustainability_ratios.sr_dashboard_generator - INFO -    first 3 values: [353.8269990710786, 353.20239321490845, 358.130898442424]
+2025-09-22 12:24:15,851 - src.sustainability_ratios.sr_dashboard_generator - INFO -    last 3 values: [325.7505837370915, 322.163166243706, 320.60586976981165]
+2025-09-22 12:24:15,851 - src.sustainability_ratios.sr_dashboard_generator - INFO -    has NaN values: False
+2025-09-22 12:24:15,851 - src.sustainability_ratios.sr_dashboard_generator - INFO -    NaN count: 0
+2025-09-22 12:24:15,852 - src.sustainability_ratios.sr_dashboard_generator - INFO - ✅ Main series plotted: 1 lines created
+2025-09-22 12:24:15,852 - src.sustainability_ratios.sr_dashboard_generator - INFO - 🔍 OVERLAY DETECTION STARTING:
+2025-09-22 12:24:15,852 - src.sustainability_ratios.sr_dashboard_generator - INFO -    is_bundled: True
+2025-09-22 12:24:15,852 - src.sustainability_ratios.sr_dashboard_generator - INFO - 📊 ENHANCED OVERLAY DETECTION (Bundled Format)
+2025-09-22 12:24:15,852 - src.sustainability_ratios.sr_dashboard_generator - INFO - 
+   🔎 Checking column: 'Close'
+2025-09-22 12:24:15,852 - src.sustainability_ratios.sr_dashboard_generator - INFO -       is_metadata: False
+2025-09-22 12:24:15,852 - src.sustainability_ratios.sr_dashboard_generator - INFO -       is_series: True
+2025-09-22 12:24:15,852 - src.sustainability_ratios.sr_dashboard_generator - INFO -       is_indicator_column: False
+2025-09-22 12:24:15,852 - src.sustainability_ratios.sr_dashboard_generator - INFO -       key != main_series.name: False ('Close' != 'Close')
+2025-09-22 12:24:15,852 - src.sustainability_ratios.sr_dashboard_generator - INFO -       ❌ Failed basic checks
+2025-09-22 12:24:15,852 - src.sustainability_ratios.sr_dashboard_generator - INFO - 
+   🔎 Checking column: 'metadata'
+2025-09-22 12:24:15,852 - src.sustainability_ratios.sr_dashboard_generator - INFO -       ❌ Skipped: metadata or not series
+2025-09-22 12:24:15,853 - src.sustainability_ratios.sr_dashboard_generator - INFO - 
+   🔎 Checking column: 'EMA_ema'
+2025-09-22 12:24:15,853 - src.sustainability_ratios.sr_dashboard_generator - INFO -       is_metadata: False
+2025-09-22 12:24:15,853 - src.sustainability_ratios.sr_dashboard_generator - INFO -       is_series: True
+2025-09-22 12:24:15,853 - src.sustainability_ratios.sr_dashboard_generator - INFO -       is_indicator_column: True
+2025-09-22 12:24:15,853 - src.sustainability_ratios.sr_dashboard_generator - INFO -       key != main_series.name: True ('EMA_ema' != 'Close')
+2025-09-22 12:24:15,853 - src.sustainability_ratios.sr_dashboard_generator - INFO -       ✅ Passed basic checks
+2025-09-22 12:24:15,853 - src.sustainability_ratios.sr_dashboard_generator - INFO -       overlay_label: 'EMA(10)'
+2025-09-22 12:24:15,853 - src.sustainability_ratios.sr_dashboard_generator - INFO -       indicator_type: 'EMA'
+2025-09-22 12:24:15,853 - src.sustainability_ratios.sr_dashboard_generator - INFO -       plotted_indicators: set()
+2025-09-22 12:24:15,853 - src.sustainability_ratios.sr_dashboard_generator - INFO -       ends_with_ema: True
+2025-09-22 12:24:15,853 - src.sustainability_ratios.sr_dashboard_generator - INFO -       ends_with_sma: False
+2025-09-22 12:24:15,853 - src.sustainability_ratios.sr_dashboard_generator - INFO -       ends_with_ppo: False
+2025-09-22 12:24:15,853 - src.sustainability_ratios.sr_dashboard_generator - INFO -       ends_with_rsi: False
+2025-09-22 12:24:15,853 - src.sustainability_ratios.sr_dashboard_generator - INFO -       ends_with_macd: False
+2025-09-22 12:24:15,853 - src.sustainability_ratios.sr_dashboard_generator - INFO -       equals_type: False
+2025-09-22 12:24:15,853 - src.sustainability_ratios.sr_dashboard_generator - INFO -       ✅ PRIMARY INDICATOR - WILL PLOT
+2025-09-22 12:24:15,853 - src.sustainability_ratios.sr_dashboard_generator - INFO -       🎨 PLOTTING OVERLAY:
+2025-09-22 12:24:15,853 - src.sustainability_ratios.sr_dashboard_generator - INFO -          label: 'EMA(10)'
+2025-09-22 12:24:15,853 - src.sustainability_ratios.sr_dashboard_generator - INFO -          color: red
+2025-09-22 12:24:15,853 - src.sustainability_ratios.sr_dashboard_generator - INFO -          data type: <class 'pandas.core.series.Series'>
+2025-09-22 12:24:15,853 - src.sustainability_ratios.sr_dashboard_generator - INFO -          data length: 30
+2025-09-22 12:24:15,853 - src.sustainability_ratios.sr_dashboard_generator - INFO -          data range: 330.38 to 376.88
+2025-09-22 12:24:15,853 - src.sustainability_ratios.sr_dashboard_generator - INFO -          data index type: <class 'pandas.core.indexes.datetimes.DatetimeIndex'>
+2025-09-22 12:24:15,853 - src.sustainability_ratios.sr_dashboard_generator - INFO -          first 3 values: [353.8269990710786, 353.7134343699567, 354.51660965585984]
+2025-09-22 12:24:15,853 - src.sustainability_ratios.sr_dashboard_generator - INFO -          last 3 values: [334.8665826038242, 332.55687053834816, 330.38396130770514]
+2025-09-22 12:24:15,854 - src.sustainability_ratios.sr_dashboard_generator - INFO -          has NaN values: False
+2025-09-22 12:24:15,854 - src.sustainability_ratios.sr_dashboard_generator - INFO -          NaN count: 0
+2025-09-22 12:24:15,854 - src.sustainability_ratios.sr_dashboard_generator - INFO -          overlay #1
+2025-09-22 12:24:15,855 - src.sustainability_ratios.sr_dashboard_generator - INFO -          ✅ Overlay plotted: 1 lines created
+2025-09-22 12:24:15,855 - src.sustainability_ratios.sr_dashboard_generator - INFO - 
+   🔎 Checking column: 'EMA_price'
+2025-09-22 12:24:15,855 - src.sustainability_ratios.sr_dashboard_generator - INFO -       is_metadata: False
+2025-09-22 12:24:15,855 - src.sustainability_ratios.sr_dashboard_generator - INFO -       is_series: True
+2025-09-22 12:24:15,855 - src.sustainability_ratios.sr_dashboard_generator - INFO -       is_indicator_column: True
+2025-09-22 12:24:15,855 - src.sustainability_ratios.sr_dashboard_generator - INFO -       key != main_series.name: True ('EMA_price' != 'Close')
+2025-09-22 12:24:15,855 - src.sustainability_ratios.sr_dashboard_generator - INFO -       ✅ Passed basic checks
+2025-09-22 12:24:15,855 - src.sustainability_ratios.sr_dashboard_generator - INFO -       overlay_label: 'EMA(10)'
+2025-09-22 12:24:15,855 - src.sustainability_ratios.sr_dashboard_generator - INFO -       indicator_type: 'EMA'
+2025-09-22 12:24:15,855 - src.sustainability_ratios.sr_dashboard_generator - INFO -       plotted_indicators: {'EMA'}
+2025-09-22 12:24:15,855 - src.sustainability_ratios.sr_dashboard_generator - INFO -       ❌ Already plotted indicator type 'EMA'
+2025-09-22 12:24:15,855 - src.sustainability_ratios.sr_dashboard_generator - INFO - 
+   🔎 Checking column: 'EMA_signals'
+2025-09-22 12:24:15,855 - src.sustainability_ratios.sr_dashboard_generator - INFO -       is_metadata: False
+2025-09-22 12:24:15,855 - src.sustainability_ratios.sr_dashboard_generator - INFO -       is_series: True
+2025-09-22 12:24:15,855 - src.sustainability_ratios.sr_dashboard_generator - INFO -       is_indicator_column: True
+2025-09-22 12:24:15,855 - src.sustainability_ratios.sr_dashboard_generator - INFO -       key != main_series.name: True ('EMA_signals' != 'Close')
+2025-09-22 12:24:15,855 - src.sustainability_ratios.sr_dashboard_generator - INFO -       ✅ Passed basic checks
+2025-09-22 12:24:15,855 - src.sustainability_ratios.sr_dashboard_generator - INFO -       overlay_label: 'EMA(10)'
+2025-09-22 12:24:15,855 - src.sustainability_ratios.sr_dashboard_generator - INFO -       indicator_type: 'EMA'
+2025-09-22 12:24:15,856 - src.sustainability_ratios.sr_dashboard_generator - INFO -       plotted_indicators: {'EMA'}
+2025-09-22 12:24:15,856 - src.sustainability_ratios.sr_dashboard_generator - INFO -       ❌ Already plotted indicator type 'EMA'
+2025-09-22 12:24:15,856 - src.sustainability_ratios.sr_dashboard_generator - INFO - 
+🎨 FINAL CHART ASSEMBLY:
+2025-09-22 12:24:15,856 - src.sustainability_ratios.sr_dashboard_generator - INFO -    Total overlays plotted: 1
+2025-09-22 12:24:15,857 - src.sustainability_ratios.sr_dashboard_generator - INFO - ✅ Legend created successfully
+2025-09-22 12:24:15,857 - src.sustainability_ratios.sr_dashboard_generator - INFO - ✅ Grid enabled successfully
+2025-09-22 12:24:15,857 - src.sustainability_ratios.sr_dashboard_generator - INFO - ✅ Chart info retrieval successful
+2025-09-22 12:24:15,857 - src.sustainability_ratios.sr_dashboard_generator - INFO - 📊 FINAL CHART RESULTS:
+2025-09-22 12:24:15,858 - src.sustainability_ratios.sr_dashboard_generator - INFO -    Total lines on chart: 2
+2025-09-22 12:24:15,858 - src.sustainability_ratios.sr_dashboard_generator - INFO -    Legend labels: ['QQQ', 'EMA(10)']
+2025-09-22 12:24:15,858 - src.sustainability_ratios.sr_dashboard_generator - INFO -    Legend visible: True
+2025-09-22 12:24:15,858 - src.sustainability_ratios.sr_dashboard_generator - INFO -    Legend entries count: 2
+2025-09-22 12:24:15,858 - src.sustainability_ratios.sr_dashboard_generator - INFO -    Line 1: 'QQQ'
+2025-09-22 12:24:15,858 - src.sustainability_ratios.sr_dashboard_generator - INFO -      color: blue
+2025-09-22 12:24:15,858 - src.sustainability_ratios.sr_dashboard_generator - INFO -      linewidth: 1.5
+2025-09-22 12:24:15,858 - src.sustainability_ratios.sr_dashboard_generator - INFO -      alpha: 0.8
+2025-09-22 12:24:15,858 - src.sustainability_ratios.sr_dashboard_generator - INFO -      visible: True
+2025-09-22 12:24:15,858 - src.sustainability_ratios.sr_dashboard_generator - INFO -      data points: 30
+2025-09-22 12:24:15,858 - src.sustainability_ratios.sr_dashboard_generator - INFO -    Line 2: 'EMA(10)'
+2025-09-22 12:24:15,858 - src.sustainability_ratios.sr_dashboard_generator - INFO -      color: red
+2025-09-22 12:24:15,858 - src.sustainability_ratios.sr_dashboard_generator - INFO -      linewidth: 1.0
+2025-09-22 12:24:15,858 - src.sustainability_ratios.sr_dashboard_generator - INFO -      alpha: 0.7
+2025-09-22 12:24:15,858 - src.sustainability_ratios.sr_dashboard_generator - INFO -      visible: True
+2025-09-22 12:24:15,858 - src.sustainability_ratios.sr_dashboard_generator - INFO -      data points: 30
+2025-09-22 12:24:15,858 - src.sustainability_ratios.sr_dashboard_generator - INFO - ✅ plot_overlay_chart COMPLETED SUCCESSFULLY
+2025-09-22 12:24:16,456 - src.sustainability_ratios.sr_dashboard_generator - INFO - Created multi-panel chart: test_real_sr_debug.png
+2025-09-22 12:24:16,456 - __main__ - INFO - ✅ CHART GENERATION SUCCESS: test_real_sr_debug.png
+2025-09-22 12:24:16,456 - __main__ - INFO - ================================================================================
+2025-09-22 12:24:16,456 - __main__ - INFO - REAL SR DEBUG TEST COMPLETED
+2025-09-22 12:24:16,456 - __main__ - INFO - ================================================================================
