@@ -17,6 +17,8 @@ from pathlib import Path
 from typing import Dict, List, Optional, Union, Tuple, Any
 from datetime import datetime
 
+from .sr_output_manager import get_sr_output_manager
+
 from ..indicators.indicator_parser import calculate_indicator, get_indicator_chart_type
 
 logger = logging.getLogger(__name__)
@@ -24,6 +26,111 @@ logger = logging.getLogger(__name__)
 # Set style for consistent charts
 plt.style.use('default')
 sns.set_palette("husl")
+
+
+def plot_candlestick_chart(ax, result: Dict, x_positions: range, main_label: str):
+    """
+    Plot candlestick chart using OHLCV data from result dict.
+
+    Args:
+        ax: Matplotlib axes to plot on
+        result: Dictionary containing OHLCV data
+        x_positions: Range object for x-axis positions (for weekend gap removal)
+        main_label: Label for the chart
+
+    Returns:
+        None (plots directly on ax) or list of plot objects for compatibility
+    """
+    try:
+        # Extract OHLCV data from result dict
+        open_data = result.get('Open')
+        high_data = result.get('High')
+        low_data = result.get('Low')
+        close_data = result.get('Close')
+
+        # Check if we have proper OHLCV data structure
+        missing_data = []
+        if not isinstance(open_data, pd.Series): missing_data.append('Open')
+        if not isinstance(high_data, pd.Series): missing_data.append('High')
+        if not isinstance(low_data, pd.Series): missing_data.append('Low')
+        if not isinstance(close_data, pd.Series): missing_data.append('Close')
+
+        if missing_data:
+            logger.warning(f"❌ Missing OHLCV data for candlestick chart: {missing_data}")
+            logger.info(f"   Available result keys: {list(result.keys())}")
+
+            # Try to find Close data in result for fallback line chart
+            close_data = result.get('Close') or result.get('close') or result.get('Close_SPY') or result.get('Close_QQQ')
+            if close_data is not None and hasattr(close_data, 'values'):
+                logger.info("✅ Found Close data for line chart fallback")
+                return ax.plot(x_positions, close_data.values, label=main_label, linewidth=1.5, alpha=0.8, color='blue')
+            else:
+                # Try to use main data series if available
+                for key in result.keys():
+                    if hasattr(result[key], 'values') and len(result[key]) > 0:
+                        logger.info(f"✅ Using {key} data for line chart fallback")
+                        return ax.plot(x_positions, result[key].values, label=main_label, linewidth=1.5, alpha=0.8, color='blue')
+
+                logger.error("❌ No suitable data available for fallback line chart")
+                return None
+
+        # Prepare candlestick data
+        opens = open_data.values
+        highs = high_data.values
+        lows = low_data.values
+        closes = close_data.values
+
+        # Plot candlestick chart manually (compatible with existing weekend gap removal)
+        for i, x_pos in enumerate(x_positions):
+            if i >= len(opens):
+                break
+
+            open_val = opens[i]
+            high_val = highs[i]
+            low_val = lows[i]
+            close_val = closes[i]
+
+            # Skip if any value is NaN
+            if pd.isna(open_val) or pd.isna(high_val) or pd.isna(low_val) or pd.isna(close_val):
+                continue
+
+            # Determine color (green for up, red for down)
+            color = 'green' if close_val >= open_val else 'red'
+            edge_color = 'darkgreen' if close_val >= open_val else 'darkred'
+
+            # Draw high-low line
+            ax.plot([x_pos, x_pos], [low_val, high_val], color=edge_color, linewidth=1, alpha=0.8)
+
+            # Draw candlestick body
+            body_height = abs(close_val - open_val)
+            body_bottom = min(open_val, close_val)
+
+            if body_height > 0:
+                # Draw filled rectangle for body
+                ax.bar(x_pos, body_height, bottom=body_bottom, width=0.8,
+                       color=color, edgecolor=edge_color, alpha=0.7)
+            else:
+                # Draw thin line for doji (open == close)
+                ax.plot([x_pos - 0.4, x_pos + 0.4], [close_val, close_val],
+                       color=edge_color, linewidth=2)
+
+        logger.info(f"✅ Candlestick chart plotted for {len(x_positions)} periods")
+
+        # Add label to legend (create invisible line for legend compatibility)
+        ax.plot([], [], color='blue', label=main_label, linewidth=0, marker='s', markersize=8, alpha=0.7)
+
+        return None  # Return None for compatibility, actual plotting is done directly on ax
+
+    except Exception as e:
+        logger.error(f"❌ Failed to plot candlestick chart: {e}")
+        # Fallback to line chart
+        close_data = result.get('Close')
+        if isinstance(close_data, pd.Series):
+            logger.info("🔄 Falling back to line chart")
+            return ax.plot(x_positions, close_data.values, label=main_label, linewidth=1.5, alpha=0.8, color='blue')
+        else:
+            logger.error("❌ No Close data available for fallback")
+            return None
 
 
 def is_bundled_format(data_source: str, panel_data: Dict[str, Any] = None) -> bool:
@@ -399,17 +506,20 @@ def plot_panel(ax, panel_data: Dict[str, Any], panel_name: str, user_config = No
             # Continue with original result if filtering fails
 
         metadata = result.get('metadata', {})
-        chart_type = metadata.get('chart_type', 'overlay')
+        indicator_chart_type = metadata.get('chart_type', 'overlay')
+
+        # Extract new chart_type for main series display (candle, line, no_drawing)
+        main_chart_type = panel_data.get('chart_type', 'candle')
 
         # DEBUG: Log chart type detection
-        # print(f"🎯 CHART TYPE DETECTION: chart_type='{chart_type}', indicator='{indicator}'")  # Debug output
         logger.info(f"🎯 CHART TYPE DETECTION:")
         logger.info(f"   metadata: {metadata}")
-        logger.info(f"   chart_type: '{chart_type}'")
+        logger.info(f"   indicator_chart_type: '{indicator_chart_type}' (for indicator display)")
+        logger.info(f"   main_chart_type: '{main_chart_type}' (for main series display)")
         logger.info(f"   indicator: '{indicator}'")
 
         # Special handling for oscillator indicators (PPO, RSI, MACD)
-        if chart_type == 'oscillator' and indicator:
+        if indicator_chart_type == 'oscillator' and indicator:
             # print(f"🎯 OSCILLATOR DETECTED - Routing to plot_indicator_chart")  # Debug output
             logger.info(f"🎯 OSCILLATOR DETECTED - Routing directly to plot_indicator_chart")
             plot_indicator_chart(ax, result, None, data_source, indicator, False)
@@ -477,13 +587,13 @@ def plot_panel(ax, panel_data: Dict[str, Any], panel_name: str, user_config = No
 
         main_series = result[main_data_key]
 
-        if chart_type == 'overlay' or not indicator:
+        if indicator_chart_type == 'overlay' or not indicator:
             # Plot price data with indicator overlay
-            logger.info(f"🚀 CALLING plot_overlay_chart (chart_type='{chart_type}', indicator='{indicator}')")
-            ax = plot_overlay_chart(ax, result, main_series, data_source, indicator, is_bundled)
+            logger.info(f"🚀 CALLING plot_overlay_chart (main_chart_type='{main_chart_type}', indicator='{indicator}')")
+            ax = plot_overlay_chart(ax, result, main_series, data_source, indicator, is_bundled, main_chart_type)
         else:
             # Plot indicator in subplot style
-            logger.info(f"🚀 CALLING plot_indicator_chart (chart_type='{chart_type}', indicator='{indicator}')")
+            logger.info(f"🚀 CALLING plot_indicator_chart (indicator_chart_type='{indicator_chart_type}', indicator='{indicator}')")
             plot_indicator_chart(ax, result, main_series, data_source, indicator, is_bundled)
 
         # Set title (only if ax is still valid)
@@ -512,7 +622,7 @@ def plot_panel(ax, panel_data: Dict[str, Any], panel_name: str, user_config = No
         ax.set_title(f"ERROR: {panel_name}", color='red')
 
 
-def plot_overlay_chart(ax, result: Dict, main_series: pd.Series, data_source: str, indicator: str, is_bundled: bool = False):
+def plot_overlay_chart(ax, result: Dict, main_series: pd.Series, data_source: str, indicator: str, is_bundled: bool = False, chart_type: str = 'candle'):
     """Plot chart with indicator overlaid on price data."""
     try:
         # DEBUG: Log function entry
@@ -588,11 +698,24 @@ def plot_overlay_chart(ax, result: Dict, main_series: pd.Series, data_source: st
         try:
             # Use index positions instead of dates for no weekend gaps
             x_positions = range(len(main_series))
-            main_line = ax.plot(x_positions, main_series.values,
-                               label=main_label, linewidth=1.5, alpha=0.8, color='blue')
-            logger.info(f"✅ Main series plotted: {len(main_line)} lines created")
+
+            # Chart type routing logic
+            if chart_type == 'no_drawing':
+                # Skip plotting main series entirely
+                logger.info(f"🚫 Skipping main series plot (chart_type='no_drawing')")
+                main_line = None
+            elif chart_type == 'candle':
+                # Plot candlestick chart
+                main_line = plot_candlestick_chart(ax, result, x_positions, main_label)
+                logger.info(f"✅ Candlestick chart plotted")
+            else:  # chart_type == 'line' (default)
+                # Current line chart logic
+                main_line = ax.plot(x_positions, main_series.values,
+                                   label=main_label, linewidth=1.5, alpha=0.8, color='blue')
+                logger.info(f"✅ Line chart plotted: {len(main_line)} lines created")
         except Exception as e:
             logger.error(f"❌ FAILED to plot main series: {e}")
+            logger.error(f"   chart_type: {chart_type}")
             logger.error(f"   main_series type: {type(main_series)}")
             logger.error(f"   main_series.index type: {type(main_series.index)}")
             logger.error(f"   main_series.values type: {type(main_series.values)}")
@@ -1170,7 +1293,7 @@ def generate_sr_dashboard(results: Dict[str, Any], output_dir: Path, panel_confi
 
     Args:
         results: SR analysis results
-        output_dir: Output directory
+        output_dir: Output directory (will be organized into submodules)
         panel_config: Panel configuration
 
     Returns:
@@ -1183,12 +1306,20 @@ def generate_sr_dashboard(results: Dict[str, Any], output_dir: Path, panel_confi
     logger.info(f"   panel_config keys: {list(panel_config.keys()) if panel_config else 'None'}")
 
     try:
+        # Initialize SR output manager with organized submodule structure
+        output_manager = get_sr_output_manager(str(output_dir))
+        logger.info(f"📁 SR Output Manager initialized: {output_manager}")
+
+        # Migrate any legacy files to new structure
+        output_manager.migrate_legacy_files()
+
         chart_paths = {}
         timestamp = datetime.now().strftime("%Y%m%d_%H%M")
 
-        # Primary: Multi-panel chart from panel indicators
+        # Primary: Multi-panel chart from panel indicators (goes to 'panels' submodule)
         if 'panel_indicators' in results and panel_config:
-            multi_panel_path = output_dir / f"sr_multi_panel_{timestamp}.png"
+            panels_dir = output_manager.get_submodule_dir('panels')
+            multi_panel_path = panels_dir / f"sr_multi_panel_{timestamp}.png"
             chart_path = create_multi_panel_chart(
                 results['panel_indicators'],
                 str(multi_panel_path),
@@ -1203,9 +1334,10 @@ def generate_sr_dashboard(results: Dict[str, Any], output_dir: Path, panel_confi
         elif not panel_config:
             logger.info("No panel configuration - generating fallback dashboards")
 
-            # Intermarket ratios dashboard (fallback only)
+            # Intermarket ratios dashboard (fallback only) - goes to 'ratios' submodule
             if 'intermarket_ratios' in results:
-                ratios_path = output_dir / f"sr_ratios_{timestamp}.png"
+                ratios_dir = output_manager.get_submodule_dir('ratios')
+                ratios_path = ratios_dir / f"sr_ratios_{timestamp}.png"
                 chart_path = create_ratio_dashboard(
                     results['intermarket_ratios'],
                     str(ratios_path)
@@ -1213,9 +1345,10 @@ def generate_sr_dashboard(results: Dict[str, Any], output_dir: Path, panel_confi
                 if chart_path:
                     chart_paths['ratios'] = chart_path
 
-            # Market breadth dashboard (fallback only)
+            # Market breadth dashboard (fallback only) - goes to 'breadth' submodule
             if 'market_breadth' in results:
-                breadth_path = output_dir / f"sr_breadth_{timestamp}.png"
+                breadth_dir = output_manager.get_submodule_dir('breadth')
+                breadth_path = breadth_dir / f"sr_breadth_{timestamp}.png"
                 chart_path = create_breadth_dashboard(
                     results['market_breadth'],
                     str(breadth_path)
@@ -1223,8 +1356,9 @@ def generate_sr_dashboard(results: Dict[str, Any], output_dir: Path, panel_confi
                 if chart_path:
                     chart_paths['breadth'] = chart_path
 
-            # Summary overview (fallback only)
-            overview_path = output_dir / f"sr_overview_{timestamp}.png"
+            # Summary overview (fallback only) - goes to 'overview' submodule
+            overview_dir = output_manager.get_submodule_dir('overview')
+            overview_path = overview_dir / f"sr_overview_{timestamp}.png"
             chart_path = create_sr_overview(results, str(overview_path))
             if chart_path:
                 chart_paths['overview'] = chart_path

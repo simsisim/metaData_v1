@@ -610,7 +610,7 @@ def _parse_simple_ticker_format(entry: str) -> Dict[str, Any]:
             raise ValueError("Empty ticker")
 
         # Basic ticker validation (alphanumeric plus common symbols)
-        if not re.match(r'^[A-Z0-9\.\-\^]+$', ticker.upper()):
+        if not re.match(r'^[A-Z0-9\.\-\^_]+$', ticker.upper()):
             logger.warning(f"Unusual ticker format: {ticker}")
 
         result = {
@@ -831,7 +831,7 @@ def _validate_simple_ticker(parsed: Dict[str, Any], validation_result: Dict[str,
     ticker = parsed['tickers'][0] if parsed['tickers'] else ''
 
     # Basic ticker format validation
-    if not re.match(r'^[A-Z0-9\.\-\^]+$', ticker.upper()):
+    if not re.match(r'^[A-Z0-9\.\-\^_]+$', ticker.upper()):
         validation_result['warnings'].append(f"Unusual ticker format: {ticker}")
 
     if len(ticker) > 10:

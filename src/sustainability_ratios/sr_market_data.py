@@ -496,7 +496,12 @@ def calculate_bundled_indicator(indicator_str: str, ticker_data: Dict[str, pd.Da
         logger.info(f"🎯 TICKER DETERMINATION:")
         if tickers and len(tickers) > 0:
             ticker = tickers[0]
-            logger.info(f"   Using ticker from parsed: '{ticker}'")
+            # Resolve AUTO_DETECT placeholder to base_ticker
+            if ticker == 'AUTO_DETECT':
+                ticker = base_ticker
+                logger.info(f"   Resolved AUTO_DETECT to base_ticker: '{ticker}'")
+            else:
+                logger.info(f"   Using ticker from parsed: '{ticker}'")
         else:
             ticker = base_ticker
             logger.info(f"   Using base_ticker: '{ticker}'")
@@ -589,6 +594,28 @@ def calculate_multi_ticker_indicator(data_dict: Dict[str, pd.DataFrame], indicat
             # Use existing ratio calculation
             ratio_string = f"{ticker1}:{ticker2}"
             return calculate_ratio_data(ratio_string, data_dict)
+
+        elif indicator == 'CORR' and len(tickers) == 2:
+            # Calculate correlation between two tickers
+            ticker1, ticker2 = tickers
+            data1 = data_dict[ticker1]
+            data2 = data_dict[ticker2]
+
+            # Import CORR calculator
+            from ..indicators.CORR import calculate_corr_for_chart
+
+            # Calculate correlation using parameters
+            corr_result = calculate_corr_for_chart(data1, data2, **parameters)
+
+            # Return result in the same format as other indicators (dict format)
+            if 'correlation' in corr_result and not corr_result['correlation'].empty:
+                logger.info(f"CORR calculation completed for {ticker1}/{ticker2}: "
+                          f"{len(corr_result['correlation'])} data points")
+                return corr_result  # Return the dict format like other indicators
+            else:
+                logger.warning(f"CORR calculation failed for {ticker1}/{ticker2}")
+                return None
+
         else:
             logger.warning(f"Unsupported multi-ticker indicator: {indicator} with {len(tickers)} tickers")
             return None

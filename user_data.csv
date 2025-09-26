@@ -38,6 +38,7 @@ TW_intraday_data,FALSE,Process intraday data from TradingView source
 TW_intraday_file,intraday_data.csv,File name for intraday data input
 ,,
 # GLOBAL STRUCTURE FLAGS,,
+PRE_PROCESS,TRUE,pRrocess data from gf and tw
 BASIC,TRUE,Execute data processing and core calculations phase
 SCREENERS,FALSE,Execute screening and analysis phase
 POST_PROCESS,FALSE,Execute post-processing and report generation phase
@@ -58,6 +59,11 @@ ticker_info_YF,FALSE,Download ticker info from YFinance
 ticker_choice,2-5,Ticker combination choice (0-17)
 batch_size,100,Global batch size for data processing and calculations
 ,,
+# PRE-PROCESSING,,
+PRE_PROCESS_enable,TRUE,
+PRE_PROCESS_file,user_data_pre_process.csv,
+,,
+,,All files in folder_location
 # TICKER GROUP CHOICES (ticker_choice values),,
 # ==========================================,,
 "# Use single numbers or dash-separated combinations (e.g. ""1-2-3"")",,
@@ -79,9 +85,9 @@ batch_size,100,Global batch size for data processing and calculations
 ,,
 # RELATIVE STRENGTH (RS) CONFIGURATION - MULTI-BENCHMARK,,
 # ==========================================================,,
-RS_enable_stocks,TRUE,Enable RS calculation for individual stocks
-RS_enable_sectors,TRUE,Enable RS calculation for sectors  
-RS_enable_industries,TRUE,Enable RS calculation for industries
+RS_enable_stocks,FALSE,Enable RS calculation for individual stocks
+RS_enable_sectors,FALSE,Enable RS calculation for sectors  
+RS_enable_industries,FALSE,Enable RS calculation for industries
 # MULTI-BENCHMARK CONFIGURATION,,
 RS_benchmark_tickers,QQQ; SPY,Benchmark tickers for RS calculations (semicolon separated)
 # COMPOSITE CONFIGURATION,,
@@ -92,7 +98,7 @@ RS_percentile_universe_stocks,QQQ:NASDAQ100; SPY:SP500,Universe for stock percen
 RS_percentile_universe_sectors,QQQ:NASDAQ100,Universe for sector percentiles: all | ticker_choice  | NASADQ100  
 RS_percentile_universe_industries,QQQ:NASDAQ100,Universe for industry percentiles: all | ticker_choice | SP500
 # TIMEFRAME CONFIGURATION,,
-RS_daily_enable,TRUE,Enable RS calculation for daily timeframe
+RS_daily_enable,FALSE,Enable RS calculation for daily timeframe
 RS_weekly_enable,FALSE,Enable RS calculation for weekly timeframe
 RS_monthly_enable,FALSE,Enable RS calculation for monthly timeframe
 # MOVING AVERAGE RS CONFIGURATION,,
@@ -154,13 +160,60 @@ monthly_monthly_periods,2;3;6,Monthly data: monthly percent change periods (mont
 ,,
 # SUSTAINABILITY RATIOS (SR) CONFIGURATION,,
 # ==========================================,,
-SR_enable,FALSE,Enable Sustainability Ratios analysis module
+SR_enable,TRUE,Enable Sustainability Ratios analysis module
 SR_output_dir,results/sustainability_ratios,Output directory for Sustainability Ratios results
-SR_panel_config_file,SR_EB/user_data_panel.csv,Path to panel configuration CSV file
+,,
+# SUBMODULE CONTROL FLAGS,,
+# -------------------------,,
+SR_panels_enable,TRUE,Enable multi-panel charts submodule (existing SR functionality)
+SR_overview_enable,FALSE,Enable overview values and charts submodule
+SR_mmm_enable,FALSE,SR_mmm_enable
+SR_intermarket_enable,FALSE,Enable intermarket ratios submodule
+SR_breadth_enable,FALSE,Enable market breadth indicators submodule
+,,
+# PANEL SUBMODULE CONFIGURATION,,
+# ------------------------------,,
+SR_panel_config_file,user_data_sr_panel.csv,Path to panel configuration CSV file
 SR_timeframes,daily,Timeframes for SR analysis (semicolon separated: daily;weekly;monthly)
 SR_timeframe_daily,TRUE,Enable daily timeframe for SR analysis
 SR_timeframe_weekly,FALSE,Enable weekly timeframe for SR analysis
 SR_timeframe_monthly,FALSE,Enable monthly timeframe for SR analysis
+,,
+# OVERVIEW SUBMODULE CONFIGURATION,,
+# ---------------------------------,,
+SR_overview_values_enable,FALSE,Calculate overview values
+SR_overview_charts_enable,FALSE,Generate overview charts
+SR_overview_values_history,10,Historical periods needed for values calculation
+SR_overview_values_indexes,SPY;IWM,Index tickers (semicolon separated) or CSV file path
+SR_overview_values_sectors,XLY;XLC,Sector tickers (semicolon separated) or CSV file path
+SR_overview_values_industries,NVDA,Industry tickers (semicolon separated) or CSV file path
+SR_overview_values_timeframe,latest;5;latest_Wednesday,Time units for overview display
+SR_overview_output_dir,results/sustainability_ratios/overview,Overview submodule output directory
+SR_overview_filename_prefix,sr_overview,Filename prefix for overview output files
+SR_overview_charts_tickers,SPY; IWM,tickers separated by semicolum or list.csv
+SR_overview_charts_display_panel,user_data_sr_overview.csv,Configure chart panels with indicators
+SR_overview_charts_display_history,30,unit time frame
+,,
+#MMM SUBMODULE,,
+SR_mmm_daily_enable,TRUE,
+SR_mmm_weekly_enable,FALSE,
+SR_mmm_monthly_enable,FALSE,
+SR_mmm_gaps_values,TRUE,
+SR_mmm_gaps_tickers,XLY;XLC,list or tickers
+SR_mmm_gaps_values_input_folder_daily,../downloadData_v1/data/market_data/daily/,
+SR_mmm_gaps_values_input_folder_weekly,../downloadData_v1/data/market_data/weekly/,
+SR_mmm_gaps_values_input_folder_monthly,../downloadData_v1/data/market_data/monthly/,
+SR_mmm_gaps_values_output_folder_daily,../downloadData_v1/data/market_data/daily/,
+SR_mmm_gaps_values_output_folder_weekly,../downloadData_v1/data/market_data/weekly/,
+SR_mmm_gaps_values_output_folder_monthly,../downloadData_v1/data/market_data/monthly/,
+SR_mmm_gaps_values_filename_suffix,_gap,
+SR_mmm_gaps_chart_enable,FALSE,
+SR_mmm_gaps_charts_display_panel,user_data_sr_mmm.csv,Configure chart panels with indicators
+SR_mmm_gaps_charts_display_history,30,unit time frame
+SR_mmm_output_dir,results/sustainability_ratios/mmm,
+# PANEL CHARTS CONFIGURATION,,
+# ---------------------------,,
+,,
 SR_chart_display,66,Number of historical data points to show on charts
 SR_chart_generation,TRUE,Enable chart generation for SR dashboard
 SR_intermarket_ratios,TRUE,Enable intermarket ratios calculation (QQQ:SPY XLY:XLP etc)
@@ -168,6 +221,7 @@ SR_market_breadth,TRUE,Enable market breadth indicators calculation
 SR_save_detailed_results,TRUE,Save detailed CSV results for all SR components
 SR_dashboard_style,multi_panel,Dashboard style (multi_panel market_timing comprehensive)
 SR_lookback_days,252,Default lookback period for SR calculations (trading days)
+,,
 ,,
 # STAGE ANALYSIS CONFIGURATION,,
 # ==============================,,

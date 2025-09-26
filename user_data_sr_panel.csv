@@ -1,0 +1,8 @@
+#file_name_id,chart_type,Panel_1,Panel_2,Panel_3,Panel_4,Panel_5,Panel_6,Panel_1_index,Panel_2_index,Panel_3_index,Panel_4_index,Panel_5_index,Panel_6_index
+#SPY_vs_IWM_panel,cnadle,SPY + EMA(20),,,,,,"A_PPO(12,26,9)_for_(SPY)",B_RSI(14)_for_(IWM),,,,
+#QQQ_Analysis_panel,candle,QQQ + EMA(10) + SMA(50),,,,,,"A_PPO(12,26,9)_for_(QQQ) ",B_RSI(14)_for_(QQQ),,,,
+#QQQ_vs_SPY_panel,candle,"QQQ + EMA(QQQ, 10)",SPY,,,,,"A_PPO(12,26,9)_for_(QQQ)",,,,,
+#test_panel,line,"QQQ + EMA(QQQ, 10)",,,,,,"A_PPO(12,26,9)_for_(QQQ)",B_RSI(14)_for_(QQQ),,,,
+#tesst2_panel,line,"QQQ + EMA(QQQ, 10)",XLY,,,,,,,,,,
+SPY_vs_CPCS,candle,SPY + EMA(20) + SMA(50),INDEX_CPCS+ SMA(5),,,,,"A_PPO(12,26,9)_for_(SPY)",,,,,
+SPY_vs_VIX,candle,SPY + EMA(20) + SMA(50),,,,,,"A_PPO(12,26,9)_for_(SPY)","CORR(20)_for_(SPY,QQQ)",,,,

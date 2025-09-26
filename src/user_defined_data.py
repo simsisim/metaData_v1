@@ -28,9 +28,13 @@ class UserConfiguration:
     zacks_fin_data: bool = False
     
     # GLOBAL EXECUTION PHASE CONTROL
+    PRE_PROCESS: bool = True  # Execute pre-processing of TradingView data phase
     BASIC: bool = True        # Execute data processing and core calculations phase
     SCREENERS: bool = True    # Execute screening and analysis phase
     POST_PROCESS: bool = True # Execute post-processing and report generation phase
+
+    # PRE_PROCESS configuration
+    PRE_PROCESS_file: str = "user_data_pre_process.csv"
 
     # General settings
     write_info_file: bool = True
@@ -154,6 +158,45 @@ class UserConfiguration:
     sr_save_detailed_results: bool = True
     sr_dashboard_style: str = "multi_panel"
     sr_lookback_days: int = 252
+
+    # SUBMODULE CONTROL FLAGS
+    sr_panels_enable: bool = True
+    sr_overview_enable: bool = True
+    sr_intermarket_enable: bool = True
+    sr_breadth_enable: bool = True
+
+    # OVERVIEW SUBMODULE CONFIGURATION
+    sr_overview_values_enable: bool = True
+    sr_overview_charts_enable: bool = True
+    sr_overview_values_history: int = 10
+    sr_overview_values_indexes: str = "SPY;IWM"
+    sr_overview_values_sectors: str = "XLY;XLC"
+    sr_overview_values_industries: str = "NVDA"
+    sr_overview_values_timeframe: str = "latest;5;latest_Wednesday"
+    sr_overview_output_dir: str = "results/sustainability_ratios/overview"
+    sr_overview_filename_prefix: str = "sr_overview"
+    sr_overview_charts_tickers: str = "SPY;IWM"
+    sr_overview_charts_display_panel: str = "user_data_sr_overview.csv"
+    sr_overview_charts_display_history: int = 30
+
+    # MMM SUBMODULE CONFIGURATION
+    sr_mmm_enable: bool = False
+    sr_mmm_daily_enable: bool = True
+    sr_mmm_weekly_enable: bool = False
+    sr_mmm_monthly_enable: bool = False
+    sr_mmm_gaps_values: bool = True
+    sr_mmm_gaps_tickers: str = "XLY;XLC"
+    sr_mmm_gaps_values_input_folder_daily: str = "../downloadData_v1/data/market_data/daily/"
+    sr_mmm_gaps_values_input_folder_weekly: str = "../downloadData_v1/data/market_data/weekly/"
+    sr_mmm_gaps_values_input_folder_monthly: str = "../downloadData_v1/data/market_data/monthly/"
+    sr_mmm_gaps_values_output_folder_daily: str = "../downloadData_v1/data/market_data/daily/"
+    sr_mmm_gaps_values_output_folder_weekly: str = "../downloadData_v1/data/market_data/weekly/"
+    sr_mmm_gaps_values_output_folder_monthly: str = "../downloadData_v1/data/market_data/monthly/"
+    sr_mmm_gaps_values_filename_suffix: str = "_gap"
+    sr_mmm_gaps_chart_enable: bool = True
+    sr_mmm_gaps_charts_display_panel: str = "user_data_sr_mmm.csv"
+    sr_mmm_gaps_charts_display_history: int = 30
+    sr_mmm_output_dir: str = "results/sustainability_ratios/mmm"
 
     # Screeners
     screener_output_file: str = "screener_results.csv"
@@ -921,12 +964,31 @@ def read_user_data(file_path: str = 'user_data.csv') -> UserConfiguration:
             # SUSTAINABILITY RATIOS (SR) CONFIGURATION
             'SR_enable': ('sr_enable', parse_boolean),
             'SR_output_dir': ('sr_output_dir', str),
+            # SUBMODULE CONTROL FLAGS
+            'SR_panels_enable': ('sr_panels_enable', parse_boolean),
+            'SR_overview_enable': ('sr_overview_enable', parse_boolean),
+            'SR_intermarket_enable': ('sr_intermarket_enable', parse_boolean),
+            'SR_breadth_enable': ('sr_breadth_enable', parse_boolean),
+            # PANEL SUBMODULE CONFIGURATION
             'SR_panel_config_file': ('sr_panel_config_file', str),
             'SR_timeframes': ('sr_timeframes', str),
             # New granular timeframe controls
             'SR_timeframe_daily': ('sr_timeframe_daily', parse_boolean),
             'SR_timeframe_weekly': ('sr_timeframe_weekly', parse_boolean),
             'SR_timeframe_monthly': ('sr_timeframe_monthly', parse_boolean),
+            # OVERVIEW SUBMODULE CONFIGURATION
+            'SR_overview_values_enable': ('sr_overview_values_enable', parse_boolean),
+            'SR_overview_charts_enable': ('sr_overview_charts_enable', parse_boolean),
+            'SR_overview_values_history': ('sr_overview_values_history', int),
+            'SR_overview_values_indexes': ('sr_overview_values_indexes', str),
+            'SR_overview_values_sectors': ('sr_overview_values_sectors', str),
+            'SR_overview_values_industries': ('sr_overview_values_industries', str),
+            'SR_overview_values_timeframe': ('sr_overview_values_timeframe', str),
+            'SR_overview_output_dir': ('sr_overview_output_dir', str),
+            'SR_overview_filename_prefix': ('sr_overview_filename_prefix', str),
+            'SR_overview_charts_tickers': ('sr_overview_charts_tickers', str),
+            'SR_overview_charts_display_panel': ('sr_overview_charts_display_panel', str),
+            'SR_overview_charts_display_history': ('sr_overview_charts_display_history', int),
             # Chart display range control
             'SR_chart_display': ('sr_chart_display', int),
             'SR_chart_generation': ('sr_chart_generation', parse_boolean),
@@ -935,6 +997,25 @@ def read_user_data(file_path: str = 'user_data.csv') -> UserConfiguration:
             'SR_save_detailed_results': ('sr_save_detailed_results', parse_boolean),
             'SR_dashboard_style': ('sr_dashboard_style', str),
             'SR_lookback_days': ('sr_lookback_days', int),
+
+            # MMM SUBMODULE CONFIGURATION
+            'SR_mmm_enable': ('sr_mmm_enable', parse_boolean),
+            'SR_mmm_daily_enable': ('sr_mmm_daily_enable', parse_boolean),
+            'SR_mmm_weekly_enable': ('sr_mmm_weekly_enable', parse_boolean),
+            'SR_mmm_monthly_enable': ('sr_mmm_monthly_enable', parse_boolean),
+            'SR_mmm_gaps_values': ('sr_mmm_gaps_values', parse_boolean),
+            'SR_mmm_gaps_tickers': ('sr_mmm_gaps_tickers', str),
+            'SR_mmm_gaps_values_input_folder_daily': ('sr_mmm_gaps_values_input_folder_daily', str),
+            'SR_mmm_gaps_values_input_folder_weekly': ('sr_mmm_gaps_values_input_folder_weekly', str),
+            'SR_mmm_gaps_values_input_folder_monthly': ('sr_mmm_gaps_values_input_folder_monthly', str),
+            'SR_mmm_gaps_values_output_folder_daily': ('sr_mmm_gaps_values_output_folder_daily', str),
+            'SR_mmm_gaps_values_output_folder_weekly': ('sr_mmm_gaps_values_output_folder_weekly', str),
+            'SR_mmm_gaps_values_output_folder_monthly': ('sr_mmm_gaps_values_output_folder_monthly', str),
+            'SR_mmm_gaps_values_filename_suffix': ('sr_mmm_gaps_values_filename_suffix', str),
+            'SR_mmm_gaps_chart_enable': ('sr_mmm_gaps_chart_enable', parse_boolean),
+            'SR_mmm_gaps_charts_display_panel': ('sr_mmm_gaps_charts_display_panel', str),
+            'SR_mmm_gaps_charts_display_history': ('sr_mmm_gaps_charts_display_history', int),
+            'SR_mmm_output_dir': ('sr_mmm_output_dir', str),
 
             # Screeners
             'screener_output_file': ('screener_output_file', str),

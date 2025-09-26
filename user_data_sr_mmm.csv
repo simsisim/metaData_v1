@@ -1,0 +1,11 @@
+#file_name_id,chart_type,Panel_1,Panel_2,Panel_3,Panel_4,Panel_5,Panel_6,Panel_1_index,Panel_2_index,Panel_3_index,Panel_4_index,Panel_5_index,Panel_6_index
+mmm_SPY_vs_IWM_mmm,candle,SPY + EMA(20),,,,,,"A_PPO(12,26,9)_for_(SPY)",B_RSI(14)_for_(IWM),,,,
+mmm_QQQ_Analysis_mmm,line,QQQ + EMA(10) + SMA(50),XLY_gap2,,,,,"A_PPO(12,26,9)_for_(QQQ) ",B_RSI(14)_for_(QQQ),,,,
+mmm_test_1111,line,XLY,XLY-gap2,,,,,,,,,,
+mmm_test_2222,line,XLY,XLY-gap,,,,,,,,,,
+mmm_test_3333,line,XLY,XLYGAP2,,,,,,,,,,
+mmm_test_4444,line,XLY,XLYGAP,,,,,,,,,,
+mmm_test_5555,line,XLY,QQQ,,,,,,,,,,
+mmm_test_6666,line,XLY,QQQGAP,,,,,,,,,,
+mmm_test_7777,line,XLY,QQQGAP,,,,,,,,,,
+mmm_test_8888,line,XLY,QQQ-gap2,,,,,,,,,,

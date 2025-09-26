@@ -334,7 +334,7 @@ def _validate_data_source(data_source: str, panel_name: str, validation_results:
             # Single ticker - validate format
             if not data_source.strip():
                 validation_results['errors'].append(f"{panel_name}: Empty data source")
-            elif not re.match(r'^[A-Z0-9\.\-\^]+$', data_source.upper()):
+            elif not re.match(r'^[A-Z0-9\.\-\^_]+$', data_source.upper()):
                 validation_results['warnings'].append(f"{panel_name}: Unusual ticker format: {data_source}")
 
     except Exception as e:
@@ -426,7 +426,7 @@ def _validate_panel_positioning(panel_info: Dict[str, Any], panel_name: str, val
 
         if position in ['above', 'below']:
             if not base_panel:
-                validation_results['warnings'].append(f"{panel_name}: Positioned panel missing base_panel reference")
+                logger.debug(f"{panel_name}: Positioned panel missing base_panel reference (orphaned positioned panel - allowed)")
 
             # Check if prefix is consistent with position
             prefix = panel_info.get('prefix')
@@ -573,6 +573,24 @@ def _parse_single_row(row: pd.Series, columns: pd.Index, row_number: int) -> Dic
             timeframe = get_global_timeframe()  # From user_data.csv settings
             panel_start_idx = 1
 
+        # Extract chart_type from CSV if available
+        chart_type = 'candle'  # Default as specified by user
+        for col_idx, col_name in enumerate(columns):
+            col_name_str = str(col_name).strip().lower()
+            if col_name_str == 'chart_type':
+                chart_type_value = str(row.iloc[col_idx]).strip() if pd.notna(row.iloc[col_idx]) else ''
+                if chart_type_value == '':
+                    chart_type = 'candle'  # Default when empty
+                elif chart_type_value.lower() in ['candle', 'candlestick']:
+                    chart_type = 'candle'
+                elif chart_type_value.lower() == 'line':
+                    chart_type = 'line'
+                elif chart_type_value.lower() == 'no_drawing':
+                    chart_type = 'no_drawing'
+                else:
+                    chart_type = 'candle'  # Fallback to default
+                break
+
         # Extract panel data sources and indicators for this row
         panel_data_sources = {}
         panel_indicators = {}
@@ -631,10 +649,10 @@ def _parse_single_row(row: pd.Series, columns: pd.Index, row_number: int) -> Dic
             main_panel_processed = False
             if data_source_parsed:
                 if data_source_parsed.get('is_bundled', False):
-                    _process_bundled_panel_entry(panel_config, panel_name, data_source_parsed, timeframe, row_number, file_name_id)
+                    _process_bundled_panel_entry(panel_config, panel_name, data_source_parsed, timeframe, row_number, file_name_id, chart_type)
                     main_panel_processed = True
                 else:
-                    _process_enhanced_data_source_panel(panel_config, panel_name, data_source_parsed, timeframe, row_number, file_name_id)
+                    _process_enhanced_data_source_panel(panel_config, panel_name, data_source_parsed, timeframe, row_number, file_name_id, chart_type)
                     main_panel_processed = True
 
             # Then handle indicator information (positioned panels or main panel indicators)
@@ -650,34 +668,44 @@ def _parse_single_row(row: pd.Series, columns: pd.Index, row_number: int) -> Dic
                 elif not main_panel_processed:
                     # Handle bundled format indicators
                     if parsed_data.get('format_type') == 'bundled':
-                        _process_bundled_panel_entry(panel_config, panel_name, parsed_data, timeframe, row_number, file_name_id)
+                        _process_bundled_panel_entry(panel_config, panel_name, parsed_data, timeframe, row_number, file_name_id, chart_type)
 
                     # Handle enhanced format indicators
                     elif parsed_data.get('format_type') == 'enhanced':
-                        _process_enhanced_panel_entry(panel_config, panel_name, data_source, parsed_data, timeframe, row_number, file_name_id)
+                        _process_enhanced_panel_entry(panel_config, panel_name, data_source, parsed_data, timeframe, row_number, file_name_id, chart_type)
 
                     # Handle legacy formats that don't create positioned panels
                     elif parsed_data.get('format_type') in ['legacy_indicator', 'simple_ticker']:
-                        _process_legacy_main_panel(panel_config, panel_name, data_source, parsed_data, timeframe, row_number, file_name_id)
+                        _process_legacy_main_panel(panel_config, panel_name, data_source, parsed_data, timeframe, row_number, file_name_id, chart_type)
                     main_panel_processed = True
 
             # Fallback if no main panel was processed
             if not main_panel_processed:
                 # Fallback to simple panel without indicators
-                _process_simple_main_panel(panel_config, panel_name, data_source, timeframe, row_number, file_name_id)
+                _process_simple_main_panel(panel_config, panel_name, data_source, timeframe, row_number, file_name_id, chart_type)
 
         # Process positioned panels (A_/B_) from enhanced parsing
         for indicator_key, indicator_info in panel_indicators.items():
             if isinstance(indicator_info, dict) and 'parsed_data' in indicator_info:
                 parsed_data = indicator_info['parsed_data']
+                logger.info(f"🔍 PROCESSING PANEL INDEX: {indicator_key}")
+                logger.info(f"   parsed_data keys: {list(parsed_data.keys())}")
+                logger.info(f"   position: {parsed_data.get('position')}")
+                logger.info(f"   indicator: {parsed_data.get('indicator')}")
+                logger.info(f"   tickers: {parsed_data.get('tickers')}")
 
                 # Handle positioned panels (A_/B_) and bundled positioned panels
                 if parsed_data.get('position') in ['above', 'below']:
                     base_panel_name = indicator_key.replace('_index', '')
+                    logger.info(f"✅ POSITIONED PANEL DETECTED: {indicator_key} → {base_panel_name}")
                     if parsed_data.get('format_type') == 'bundled':
-                        _process_bundled_panel_entry(panel_config, base_panel_name, parsed_data, timeframe, row_number, file_name_id)
+                        logger.info(f"   Processing as bundled positioned panel")
+                        _process_bundled_panel_entry(panel_config, base_panel_name, parsed_data, timeframe, row_number, file_name_id, chart_type)
                     else:
-                        _process_positioned_panel(panel_config, base_panel_name, parsed_data, timeframe, row_number, file_name_id)
+                        logger.info(f"   Processing as regular positioned panel")
+                        _process_positioned_panel(panel_config, base_panel_name, parsed_data, timeframe, row_number, file_name_id, chart_type)
+                else:
+                    logger.info(f"❌ NOT A POSITIONED PANEL: position={parsed_data.get('position')}")
 
         # Legacy fallback: Process additional panels from Panel_*_index A_/B_ definitions
         for indicator_key, indicator_value in panel_indicators.items():
@@ -704,12 +732,20 @@ def _parse_single_row(row: pd.Series, columns: pd.Index, row_number: int) -> Dic
                     'position': position_name,  # 'above' or 'below'
                     'base_panel': base_panel_name,  # Reference to main panel
                     'prefix': prefix,  # 'A_' or 'B_'
-                    'file_name_id': file_name_id
+                    'file_name_id': file_name_id,
+                    'chart_type': chart_type
                 }
 
         # Apply priority system and vertical stacking for this row
         if panel_config:
             panel_config = _apply_panel_priority_and_stacking(panel_config)
+
+        logger.info(f"🚀 ROW {row_number} FINAL PANEL CONFIG:")
+        for panel_key, panel_info in panel_config.items():
+            logger.info(f"   ✅ {panel_key}")
+            logger.info(f"      data_source: {panel_info.get('data_source')}")
+            logger.info(f"      indicator: {panel_info.get('indicator')}")
+            logger.info(f"      position: {panel_info.get('position')}")
 
         return panel_config
 
@@ -982,7 +1018,12 @@ def _apply_panel_priority_and_stacking(panel_config: Dict[str, Dict[str, Any]]) 
             except (IndexError, ValueError):
                 return 999
 
-        sorted_panel_types = sorted(main_panels.keys(), key=get_panel_number)
+        # Collect all panel types from main, above, and below panels
+        # This allows positioned panels to exist without requiring base main panels
+        all_panel_types = set(main_panels.keys())
+        all_panel_types.update(above_panels.keys())
+        all_panel_types.update(below_panels.keys())
+        sorted_panel_types = sorted(all_panel_types, key=get_panel_number)
 
         # Build final ordered configuration with stacking_order
         final_config = {}
@@ -1030,7 +1071,8 @@ def _process_enhanced_panel_entry(panel_config: Dict[str, Dict[str, Any]],
                                  parsed_data: Dict[str, Any],
                                  timeframe: str,
                                  row_number: int,
-                                 file_name_id: str = '') -> None:
+                                 file_name_id: str = '',
+                                 chart_type: str = 'candle') -> None:
     """
     Process enhanced format panel entry and add to panel configuration.
 
@@ -1074,7 +1116,8 @@ def _process_enhanced_panel_entry(panel_config: Dict[str, Dict[str, Any]],
                 'format_type': 'enhanced',
                 'tickers': tickers,
                 'is_multi_ticker': len(tickers) > 1,
-                'file_name_id': file_name_id
+                'file_name_id': file_name_id,
+                'chart_type': chart_type
             }
 
         elif position in ['above', 'below']:
@@ -1096,7 +1139,8 @@ def _process_enhanced_panel_entry(panel_config: Dict[str, Dict[str, Any]],
                 'prefix': prefix,
                 'format_type': 'enhanced',
                 'tickers': tickers,
-                'file_name_id': file_name_id
+                'file_name_id': file_name_id,
+                'chart_type': chart_type
             }
 
         logger.debug(f"Processed enhanced panel entry: {config_key}")
@@ -1111,7 +1155,8 @@ def _process_legacy_main_panel(panel_config: Dict[str, Dict[str, Any]],
                               parsed_data: Dict[str, Any],
                               timeframe: str,
                               row_number: int,
-                              file_name_id: str = '') -> None:
+                              file_name_id: str = '',
+                              chart_type: str = 'candle') -> None:
     """
     Process legacy format main panel entry.
 
@@ -1144,7 +1189,8 @@ def _process_legacy_main_panel(panel_config: Dict[str, Dict[str, Any]],
             'config_row': row_number,
             'position': 'main',
             'format_type': parsed_data.get('format_type', 'legacy'),
-            'file_name_id': file_name_id
+            'file_name_id': file_name_id,
+            'chart_type': chart_type
         }
 
         logger.debug(f"Processed legacy main panel: {config_key}")
@@ -1158,7 +1204,8 @@ def _process_simple_main_panel(panel_config: Dict[str, Dict[str, Any]],
                               data_source: str,
                               timeframe: str,
                               row_number: int,
-                              file_name_id: str = '') -> None:
+                              file_name_id: str = '',
+                              chart_type: str = 'candle') -> None:
     """
     Process simple main panel without indicators.
 
@@ -1183,7 +1230,8 @@ def _process_simple_main_panel(panel_config: Dict[str, Dict[str, Any]],
             'config_row': row_number,
             'position': 'main',
             'format_type': 'simple',
-            'file_name_id': file_name_id
+            'file_name_id': file_name_id,
+            'chart_type': chart_type
         }
 
         logger.debug(f"Processed simple main panel: {config_key}")
@@ -1197,7 +1245,8 @@ def _process_positioned_panel(panel_config: Dict[str, Dict[str, Any]],
                              parsed_data: Dict[str, Any],
                              timeframe: str,
                              row_number: int,
-                             file_name_id: str = '') -> None:
+                             file_name_id: str = '',
+                             chart_type: str = 'candle') -> None:
     """
     Process positioned panel (above/below) from enhanced parsing.
 
@@ -1216,11 +1265,23 @@ def _process_positioned_panel(panel_config: Dict[str, Dict[str, Any]],
         parameters = parsed_data.get('parameters', {})
         prefix = parsed_data.get('prefix')
 
+        logger.info(f"🚀 _process_positioned_panel CALLED:")
+        logger.info(f"   base_panel_name: {base_panel_name}")
+        logger.info(f"   position: {position}")
+        logger.info(f"   tickers: {tickers}")
+        logger.info(f"   indicator: {indicator}")
+        logger.info(f"   parameters: {parameters}")
+
         if position not in ['above', 'below']:
+            logger.info(f"❌ INVALID POSITION: {position} - Returning early")
             return
 
         ticker = tickers[0] if tickers else 'UNKNOWN'
         config_key = f"{base_panel_name}_{position}_{ticker}_{indicator or 'price'}_row{row_number}"
+
+        logger.info(f"✅ CREATING CONFIG KEY: {config_key}")
+        logger.info(f"   ticker resolved: {ticker}")
+        logger.info(f"   indicator for config: {indicator or 'PRICE'}")
 
         panel_config[config_key] = {
             'panel_name': f"{base_panel_name}_{position}",
@@ -1236,10 +1297,15 @@ def _process_positioned_panel(panel_config: Dict[str, Dict[str, Any]],
             'prefix': prefix,
             'format_type': parsed_data.get('format_type', 'enhanced'),
             'tickers': tickers,
-            'file_name_id': file_name_id
+            'file_name_id': file_name_id,
+            'chart_type': chart_type
         }
 
-        logger.debug(f"Processed positioned panel: {config_key}")
+        logger.info(f"✅ POSITIONED PANEL CREATED: {config_key}")
+        logger.info(f"   panel_name: {panel_config[config_key]['panel_name']}")
+        logger.info(f"   data_source: {panel_config[config_key]['data_source']}")
+        logger.info(f"   indicator: {panel_config[config_key]['indicator']}")
+        logger.info(f"   has_indicator: {panel_config[config_key]['has_indicator']}")
 
     except Exception as e:
         logger.error(f"Error processing positioned panel: {e}")
@@ -1250,7 +1316,8 @@ def _process_enhanced_data_source_panel(panel_config: Dict[str, Dict[str, Any]],
                                         parsed_data: Dict[str, Any],
                                         timeframe: str,
                                         row_number: int,
-                                        file_name_id: str = '') -> None:
+                                        file_name_id: str = '',
+                                        chart_type: str = 'candle') -> None:
     """
     Process enhanced format as data source (e.g., PPO(10,20,40)_for_(QQQ) in Panel_1).
 
@@ -1298,7 +1365,8 @@ def _process_enhanced_data_source_panel(panel_config: Dict[str, Dict[str, Any]],
                 'tickers': tickers,
                 'is_multi_ticker': len(tickers) > 1,
                 'is_data_source_indicator': True,
-                'file_name_id': file_name_id
+                'file_name_id': file_name_id,
+                'chart_type': chart_type
             }
         else:
             # Main panel with enhanced data source
@@ -1317,7 +1385,8 @@ def _process_enhanced_data_source_panel(panel_config: Dict[str, Dict[str, Any]],
                 'tickers': tickers,
                 'is_multi_ticker': len(tickers) > 1,
                 'is_data_source_indicator': True,
-                'file_name_id': file_name_id
+                'file_name_id': file_name_id,
+                'chart_type': chart_type
             }
 
         logger.debug(f"Processed enhanced data source panel: {config_key}")
@@ -1331,7 +1400,8 @@ def _process_bundled_panel_entry(panel_config: Dict[str, Dict[str, Any]],
                                  parsed_data: Dict[str, Any],
                                  timeframe: str,
                                  row_number: int,
-                                 file_name_id: str = '') -> None:
+                                 file_name_id: str = '',
+                                 chart_type: str = 'candle') -> None:
     """
     Process bundled panel entry (e.g., QQQ+EMA(20)+EMA(50) or A_QQQ+EMA(20)).
 
@@ -1382,6 +1452,7 @@ def _process_bundled_panel_entry(panel_config: Dict[str, Dict[str, Any]],
             'is_multi_ticker': len(tickers) > 1,
             'file_name_id': file_name_id,
             'is_bundled': True,
+            'chart_type': chart_type,
             'overlay_indicators': [ind for ind in indicators if ind.get('display_type') == 'overlay'],
             'subplot_indicators': [ind for ind in indicators if ind.get('display_type') == 'subplot']
         }

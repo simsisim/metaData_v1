@@ -22,6 +22,7 @@ from .RATIO import parse_ratio_params, calculate_ratio_for_chart
 from .PRICE import parse_price_params, calculate_price_for_chart
 from .MACD import parse_macd_params, calculate_macd_for_chart
 from .ADLINE import parse_adline_params, calculate_adline_for_chart
+from .CORR import parse_corr_params, calculate_corr_for_chart
 
 
 # Registry of supported indicators
@@ -65,6 +66,11 @@ INDICATOR_REGISTRY = {
         'parser': parse_adline_params,
         'calculator': calculate_adline_for_chart,
         'description': 'Accumulation Distribution Line'
+    },
+    'CORR': {
+        'parser': parse_corr_params,
+        'calculator': calculate_corr_for_chart,
+        'description': 'Rolling Correlation between two tickers'
     }
 }
 
@@ -299,7 +305,7 @@ def get_indicator_chart_type(indicator_name: str) -> str:
         'overlay'
     """
     overlay_indicators = ['EMA', 'SMA', 'MA', 'ADLINE']
-    subplot_indicators = ['PPO', 'RSI', 'MACD', 'MFI']
+    subplot_indicators = ['PPO', 'RSI', 'MACD', 'MFI', 'CORR']
 
     if indicator_name.upper() in overlay_indicators:
         return 'overlay'

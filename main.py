@@ -18,7 +18,8 @@ from src.config import Config
 from src.user_defined_data import read_user_data, UserConfiguration
 from src.unified_ticker_generator import generate_all_ticker_files
 
-# Import post-processing modules
+# Import pre-processing and post-processing modules
+from src.pre_process import run_pre_process_analysis
 from src.basic_calculations import basic_calculations, save_basic_calculations_matrix
 from src.market_breadth_calculation import save_market_breadth_matrix
 from src.stage_analysis_processor import run_stage_analysis_processing, StageAnalysisProcessor
@@ -1454,6 +1455,34 @@ def main() -> None:
     # NEW GROUPED CALCULATION STRUCTURE
     # =====================================
     # Process calculations grouped by type across all timeframes for better efficiency
+
+    # ==============================
+    # PHASE 0: PRE_PROCESS
+    # ==============================
+    if user_config.PRE_PROCESS:
+        print(f"\n🔄 EXECUTING PRE_PROCESS PHASE")
+        print("="*60)
+
+        # Execute TradingView data transformation
+        try:
+            pre_process_result = run_pre_process_analysis()
+
+            if pre_process_result['success']:
+                print(f"✅ PRE_PROCESS completed successfully")
+                print(f"   Duration: {pre_process_result['workflow_duration']:.2f} seconds")
+                print(f"   Files processed: {pre_process_result['processing_stats']['total_processed']}")
+                print(f"   Success rate: {(pre_process_result['processing_stats']['successful'] / max(pre_process_result['processing_stats']['total_processed'], 1)) * 100:.1f}%")
+            else:
+                print(f"❌ PRE_PROCESS failed: {pre_process_result.get('error', 'Unknown error')}")
+                logger.warning(f"PRE_PROCESS phase failed but continuing with pipeline")
+
+        except Exception as e:
+            print(f"❌ PRE_PROCESS phase error: {e}")
+            logger.error(f"PRE_PROCESS phase error: {e}")
+
+        print(f"✅ PRE_PROCESS PHASE COMPLETED")
+    else:
+        print(f"\n⏭️  PRE_PROCESS PHASE SKIPPED")
 
     # ==============================
     # PHASE 1: BASIC CALCULATIONS
