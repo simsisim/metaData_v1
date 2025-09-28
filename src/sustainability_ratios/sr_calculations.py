@@ -169,6 +169,9 @@ class SRProcessor:
         self.market_data = {}  # Global cache for all market data
         self.results = {}
 
+        # 🔧 FIX: Load configuration during initialization
+        self.load_configuration()
+
     def load_configuration(self) -> bool:
         """
         Load SR configuration from CSV files.
@@ -181,13 +184,22 @@ class SRProcessor:
             self.sr_config = load_sr_configuration(self.config, self.user_config)
 
             # Load panel configuration (now returns list of row configs)
-            panel_csv_path = Path(self.config.base_dir) / "SR_EB" / "user_data_panel.csv"
+            # 🔧 FIX: Use user configuration instead of hardcoded path
+            panel_config_file = self.user_config.sr_panel_config_file
+            if not os.path.isabs(panel_config_file):
+                # Relative path - resolve from base directory
+                panel_csv_path = Path(self.config.base_dir) / panel_config_file
+            else:
+                # Absolute path - use as is
+                panel_csv_path = Path(panel_config_file)
+
             if panel_csv_path.exists():
                 self.panel_configs = parse_panel_config(str(panel_csv_path))
-                logger.info(f"Loaded SR panel configuration with {len(self.panel_configs)} row configurations")
+                logger.info(f"Loaded SR panel configuration from {panel_csv_path} with {len(self.panel_configs)} row configurations")
                 return True
             else:
                 logger.warning(f"Panel configuration file not found: {panel_csv_path}")
+                logger.info(f"Expected file: {panel_config_file} (from user config)")
                 return False
 
         except Exception as e:
@@ -349,31 +361,67 @@ class SRProcessor:
             Dict with panel indicator results
         """
         try:
-            if not self.panel_config:
+            # Combine all panel configs from all rows
+            combined_panel_config = {}
+            for row_config in self.panel_configs:
+                combined_panel_config.update(row_config)
+
+            if not combined_panel_config:
                 logger.warning("No panel configuration available")
                 return {}
 
             logger.info("Processing panel indicators...")
 
             # Load market data for all panels
-            panel_data = load_market_data_for_panels(self.panel_config, self.data_reader)
+            panel_data = load_market_data_for_panels(combined_panel_config, self.data_reader)
 
             # Process each panel (with or without indicators)
             panel_results = {}
-            for panel_name, panel_info in self.panel_config.items():
+            for panel_name, panel_info in combined_panel_config.items():
                 if panel_info.get('data_source'):
                     try:
                         # Get data for this panel
                         data_source = panel_info['data_source']
 
+                        # 🔧 SMART TYPE DETECTION: Route panels to appropriate processors
+                        panel_type = self._detect_panel_type(data_source, panel_info)
+
                         if data_source in panel_data:
                             indicator = panel_info.get('indicator', '')
 
+                            # 🔧 FIX: For legacy format, extract indicator from data_source if indicator field is empty
+                            if not indicator and '_for_(' in data_source:
+                                # Legacy format like "CORR(20)_for_(SPY,QQQ)" - extract "CORR"
+                                import re
+                                legacy_match = re.match(r'([A-Z]+)\(', data_source)
+                                if legacy_match:
+                                    indicator = legacy_match.group(1)
+
                             if indicator:
-                                # 🔧 FIX: Skip indicator processing for data source indicators (like RATIO_for_(SPY,QQQ))
+                                # 🔧 FIX: For data source indicators, create panel result from existing data
                                 if panel_info.get('is_data_source_indicator', False):
-                                    logger.debug(f"Skipping indicator processing for data source indicator: {panel_name}")
+                                    logger.debug(f"Creating panel result from existing data for data source indicator: {panel_name}")
+
+                                    # Use existing data from panel_data[data_source]
+                                    existing_data = panel_data[data_source]
+
+                                    # Create panel result with existing data
+                                    panel_result = {
+                                        'data': existing_data,
+                                        'name': panel_name,
+                                        'data_source': data_source,
+                                        'is_data_source_indicator': True
+                                    }
+
+                                    panel_results[panel_name] = {
+                                        'data_source': data_source,
+                                        'indicator': '',
+                                        'result': panel_result,
+                                        'timeframe': panel_info.get('timeframe', 'daily')
+                                    }
                                     continue
+
+                                # 🔧 TYPE-SPECIFIC INDICATOR PROCESSING
 
                                 # Calculate indicator for this panel
                                 from ..indicators.indicator_parser import calculate_indicator
@@ -406,12 +454,44 @@ class SRProcessor:
                                 else:
                                     param_string = indicator
 
-                                print(f"🔧 INDICATOR CALCULATION: '{indicator}' → '{param_string}'")
 
-                                indicator_result = calculate_indicator(
-                                    panel_data[data_source],
-                                    param_string
-                                )
+                                # 🔧 FIX: Special handling for correlation indicators that need multiple data sources
+                                if indicator == 'CORR':
+                                    # Check if this is pre-calculated correlation data (legacy format)
+                                    if isinstance(panel_data[data_source], dict):
+                                        indicator_result = panel_data[data_source]
+                                    else:
+                                        # Extract tickers from the data source (e.g., "B_CORR(20)_for_(SPY,QQQ)")
+                                        tickers = extract_tickers_from_data_source(data_source)
+                                        if len(tickers) >= 2:
+                                            # Get data for both tickers
+                                            ticker1, ticker2 = tickers[0], tickers[1]
+                                            if ticker1 in panel_data and ticker2 in panel_data:
+                                                from ..indicators.indicator_parser import calculate_indicator
+                                                # Import CORR calculator directly since calculate_indicator doesn't support dual data
+                                                from ..indicators.CORR import parse_corr_params, calculate_corr_for_chart
+
+                                                # Parse parameters from the param_string
+                                                corr_params = parse_corr_params(param_string)
+
+                                                # Calculate correlation with both data sources
+                                                indicator_result = calculate_corr_for_chart(
+                                                    panel_data[ticker1],
+                                                    panel_data[ticker2],
+                                                    **corr_params
+                                                )
+                                            else:
+                                                print(f"✗ Missing data for CORR calculation: {ticker1}={ticker1 in panel_data}, {ticker2}={ticker2 in panel_data}")
+                                                indicator_result = None
+                                        else:
+                                            print(f"✗ CORR indicator needs 2 tickers, got: {tickers}")
+                                            indicator_result = None
+                                else:
+                                    # Regular single-data-source indicators
+                                    indicator_result = calculate_indicator(
+                                        panel_data[data_source],
+                                        param_string
+                                    )
 
                                 # Add stacking metadata to indicator results
                                 if isinstance(indicator_result, dict) and 'metadata' in indicator_result:
@@ -571,7 +651,41 @@ class SRProcessor:
                 self.process_market_breadth()
                 self.generate_charts()
 
-            # Step 6: Save results
+            # Step 3: Run Overview submodule (if enabled)
+            if getattr(self.user_config, 'sr_overview_enable', False):
+                logger.info("Running Overview submodule...")
+                try:
+                    from .overview import OverviewProcessor
+                    overview_processor = OverviewProcessor(self.config, self.user_config, self.timeframe)
+                    overview_results = overview_processor.run_complete_analysis()
+
+                    if overview_results and overview_results.get('success', False):
+                        logger.info(f"✅ Overview analysis completed: {len(overview_results.get('csv_files', []))} CSV files, {len(overview_results.get('chart_files', []))} charts")
+                        self.results['overview_results'] = overview_results
+                    else:
+                        logger.warning("Overview analysis failed or returned no results")
+
+                except Exception as e:
+                    logger.error(f"Error in Overview submodule: {e}")
+
+            # Step 4: Run MMM submodule (if enabled)
+            if getattr(self.user_config, 'sr_mmm_enable', False):
+                logger.info("Running MMM submodule...")
+                try:
+                    from .mmm import MmmProcessor
+                    mmm_processor = MmmProcessor(self.config, self.user_config, self.timeframe)
+                    mmm_results = mmm_processor.run_complete_analysis()
+
+                    if mmm_results and mmm_results.get('success', False):
+                        logger.info(f"✅ MMM analysis completed: {len(mmm_results.get('csv_files', []))} CSV files, {len(mmm_results.get('chart_files', []))} charts")
+                        self.results['mmm_results'] = mmm_results
+                    else:
+                        logger.warning("MMM analysis failed or returned no results")
+
+                except Exception as e:
+                    logger.error(f"Error in MMM submodule: {e}")
+
+            # Step 5: Save results
             self.save_results()
 
             logger.info("SR analysis completed successfully")
@@ -672,6 +786,27 @@ class SRProcessor:
             # Default fallback
             return 'daily'
 
+    def _detect_panel_type(self, data_source: str, panel_info: Dict[str, Any]) -> str:
+        """
+        Smart type detection for panels based on data_source and configuration.
+
+        Returns:
+            'correlation' - CORR panels with _for_() format
+            'complex' - Complex indicators with + operators
+            'basic' - Simple ticker-based panels
+        """
+        # Type 1: Correlation panels (legacy format)
+        if '_for_(' in data_source and data_source.endswith(')'):
+            if 'CORR(' in data_source:
+                return 'correlation'
+
+        # Type 2: Complex indicators (bundled with operators)
+        if '+' in data_source and any(op in data_source for op in ['SMA(', 'EMA(', 'INDEX_']):
+            return 'complex'
+
+        # Type 3: Basic panels (simple tickers, price charts)
+        return 'basic'
+
     def process_row_panel_indicators(self, panel_config: Dict[str, Dict[str, Any]], row_number: int) -> Dict[str, Any]:
         """
         Process panel indicators for a single row configuration.
@@ -690,19 +825,9 @@ class SRProcessor:
 
             logger.info(f"Processing panel indicators for row {row_number}...")
 
-            # DEBUG: Show what panel config we're processing
-            # print(f"🔍 PROCESSING ROW {row_number} PANEL CONFIG:")  # Debug output
-            # for panel_name, panel_info in panel_config.items():  # Debug output
-            #     print(f"   {panel_name}: {panel_info}")  # Debug output
 
-            # Hybrid data loading: Use cached raw ticker data + process complex formats
-            raw_ticker_data = self.market_data
-
-            # Process complex data sources for this row (bundled, ratio, enhanced formats)
-            complex_data = self._process_complex_data_sources(panel_config, raw_ticker_data)
-
-            # Combine raw and processed data
-            panel_data = {**raw_ticker_data, **complex_data}
+            # Load market data for this row using the same mechanism as main processing
+            panel_data = load_market_data_for_panels(panel_config, self.data_reader)
 
             # Process each panel in this row
             panel_results = {}
@@ -712,14 +837,51 @@ class SRProcessor:
                         # Get data for this panel
                         data_source = panel_info['data_source']
 
+                        # 🔧 SMART TYPE DETECTION: Route panels to appropriate processors
+                        panel_type = self._detect_panel_type(data_source, panel_info)
+
+                        # 🔧 TYPE-SPECIFIC PROCESSING: Route to appropriate processor
+                        if panel_type == 'correlation':
+                            # Correlation panels should always be in panel_data after our fixes
+                            if data_source not in panel_data:
+                                continue
+
                         if data_source in panel_data:
                             indicator = panel_info.get('indicator', '')
 
+                            # 🔧 FIX: For legacy format, extract indicator from data_source if indicator field is empty
+                            if not indicator and '_for_(' in data_source:
+                                # Legacy format like "CORR(20)_for_(SPY,QQQ)" - extract "CORR"
+                                import re
+                                legacy_match = re.match(r'([A-Z]+)\(', data_source)
+                                if legacy_match:
+                                    indicator = legacy_match.group(1)
+
                             if indicator:
-                                # 🔧 FIX: Skip indicator processing for data source indicators (like RATIO_for_(SPY,QQQ))
+                                # 🔧 FIX: For data source indicators, create panel result from existing data
                                 if panel_info.get('is_data_source_indicator', False):
-                                    logger.debug(f"Skipping indicator processing for data source indicator: {panel_name}")
+                                    logger.debug(f"Creating panel result from existing data for data source indicator: {panel_name}")
+
+                                    # Use existing data from panel_data[data_source]
+                                    existing_data = panel_data[data_source]
+
+                                    # Create panel result with existing data
+                                    panel_result = {
+                                        'data': existing_data,
+                                        'name': panel_name,
+                                        'data_source': data_source,
+                                        'is_data_source_indicator': True
+                                    }
+
+                                    panel_results[panel_name] = {
+                                        'data_source': data_source,
+                                        'indicator': '',
+                                        'result': panel_result,
+                                        'timeframe': panel_info.get('timeframe', 'daily')
+                                    }
                                     continue
+
+                                # 🔧 TYPE-SPECIFIC INDICATOR PROCESSING
 
                                 # Calculate indicator for this panel
                                 from ..indicators.indicator_parser import calculate_indicator
@@ -752,12 +914,44 @@ class SRProcessor:
                                 else:
                                     param_string = indicator
 
-                                print(f"🔧 INDICATOR CALCULATION: '{indicator}' → '{param_string}'")
 
-                                indicator_result = calculate_indicator(
-                                    panel_data[data_source],
-                                    param_string
-                                )
+                                # 🔧 FIX: Special handling for correlation indicators that need multiple data sources
+                                if indicator == 'CORR':
+                                    # Check if this is pre-calculated correlation data (legacy format)
+                                    if isinstance(panel_data[data_source], dict):
+                                        indicator_result = panel_data[data_source]
+                                    else:
+                                        # Extract tickers from the data source (e.g., "B_CORR(20)_for_(SPY,QQQ)")
+                                        tickers = extract_tickers_from_data_source(data_source)
+                                        if len(tickers) >= 2:
+                                            # Get data for both tickers
+                                            ticker1, ticker2 = tickers[0], tickers[1]
+                                            if ticker1 in panel_data and ticker2 in panel_data:
+                                                from ..indicators.indicator_parser import calculate_indicator
+                                                # Import CORR calculator directly since calculate_indicator doesn't support dual data
+                                                from ..indicators.CORR import parse_corr_params, calculate_corr_for_chart
+
+                                                # Parse parameters from the param_string
+                                                corr_params = parse_corr_params(param_string)
+
+                                                # Calculate correlation with both data sources
+                                                indicator_result = calculate_corr_for_chart(
+                                                    panel_data[ticker1],
+                                                    panel_data[ticker2],
+                                                    **corr_params
+                                                )
+                                            else:
+                                                print(f"✗ Missing data for CORR calculation: {ticker1}={ticker1 in panel_data}, {ticker2}={ticker2 in panel_data}")
+                                                indicator_result = None
+                                        else:
+                                            print(f"✗ CORR indicator needs 2 tickers, got: {tickers}")
+                                            indicator_result = None
+                                else:
+                                    # Regular single-data-source indicators
+                                    indicator_result = calculate_indicator(
+                                        panel_data[data_source],
+                                        param_string
+                                    )
 
                                 # Add stacking metadata to indicator results
                                 if isinstance(indicator_result, dict) and 'metadata' in indicator_result:
@@ -773,9 +967,7 @@ class SRProcessor:
 
                                 if is_bundled:
                                     # 🎯 FIX: For bundled format, preserve all DataFrame columns (including EMA)
-                                    # print(f"🔧 BUNDLED FORMAT DETECTED: {data_source}")  # Debug output
                                     df = panel_data[data_source]
-                                    # print(f"   DataFrame columns: {list(df.columns)}")  # Debug output
 
                                     # Create result with all columns as Series
                                     indicator_result = {}
@@ -797,7 +989,6 @@ class SRProcessor:
                                         'stacking_group': panel_info.get('stacking_group', ''),
                                         'row_number': row_number
                                     }
-                                    # print(f"   ✅ Bundled result keys: {list(indicator_result.keys())}")  # Debug output
                                 else:
                                     # Standard case - use raw price data
                                     indicator_result = {
@@ -953,10 +1144,24 @@ def run_sr_analysis(config: Config, user_config: UserConfiguration, timeframes: 
             success = processor.run_full_analysis()
 
             if success:
+                # Count overview and MMM results
+                overview_files = 0
+                mmm_files = 0
+                if 'overview_results' in processor.results:
+                    overview_files = (len(processor.results['overview_results'].get('csv_files', [])) +
+                                    len(processor.results['overview_results'].get('chart_files', [])))
+                if 'mmm_results' in processor.results:
+                    mmm_files = (len(processor.results['mmm_results'].get('csv_files', [])) +
+                               len(processor.results['mmm_results'].get('chart_files', [])))
+
                 results_summary[timeframe] = {
                     'status': 'completed',
                     'panels_processed': len(processor.results.get('panel_indicators', {})),
                     'charts_generated': len(processor.results.get('chart_paths', {})),
+                    'overview_files': overview_files,
+                    'mmm_files': mmm_files,
+                    'overview_enabled': getattr(user_config, 'sr_overview_enable', False),
+                    'mmm_enabled': getattr(user_config, 'sr_mmm_enable', False),
                     'timeframe': timeframe
                 }
                 total_processed += 1

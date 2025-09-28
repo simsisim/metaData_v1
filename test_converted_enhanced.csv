@@ -1,6 +1,0 @@
-#timeframe,Panel_1,Panel_2,Panel_3,Panel_4,Panel_5,Panel_6,Panel_1_index,Panel_2_index,Panel_3_index,Panel_4_index,Panel_5_index,Panel_6_index
-daily,QQQ,SPY,,,,,,,,,,
-daily,QQQ,SPY,SPY,,,,,,,,,
-daily,QQQ,SPY,,,,,A_PRICE_for_(QQQ),,,,,
-daily,SPY,,,,,,B_PRICE_for_(QQQ),,,,,
-daily,QQQ,,,,,,"A_PPO(12,9,26)_for_(AUTO_DETECT)",,,,,

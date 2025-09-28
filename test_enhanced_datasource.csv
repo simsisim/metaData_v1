@@ -1,4 +1,0 @@
-timeframe,Panel_1,Panel_2,Panel_3,Panel_4,Panel_5,Panel_6,Panel_1_index,Panel_2_index,Panel_3_index,Panel_4_index,Panel_5_index,Panel_6_index
-daily,PPO(10,20,40)_for_(QQQ),SPY,,,,,,,,,,
-daily,RATIO_for_(QQQ,SPY,XLY),RSI(14)_for_(SPY),,,,,,,,,,
-daily,A_PRICE_for_(TLT),B_PPO(12,26,9)_for_(QQQ),,,,,,,,,,

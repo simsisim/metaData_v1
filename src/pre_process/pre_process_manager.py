@@ -93,9 +93,10 @@ class PreProcessManager:
             # Log configuration summary
             config_summary = self.config.get_config_summary()
             logger.info(f"Configuration loaded: {config_summary['total_rules']} processing rules")
+            logger.info(f"File origins detected: {', '.join(config_summary['file_origins'])}")
 
             for rule in self.config.get_processing_rules():
-                logger.info(f"  Rule: {rule['pattern_match']} -> {rule['target_folder']}")
+                logger.info(f"  Rule [{rule['file_origin']}]: {rule['pattern_match']} -> {rule['target_folder']}")
 
             return {'success': True, 'config_summary': config_summary}
 
@@ -253,6 +254,23 @@ class PreProcessManager:
             status['processing_stats'] = self.data_transformer.get_processing_stats()
 
         return status
+
+    def get_processing_stats_by_origin(self) -> Dict:
+        """Get processing statistics grouped by file origin."""
+        if not self.config:
+            return {}
+
+        stats_by_origin = {}
+        for origin in self.config.get_file_origins():
+            rules = self.config.get_rules_by_origin(origin)
+            stats_by_origin[origin] = {
+                'rules_count': len(rules),
+                'source_folders': list(set(rule['source_folder'] for rule in rules)),
+                'target_folders': list(set(rule['target_folder'] for rule in rules)),
+                'patterns': [rule['pattern_match'] for rule in rules]
+            }
+
+        return stats_by_origin
 
     def validate_configuration(self) -> Dict:
         """Validate PRE_PROCESS configuration without running workflow."""

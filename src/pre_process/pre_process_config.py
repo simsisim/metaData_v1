@@ -53,6 +53,7 @@ class PreProcessConfig:
 
             rule = {
                 'files_type': row['files_type'],
+                'file_origin': row['file_origin'],
                 'source_folder': row['files_path_folder_source'],
                 'target_folder': row['files_path_folder_target'],
                 'pattern_match': row['files_patterns_match'],
@@ -68,7 +69,7 @@ class PreProcessConfig:
         """Validate a single processing rule."""
         try:
             # Check required fields
-            required_fields = ['files_type', 'source_folder', 'target_folder',
+            required_fields = ['files_type', 'file_origin', 'source_folder', 'target_folder',
                              'pattern_match', 'filename_template']
             for field in required_fields:
                 if not rule.get(field):
@@ -138,11 +139,20 @@ class PreProcessConfig:
         template = self.get_filename_template(pattern)
         return template.replace('{ticker}', ticker)
 
+    def get_file_origins(self) -> List[str]:
+        """Get list of unique file origins."""
+        return list(set(rule['file_origin'] for rule in self.processing_rules))
+
+    def get_rules_by_origin(self, file_origin: str) -> List[Dict]:
+        """Get processing rules for a specific file origin."""
+        return [rule for rule in self.processing_rules if rule['file_origin'] == file_origin]
+
     def get_config_summary(self) -> Dict:
         """Get summary of configuration for logging."""
         return {
             'config_file': self.config_file,
             'total_rules': len(self.processing_rules),
+            'file_origins': self.get_file_origins(),
             'source_folders': self.get_source_folders(),
             'target_folders': self.get_target_folders(),
             'enabled': self.is_enabled()

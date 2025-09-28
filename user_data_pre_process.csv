@@ -1,3 +1,4 @@
-flag_file,files_type,files_path_folder_source,files_path_folder_target,files_patterns_match,new_filename
-TRUE,csv,pre_process_data/gatheredData/TW,../downloadData_v1/data/market_data/daily/,*1D*,{ticker}.csv
-TRUE,csv,pre_process_data/gatheredData/TW,../downloadData_v1/data/market_data/weekly/,*1W*,{ticker}.csv
+flag_file,files_type,file_origin,files_path_folder_source,files_path_folder_target,files_patterns_match,new_filename
+TRUE,csv,TW,pre_process_data/gatheredData/TW,../downloadData_v1/data/market_data/daily/,*1D*,{ticker}.csv
+TRUE,csv,TW,pre_process_data/gatheredData/TW,../downloadData_v1/data/market_data/weekly/,*1W*,{ticker}.csv
+TRUE,csv,GF,pre_process_data/gatheredData/GF/DJIndexes_data/data/daily_csv,../downloadData_v1/data/market_data/daily/,*_daily*,{ticker}.csv

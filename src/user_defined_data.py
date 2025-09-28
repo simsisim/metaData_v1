@@ -32,6 +32,7 @@ class UserConfiguration:
     BASIC: bool = True        # Execute data processing and core calculations phase
     SCREENERS: bool = True    # Execute screening and analysis phase
     POST_PROCESS: bool = True # Execute post-processing and report generation phase
+    BACKTESTING: bool = False # Execute backtesting analysis of screener strategies
 
     # PRE_PROCESS configuration
     PRE_PROCESS_file: str = "user_data_pre_process.csv"
@@ -144,7 +145,7 @@ class UserConfiguration:
     # SUSTAINABILITY RATIOS (SR) CONFIGURATION
     sr_enable: bool = False
     sr_output_dir: str = "results/sustainability_ratios"
-    sr_panel_config_file: str = "SR_EB/user_data_panel.csv"
+    sr_panel_config_file: str = "user_data_sr_panel.csv"
     sr_timeframes: str = "daily"  # Legacy setting - use sr_timeframe_* settings instead
     # New granular timeframe controls
     sr_timeframe_daily: bool = True
@@ -882,9 +883,12 @@ def read_user_data(file_path: str = 'user_data.csv') -> UserConfiguration:
             'batch_size': ('batch_size', int),
 
             # Global execution phase flags
+            'PRE_PROCESS': ('PRE_PROCESS', parse_boolean),
+            'PRE_PROCESS_file': ('PRE_PROCESS_file', str),
             'BASIC': ('BASIC', parse_boolean),
             'SCREENERS': ('SCREENERS', parse_boolean),
             'POST_PROCESS': ('POST_PROCESS', parse_boolean),
+            'BACKTESTING': ('BACKTESTING', parse_boolean),
 
             # POST-PROCESSING CONFIGURATION
             # Input historical data sources (local data loading)

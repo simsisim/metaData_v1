@@ -1,2 +1,0 @@
-Filename,File_id,Generation,Output_id,PDF_enable,PDF_type,Template,Step,Action,Column,Condition,Value,Order,Logic
-basic_calculation,500,TRUE,single_test,FALSE,basic_calculation,auto,1,filter,current_price,greater_than,200,,AND

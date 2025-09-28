@@ -1,2 +1,0 @@
-ticker,timeframe,signal_date,signal_type,current_price,signal_price,sma,volume,volume_highest,days_since_signal,score,screen_type,price_change_pct,volume_change_pct,volume_surge,signal_day_change_abs,signal_day_change_pct,performance_since_signal
-AVGO,weekly,2025-09-01,Buy,334.8900,334.8900,294.9310,147778200,122453300.0000,0,41.7353,pvb,13.5486,20.6813,20.6813,45.5500,15.7427,0.0000

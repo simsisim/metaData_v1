@@ -3,3 +3,6 @@ SPY_vs_IWM_overview,no_drawing,SPY + EMA(20),,,,,,"A_PPO(12,26,9)_for_(SPY)",B_R
 QQQ_Analysis_overview,line,QQQ + EMA(10) + SMA(50),,,,,,"A_PPO(12,26,9)_for_(QQQ) ",B_RSI(14)_for_(QQQ),,,,
 QQQ_vs_SPY_overview,candle,"QQQ + EMA(QQQ, 10)",SPY,,,,,"A_PPO(12,26,9)_for_(QQQ)",,,,,
 overview_TESTTEST,line,QQQ,SPY,,,,,,"A_PPO(12,26,9)_for_(SPY)",,,,
+overvoiew_SPY_vs_CPCS,candle,SPY + EMA(20) + SMA(50),INDEX_CPCS+ SMA(5),,,,,"A_PPO(12,26,9)_for_(SPY)",,,,,
+overview_SPY_vs_TESTSTES,candle,SPY + EMA(20) + SMA(50),XLY,,,,,"A_PPO(12,26,9)_for_(SPY)",,,,,
+overview_SPY_vs_VIX,candle,SPY + EMA(20) + SMA(50),QQQ,,,,,,"B_CORR(20)_for_(SPY,QQQ)",,,,

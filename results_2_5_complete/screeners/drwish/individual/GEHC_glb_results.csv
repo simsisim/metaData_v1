@@ -1,4 +1,0 @@
-level,detection_date,detection_bar,confirmation_date,confirmation_bar,breakout_date,breakout_bar,is_confirmed,is_broken
-77.28474516838037,2025-07-07,79,2025-07-07,-1,2025-07-21,81.0,True,True
-78.7699966430664,2025-07-28,82,2025-07-28,-1,,,True,False
-75.75,2025-09-01,89,2025-09-01,-1,,,True,False

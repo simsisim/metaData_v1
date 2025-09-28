@@ -19,7 +19,7 @@ from .pre_process_manager import PreProcessManager
 def run_pre_process_analysis():
     """
     Main entry point for PRE_PROCESS module.
-    Called from main.py when PRE_PROCESS_enable = TRUE.
+    Called from main.py when PRE_PROCESS = TRUE.
     """
     manager = PreProcessManager()
     return manager.run_pre_processing()

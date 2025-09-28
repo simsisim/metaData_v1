@@ -81,6 +81,49 @@ def decompose_data_source(data_source: str, panel_info: Dict) -> Dict[str, Union
                     'original_source': data_source
                 }
 
+        # 🔧 FIX: Check for legacy indicator format like "CORR(20)_for_(SPY,QQQ)"
+        elif '_for_(' in data_source and data_source.endswith(')'):
+            try:
+                # Parse legacy format: "CORR(20)_for_(SPY,QQQ)"
+                import re
+                pattern = r'([A-Z]+)\(([^)]+)\)_for_\(([^)]+)\)'
+                match = re.match(pattern, data_source)
+
+                if match:
+                    indicator = match.group(1)  # "CORR"
+                    params_str = match.group(2)  # "20"
+                    tickers_str = match.group(3)  # "SPY,QQQ"
+
+                    # Parse parameters
+                    parameters = {}
+                    if params_str.isdigit():
+                        parameters['period'] = int(params_str)
+                    else:
+                        # Handle more complex parameter parsing if needed
+                        try:
+                            parameters['period'] = int(params_str.split(',')[0])
+                        except:
+                            parameters = {}
+
+                    # Parse tickers
+                    tickers = [ticker.strip() for ticker in tickers_str.split(',')]
+
+                    logger.info(f"🔧 Parsed legacy indicator format: {data_source}")
+                    logger.info(f"   Indicator: {indicator}, Parameters: {parameters}, Tickers: {tickers}")
+
+                    return {
+                        'type': 'multi_indicator',
+                        'tickers': tickers,
+                        'indicator': indicator,
+                        'parameters': parameters,
+                        'original_source': data_source
+                    }
+                else:
+                    logger.warning(f"Failed to parse legacy indicator format: {data_source}")
+
+            except Exception as e:
+                logger.warning(f"Error parsing legacy indicator format {data_source}: {e}")
+
         # Check for legacy ratio format
         elif ':' in data_source and not ('(' in data_source):
             parts = [p.strip() for p in data_source.split(':') if p.strip()]
@@ -139,8 +182,18 @@ def load_market_data_for_panels(panel_config: Dict[str, Dict], data_reader) -> D
             if not data_source:
                 continue
 
+            # 🔧 FIX: Parse enhanced panel information first
+            from .enhanced_panel_parser import parse_enhanced_panel_entry
+            try:
+                parsed_info = parse_enhanced_panel_entry(data_source)
+                # Merge parsed info into panel_info for decomposition
+                enhanced_panel_info = {**panel_info, **parsed_info}
+            except Exception as e:
+                logger.warning(f"Failed to parse enhanced panel info for '{data_source}': {e}")
+                enhanced_panel_info = panel_info
+
             # Decompose data source into components
-            decomposition = decompose_data_source(data_source, panel_info)
+            decomposition = decompose_data_source(data_source, enhanced_panel_info)
             data_source_mappings[data_source] = decomposition
 
             # Extract required tickers based on decomposition type

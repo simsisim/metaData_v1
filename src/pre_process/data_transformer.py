@@ -3,7 +3,8 @@ Data Transformer
 ================
 
 Core transformation logic that combines all processing steps.
-Handles individual file processing, validation, and error reporting.
+Handles individual file processing using origin-specific strategies.
+Routes processing based on file_origin to appropriate transformation strategy.
 """
 
 import pandas as pd
@@ -12,8 +13,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 import logging
 
-from .ticker_extractor import TickerExtractor
-from .column_standardizer import ColumnStandardizer
+from .factories.transformation_factory import TransformationFactory
 
 logger = logging.getLogger(__name__)
 
@@ -21,27 +21,28 @@ logger = logging.getLogger(__name__)
 class DataTransformer:
     """
     Core data transformation engine that processes individual files.
-    Combines ticker extraction, column standardization, and file saving.
+    Uses origin-specific strategies for different data sources (TW, GF, etc.).
     """
 
     def __init__(self, config):
         self.config = config
-        self.ticker_extractor = TickerExtractor()
-        self.column_standardizer = ColumnStandardizer()
         self.processing_stats = {
             'total_processed': 0,
             'successful': 0,
             'failed': 0,
             'errors': [],
-            'warnings': []
+            'warnings': [],
+            'origins_processed': {},
+            'strategy_stats': {}
         }
 
     def transform_file(self, file_info: Dict) -> Dict:
         """
-        Transform a single file from TradingView to standard format.
+        Transform a single file using origin-specific strategy.
 
         Args:
             file_info: File information dictionary from FilePatternMatcher
+                      Must contain 'rule' with 'file_origin' field
 
         Returns:
             Dict: Processing result with success status and details
@@ -51,13 +52,32 @@ class DataTransformer:
             'source_file': file_info['source_path'],
             'target_file': None,
             'ticker': None,
+            'file_origin': None,
             'processing_info': {},
             'error': None
         }
 
         try:
-            # Extract ticker from filename
-            ticker = self.ticker_extractor.extract_ticker_from_filename(file_info['filename'])
+            # Get file origin from rule
+            rule = file_info.get('rule', {})
+            file_origin = rule.get('file_origin')
+
+            if not file_origin:
+                result['error'] = "Missing file_origin in rule configuration"
+                return result
+
+            result['file_origin'] = file_origin
+
+            # Get appropriate transformation strategy
+            try:
+                strategy = TransformationFactory.get_strategy(file_origin)
+                logger.debug(f"Using {file_origin} strategy for file: {file_info['filename']}")
+            except ValueError as e:
+                result['error'] = f"Strategy creation failed: {e}"
+                return result
+
+            # Extract ticker using strategy
+            ticker = strategy.extract_ticker(file_info['filename'])
             if not ticker:
                 result['error'] = f"Could not extract ticker from filename: {file_info['filename']}"
                 return result
@@ -72,8 +92,8 @@ class DataTransformer:
                 result['error'] = f"Failed to load source file: {e}"
                 return result
 
-            # Standardize columns
-            standardized_df, processing_info = self.column_standardizer.standardize_dataframe(df)
+            # Standardize columns using strategy
+            standardized_df, processing_info = strategy.standardize_columns(df)
             result['processing_info'] = processing_info
 
             # Check for critical errors
@@ -92,23 +112,34 @@ class DataTransformer:
             # Save standardized file
             try:
                 standardized_df.to_csv(target_path, index=False)
-                logger.info(f"Saved standardized file: {target_path}")
+                logger.info(f"[{file_origin}] Saved standardized file: {target_path}")
             except Exception as e:
                 result['error'] = f"Failed to save target file: {e}"
                 return result
 
             result['success'] = True
+
+            # Update strategy stats
+            strategy.update_stats(success=True)
+
+            # Update overall stats
             self.processing_stats['successful'] += 1
+            self._update_origin_stats(file_origin, success=True)
 
             # Log warnings if any
             if processing_info.get('warnings'):
-                warning_msg = f"Warnings for {file_info['filename']}: {'; '.join(processing_info['warnings'])}"
+                warning_msg = f"[{file_origin}] Warnings for {file_info['filename']}: {'; '.join(processing_info['warnings'])}"
                 logger.warning(warning_msg)
                 self.processing_stats['warnings'].append(warning_msg)
+                strategy.update_stats(success=True, warning=warning_msg)
 
         except Exception as e:
             result['error'] = f"Unexpected error processing file: {e}"
             logger.error(result['error'])
+
+            # Update stats for failure
+            if result.get('file_origin'):
+                self._update_origin_stats(result['file_origin'], success=False)
 
         finally:
             self.processing_stats['total_processed'] += 1
@@ -148,12 +179,30 @@ class DataTransformer:
 
         return results
 
-    def validate_source_file(self, file_path: str) -> Dict:
+    def _update_origin_stats(self, file_origin: str, success: bool):
+        """Update processing statistics by origin."""
+        if file_origin not in self.processing_stats['origins_processed']:
+            self.processing_stats['origins_processed'][file_origin] = {
+                'total': 0,
+                'successful': 0,
+                'failed': 0
+            }
+
+        origin_stats = self.processing_stats['origins_processed'][file_origin]
+        origin_stats['total'] += 1
+
+        if success:
+            origin_stats['successful'] += 1
+        else:
+            origin_stats['failed'] += 1
+
+    def validate_source_file(self, file_path: str, file_origin: str = None) -> Dict:
         """
-        Validate a source file before processing.
+        Validate a source file before processing using appropriate strategy.
 
         Args:
             file_path: Path to source file
+            file_origin: Origin identifier for strategy selection
 
         Returns:
             Dict: Validation result
@@ -190,11 +239,22 @@ class DataTransformer:
                 validation['file_info']['rows'] = len(df)
                 validation['file_info']['columns'] = list(df.columns)
 
-                # Check if it looks like TradingView format
-                if self.column_standardizer.is_tradingview_format(df):
-                    validation['is_valid'] = True
+                # Use strategy-specific validation if origin provided
+                if file_origin:
+                    try:
+                        strategy = TransformationFactory.get_strategy(file_origin)
+                        format_validation = strategy.validate_format(df)
+
+                        validation['is_valid'] = format_validation['is_valid']
+                        validation['errors'].extend(format_validation.get('errors', []))
+                        validation['warnings'].extend(format_validation.get('warnings', []))
+
+                    except ValueError:
+                        validation['warnings'].append(f"Unknown file origin: {file_origin}")
                 else:
-                    validation['warnings'].append("File does not appear to be in TradingView format")
+                    # Generic validation - check if it's at least a readable CSV
+                    validation['is_valid'] = True
+                    validation['warnings'].append("No file origin specified - generic validation only")
 
             except Exception as e:
                 validation['errors'].append(f"Failed to load CSV: {e}")
@@ -215,7 +275,9 @@ class DataTransformer:
             'successful': 0,
             'failed': 0,
             'errors': [],
-            'warnings': []
+            'warnings': [],
+            'origins_processed': {},
+            'strategy_stats': {}
         }
 
     def generate_processing_report(self) -> str:
@@ -229,6 +291,20 @@ class DataTransformer:
             f"Failed: {stats['failed']}",
             f"Success rate: {(stats['successful'] / max(stats['total_processed'], 1)) * 100:.1f}%"
         ]
+
+        # Add origin-specific statistics
+        if stats['origins_processed']:
+            report_lines.extend([
+                "",
+                "=== Processing by Origin ==="
+            ])
+
+            for origin, origin_stats in stats['origins_processed'].items():
+                success_rate = (origin_stats['successful'] / max(origin_stats['total'], 1)) * 100
+                report_lines.append(
+                    f"{origin}: {origin_stats['successful']}/{origin_stats['total']} "
+                    f"({success_rate:.1f}% success)"
+                )
 
         if stats['warnings']:
             report_lines.extend([
@@ -262,8 +338,32 @@ class DataTransformer:
             'failed': sum(1 for r in results if not r['success']),
             'processed_tickers': list(set(r['ticker'] for r in results if r['ticker'])),
             'target_files': [r['target_file'] for r in results if r['success']],
-            'error_files': [r['source_file'] for r in results if not r['success']]
+            'error_files': [r['source_file'] for r in results if not r['success']],
+            'origins_summary': {}
         }
+
+        # Add origin-specific summary
+        for result in results:
+            origin = result.get('file_origin', 'Unknown')
+            if origin not in summary['origins_summary']:
+                summary['origins_summary'][origin] = {
+                    'total': 0,
+                    'successful': 0,
+                    'failed': 0,
+                    'tickers': set()
+                }
+
+            summary['origins_summary'][origin]['total'] += 1
+            if result['success']:
+                summary['origins_summary'][origin]['successful'] += 1
+                if result.get('ticker'):
+                    summary['origins_summary'][origin]['tickers'].add(result['ticker'])
+            else:
+                summary['origins_summary'][origin]['failed'] += 1
+
+        # Convert ticker sets to lists
+        for origin_data in summary['origins_summary'].values():
+            origin_data['tickers'] = list(origin_data['tickers'])
 
         summary['success_rate'] = (summary['successful'] / max(summary['total_files'], 1)) * 100
 

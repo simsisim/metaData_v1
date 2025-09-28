@@ -1,8 +1,0 @@
-"#[Prefix]_IndicatorName(Params)_for_(Ticker1[,Ticker2,…]) = [Prefix]_PPO(ticker, var1, var2, etc)",,,,,,,,,,,,
-"#IndicatorName(Params)_for_(Ticker1[,Ticker2,…]) + EMA(20) +EMA(50) – same panel display",,,,,,,,,,,,
-#file_name_id,Panel_1,Panel_2,Panel_3,Panel_4,Panel_5,Panel_6,Panel_1_index,Panel_2_index,Panel_3_index,Panel_4_index,Panel_5_index,Panel_6_index
-QQQ,"QQQ + EMA(QQQ, 10)",,,,,,"A_PPO(12,26,9)_for_(QQQ)","B_RSI(14)_for_(QQQ)",,,,
-SPY_MACD,QQQ+SMA(50),SPY,,,,,,"B_MACD(12,26,9)_for_(SPY)",,,,
-#,QQQ,SPY,,,,,A_QQQ,,,,,
-#,SPY,,,,,,B_QQQ,,,,,
-#,QQQ,,,,,,"A_PPO(12,26,9)",,,,,

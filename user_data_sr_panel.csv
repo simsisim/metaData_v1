@@ -5,4 +5,5 @@
 #test_panel,line,"QQQ + EMA(QQQ, 10)",,,,,,"A_PPO(12,26,9)_for_(QQQ)",B_RSI(14)_for_(QQQ),,,,
 #tesst2_panel,line,"QQQ + EMA(QQQ, 10)",XLY,,,,,,,,,,
 SPY_vs_CPCS,candle,SPY + EMA(20) + SMA(50),INDEX_CPCS+ SMA(5),,,,,"A_PPO(12,26,9)_for_(SPY)",,,,,
-SPY_vs_VIX,candle,SPY + EMA(20) + SMA(50),,,,,,"A_PPO(12,26,9)_for_(SPY)","CORR(20)_for_(SPY,QQQ)",,,,
+SPY_vs_TESTSTES,candle,SPY + EMA(20) + SMA(50),XLY,,,,,"A_PPO(12,26,9)_for_(SPY)",,,,,
+SPY_vs_VIX,candle,SPY + EMA(20) + SMA(50),QQQ,,,,,,"B_CORR(20)_for_(SPY,QQQ)",,,,

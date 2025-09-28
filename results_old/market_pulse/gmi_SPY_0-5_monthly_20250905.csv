@@ -1,2 +1,0 @@
-index,date,timeframe,monthly_gmi_signal,monthly_gmi_score,monthly_gmi_max_score,monthly_gmi_threshold,monthly_gmi_confirmation_days,monthly_gmi_r1,monthly_gmi_r2,monthly_gmi_r3,monthly_gmi_r4,monthly_gmi_r5,monthly_gmi_r6
-1,2025-09-05,monthly,GREEN,4.0,6,3,2,0.0,0.0,1.0,1.0,1.0,1

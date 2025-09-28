@@ -314,10 +314,11 @@ def _pvb_TWmodel_screener_logic(batch_data: Dict, params: Optional[Dict] = None)
                 signal_row = df_with_indicators.loc[latest_signal['date']]
                 signal_open = signal_row['Open']
                 signal_close = signal_row['Close']
-                signal_day_change_abs = abs(signal_close - signal_open)
+                signal_day_change_abs = signal_close - signal_open  # Directional change (not absolute)
                 signal_day_change_pct = ((signal_close - signal_open) / signal_open) * 100 if signal_open != 0 else 0
 
                 # Performance Tracking Since Signal
+                # Note: performance_since_signal EXCLUDES signal day change - uses signal day close as baseline
                 performance_since_signal = ((current_price - latest_signal['close_price']) / latest_signal['close_price']) * 100
 
                 results.append({
