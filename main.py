@@ -682,11 +682,249 @@ def run_all_drwish_screener_streaming(config: Config, user_config: UserConfigura
     return results_summary
 
 
+def run_all_volume_suite_streaming(config: Config, user_config: UserConfiguration, timeframes: List[str], clean_file_path: str) -> dict:
+    """
+    Run Volume Suite screener for all timeframes using streaming approach.
+    Memory-efficient version that writes results immediately instead of accumulating.
+
+    Returns:
+        dict: Results summary for all timeframes
+    """
+    if not getattr(user_config, 'volume_suite_enable', False):
+        print(f"\n⏭️  Volume Suite screener disabled - skipping Volume Suite processing")
+        return {}
+
+    print(f"\n" + "="*60)
+    print("🔍 VOLUME SUITE SCREENER - ALL TIMEFRAMES, ALL BATCHES (STREAMING)")
+    print("="*60)
+
+    from src.screeners_streaming import VolumeSuiteStreamingProcessor
+
+    # Initialize streaming processor
+    processor = VolumeSuiteStreamingProcessor(config, user_config)
+
+    results_summary = {}
+    total_processed = 0
+
+    for timeframe in timeframes:
+        volume_suite_enabled = getattr(user_config, f'volume_suite_{timeframe}_enable', True)
+        if not volume_suite_enabled:
+            print(f"⏭️  Volume Suite screener disabled for {timeframe} timeframe")
+            continue
+
+        print(f"\n📊 Processing {timeframe.upper()} timeframe...")
+
+        # Initialize DataReader for this timeframe
+        batch_size = getattr(user_config, 'batch_size', 100)
+        data_reader = DataReader(config, timeframe, batch_size)
+
+        # Load tickers
+        data_reader.load_tickers_from_file(clean_file_path)
+
+        # Get ticker list for batch processing
+        import pandas as pd
+        tickers_df = pd.read_csv(clean_file_path)
+        ticker_list = tickers_df['ticker'].tolist()
+
+        # Process all batches with streaming approach
+        total_tickers = len(ticker_list)
+        total_batches = math.ceil(total_tickers / batch_size)
+        batches = []
+
+        print(f"📦 Processing {total_tickers} tickers in {total_batches} batches of {batch_size}")
+
+        # Collect all batches first
+        for batch_num in range(total_batches):
+            start_idx = batch_num * batch_size
+            end_idx = min(start_idx + batch_size, total_tickers)
+            batch_tickers = ticker_list[start_idx:end_idx]
+            batch_count = batch_num + 1
+
+            print(f"🔄 Loading batch {batch_count}/{total_batches} ({len(batch_tickers)} tickers) - {(batch_count/total_batches)*100:.1f}%")
+
+            # Read CSV data for the batch
+            batch_data = data_reader.read_batch_data(batch_tickers, validate=True)
+
+            if not batch_data:
+                print(f"⚠️  No valid data in batch {batch_count}, skipping...")
+                continue
+
+            print(f"✅ Loaded {len(batch_data)} valid tickers from batch {batch_count}")
+            batches.append(batch_data)
+
+        # Process all batches with streaming
+        if batches:
+            print(f"\n🚀 Processing {len(batches)} valid batches with Volume Suite screener...")
+
+            # Process each batch individually with streaming pattern
+            timeframe_processed = 0
+            output_file = None
+
+            for batch_num, batch_data in enumerate(batches, 1):
+                print(f"🔄 Processing batch {batch_num}/{len(batches)} with Volume Suite...")
+
+                result = processor.process_batch_streaming(batch_data, timeframe, user_config.ticker_choice)
+
+                if result and 'tickers_processed' in result:
+                    batch_processed = result['tickers_processed']
+                    timeframe_processed += batch_processed
+
+                    # Handle multiple output files for individual components
+                    if 'output_files' in result:
+                        output_files = result['output_files']
+                        components_count = result.get('components_processed', 0)
+                        print(f"✅ Batch {batch_num} completed: {batch_processed} results processed across {components_count} components")
+
+                        if not hasattr(main, 'all_output_files'):
+                            main.all_output_files = []
+                        main.all_output_files.extend(output_files)
+                    else:
+                        print(f"✅ Batch {batch_num} completed: {batch_processed} results processed")
+                else:
+                    print(f"⚠️  No results from batch {batch_num}")
+
+            if timeframe_processed > 0:
+                print(f"✅ Volume Suite screener completed for {timeframe}: {timeframe_processed} total results")
+
+                # Show individual component files
+                if hasattr(main, 'all_output_files') and main.all_output_files:
+                    print(f"📁 Component files created:")
+                    for file_path in main.all_output_files:
+                        print(f"   - {file_path}")
+
+                results_summary[timeframe] = timeframe_processed
+                total_processed += timeframe_processed
+            else:
+                print(f"⚠️  No results from streaming processing for {timeframe}")
+        else:
+            print(f"⚠️  No valid batches for {timeframe} - all batches failed to load data")
+
+    print(f"\n✅ VOLUME SUITE SCREENER COMPLETED!")
+    print(f"📊 Total results processed: {total_processed}")
+    print(f"🕒 Timeframes processed: {', '.join(results_summary.keys())}")
+
+    return results_summary
+
+
+def run_all_drwish_screener_accumulation(config: Config, user_config: UserConfiguration, timeframes: List[str], clean_file_path: str) -> dict:
+    """
+    Run DRWISH screener for all timeframes using accumulation pattern with multiple parameter sets.
+    Memory-efficient version that accumulates results across batches before writing.
+
+    Returns:
+        dict: Results summary for all timeframes
+    """
+    if not getattr(user_config, 'drwish_enable', False):
+        print(f"\n⏭️  DRWISH screener disabled - skipping DRWISH processing")
+        return {}
+
+    print(f"\n" + "="*60)
+    print("🔍 DRWISH SCREENER - ALL TIMEFRAMES, ALL BATCHES (ACCUMULATION)")
+    print("="*60)
+
+    from src.drwish_screener_processor import DRWISHScreenerProcessor
+
+    # Initialize accumulation processor
+    processor = DRWISHScreenerProcessor(config, user_config)
+
+    results_summary = {}
+    total_processed = 0
+
+    for timeframe in timeframes:
+        drwish_enabled = getattr(user_config, f'drwish_{timeframe}_enable', True)
+        if not drwish_enabled:
+            print(f"⏭️  DRWISH screener disabled for {timeframe} timeframe")
+            continue
+
+        print(f"\n📊 Processing {timeframe.upper()} timeframe...")
+
+        # Initialize DataReader for this timeframe
+        batch_size = getattr(user_config, 'batch_size', 100)
+        data_reader = DataReader(config, timeframe, batch_size)
+
+        # Load tickers
+        data_reader.load_tickers_from_file(clean_file_path)
+
+        # Get ticker list for batch processing
+        tickers_df = pd.read_csv(clean_file_path)
+        ticker_list = tickers_df['ticker'].tolist()
+
+        # Process all batches with accumulation
+        total_tickers = len(ticker_list)
+        total_batches = math.ceil(total_tickers / batch_size)
+
+        print(f"📦 Processing {total_tickers} tickers in {total_batches} batches of {batch_size}")
+
+        # Process all batches and accumulate results
+        timeframe_processed = 0
+        for batch_num in range(total_batches):
+            start_idx = batch_num * batch_size
+            end_idx = min(start_idx + batch_size, total_tickers)
+            batch_tickers = ticker_list[start_idx:end_idx]
+            batch_count = batch_num + 1
+
+            print(f"🔄 Processing batch {batch_count}/{total_batches} ({len(batch_tickers)} tickers) - {(batch_count/total_batches)*100:.1f}%")
+
+            # Read CSV data for the batch
+            batch_data = data_reader.read_batch_data(batch_tickers, validate=True)
+
+            if not batch_data:
+                print(f"⚠️  No valid data in batch {batch_count}, skipping...")
+                continue
+
+            print(f"✅ Loaded {len(batch_data)} valid tickers from batch {batch_count}")
+
+            # Process batch with accumulation (handles multiple parameter sets)
+            success = processor.process_drwish_batch(batch_data, timeframe, user_config.ticker_choice)
+
+            if success:
+                timeframe_processed += len(batch_data)
+
+        # Save accumulated results for this timeframe
+        if hasattr(processor, 'all_results') and timeframe in processor.all_results:
+            print(f"💾 Saving DRWISH screener matrix for {timeframe}...")
+
+            # Save results and get file paths
+            save_results = processor.save_drwish_matrix(user_config.ticker_choice)
+
+            # Count total results across all parameter sets for this timeframe
+            timeframe_total = 0
+            for timeframe_set, file_path in save_results.items():
+                if timeframe_set.startswith(timeframe):
+                    try:
+                        df = pd.read_csv(file_path)
+                        timeframe_total += len(df)
+                        print(f"📁 Saved {len(df)} results to: {file_path}")
+                    except:
+                        timeframe_total += 1
+
+            results_summary[timeframe] = timeframe_total
+            total_processed += timeframe_total
+
+            print(f"✅ DRWISH screener completed for {timeframe}: {timeframe_total} total results across all parameter sets")
+        else:
+            print(f"⚠️  No DRWISH results accumulated for {timeframe}")
+            results_summary[timeframe] = 0
+
+    print(f"\n📈 DRWISH SCREENER SUMMARY:")
+    print(f"📊 Total results processed: {total_processed}")
+    print(f"⏱️  Processing completed successfully")
+
+    return results_summary
+
+
 def run_all_drwish_screener(config: Config, user_config: UserConfiguration, timeframes: List[str], clean_file_path: str) -> dict:
     """
-    Legacy function - redirects to streaming version.
+    Legacy function - redirects to accumulation version.
     """
-    return run_all_drwish_screener_streaming(config, user_config, timeframes, clean_file_path)
+    return run_all_drwish_screener_accumulation(config, user_config, timeframes, clean_file_path)
+
+
+def run_all_volume_suite_screener(config: Config, user_config: UserConfiguration, timeframes: List[str], clean_file_path: str) -> dict:
+    """
+    Main Volume Suite screener function - uses streaming pattern for optimal performance.
+    """
+    return run_all_volume_suite_streaming(config, user_config, timeframes, clean_file_path)
 
 
 # End of streaming functions - main() function below
@@ -1381,12 +1619,12 @@ def main() -> None:
             timeframes_to_process.append('monthly')
         if getattr(user_config, 'tw_intraday_data', False):
             timeframes_to_process.append('intraday')
-        
+
         if not timeframes_to_process:
             print("❌ No timeframes enabled for processing!")
             print("   Please enable at least one: YF_daily_data, YF_weekly_data, etc.")
             return
-        
+
         print(f"📈 Processing timeframes: {', '.join(timeframes_to_process)}")
             
     except Exception as e:
@@ -1579,7 +1817,8 @@ def main() -> None:
         per_results = run_per_analysis(
             config=config,
             user_config=user_config,
-            ticker_choice=user_config.ticker_choice
+            ticker_choice=user_config.ticker_choice,
+            timeframes=timeframes_to_process
         )
 
         print(f"✅ BASIC CALCULATIONS PHASE COMPLETED")
@@ -1605,8 +1844,15 @@ def main() -> None:
         # 5. ATR1 Screener - All timeframes, all batches (NEW - individual screener)
         atr1_screener_results = run_all_atr1_screener(config, user_config, timeframes_to_process, clean_file)
 
-        # 6. DRWISH Screener - All timeframes, all batches (NEW - individual screener)
-        drwish_screener_results = run_all_drwish_screener(config, user_config, timeframes_to_process, clean_file)
+        # 6. DRWISH Screener - All timeframes, all batches (NEW - individual screener with accumulation)
+        drwish_screener_results = run_all_drwish_screener_accumulation(config, user_config, timeframes_to_process, clean_file)
+
+        # 7. Volume Suite Screener - All timeframes, all batches (NEW - individual screener with streaming)
+        volume_suite_screener_results = run_all_volume_suite_screener(config, user_config, timeframes_to_process, clean_file)
+
+        # 8. GUPPY Screener - All timeframes, all batches (NEW - individual screener with streaming)
+        from src.screeners_streaming import run_all_guppy_screener_streaming
+        guppy_screener_results = run_all_guppy_screener_streaming(config, user_config, timeframes_to_process, clean_file)
 
         print(f"✅ SCREENERS PHASE COMPLETED")
     else:
@@ -1614,6 +1860,8 @@ def main() -> None:
         pvb_screener_results = {}
         atr1_screener_results = {}
         drwish_screener_results = {}
+        volume_suite_screener_results = {}
+        guppy_screener_results = {}
 
     # 7. Screeners - All timeframes, all batches (OLD - remaining mixed screeners)
     # COMMENTED OUT - Using individual screener implementations instead
@@ -1636,6 +1884,8 @@ def main() -> None:
     print(f"✅ PVB Screener: {sum(pvb_screener_results.values())} total tickers processed")
     print(f"✅ ATR1 Screener: {sum(atr1_screener_results.values())} total tickers processed")
     print(f"✅ DRWISH Screener: {sum(drwish_screener_results.values())} total tickers processed")
+    print(f"✅ Volume Suite Screener: {sum(volume_suite_screener_results.values())} total tickers processed")
+    print(f"✅ GUPPY Screener: {sum(guppy_screener_results.values())} total tickers processed")
     # print(f"✅ Screeners: {sum(screener_results.values())} total tickers processed")  # OLD - now using individual screeners
     print(f"✅ Additional Calculations: {sum(additional_calc_results.values())} total tickers processed")
     print(f"🕒 Timeframes completed: {', '.join(timeframes_to_process)}")

@@ -41,11 +41,12 @@ class DrWishChartGenerator:
         
         logger.info(f"DrWish chart generator initialized (enabled: {self.enable_charts})")
 
-    def create_drwish_chart(self, ticker: str, df: pd.DataFrame, 
+    def create_drwish_chart(self, ticker: str, df: pd.DataFrame,
                            glb_signals: pd.DataFrame = None,
-                           blue_signals: pd.DataFrame = None, 
+                           blue_signals: pd.DataFrame = None,
                            black_signals: pd.DataFrame = None,
-                           timeframe: str = 'daily') -> Optional[str]:
+                           timeframe: str = 'daily',
+                           parameter_set: str = None) -> Optional[str]:
         """
         Create comprehensive Dr. Wish chart for a ticker
         
@@ -110,7 +111,7 @@ class DrWishChartGenerator:
             self._format_chart(ax1, ax2, ticker, timeframe)
             
             # Save chart
-            chart_path = self._save_chart(fig, ticker, timeframe)
+            chart_path = self._save_chart(fig, ticker, timeframe, parameter_set)
             plt.close(fig)
             
             return chart_path
@@ -380,15 +381,20 @@ class DrWishChartGenerator:
         
         plt.tight_layout()
 
-    def _save_chart(self, fig: plt.Figure, ticker: str, timeframe: str = 'daily') -> str:
-        """Save chart to file"""
-        # Create output directory
+    def _save_chart(self, fig: plt.Figure, ticker: str, timeframe: str = 'daily', parameter_set: str = None) -> str:
+        """Save chart to file with parameter set support"""
+        # Create output directory with parameter set subdirectory if specified
         output_dir = Path(self.chart_output_dir)
+        if parameter_set:
+            output_dir = output_dir / parameter_set
         output_dir.mkdir(parents=True, exist_ok=True)
-        
-        # Generate filename with timeframe
+
+        # Generate filename with timeframe and parameter set
         timestamp = datetime.now().strftime('%Y%m%d')
-        filename = f"{ticker}_drwish_{timeframe}_{timestamp}.png"
+        if parameter_set:
+            filename = f"{ticker}_drwish_{parameter_set}_{timeframe}_{timestamp}.png"
+        else:
+            filename = f"{ticker}_drwish_{timeframe}_{timestamp}.png"
         chart_path = output_dir / filename
         
         # Save with high quality
@@ -446,8 +452,9 @@ def generate_drwish_charts(screener_results: List[Dict], batch_data: Dict,
                 
                 # Generate chart
                 timeframe = config.get('timeframe', 'daily')
+                parameter_set = config.get('parameter_set_name', None)
                 chart_path = chart_generator.create_drwish_chart(
-                    ticker, batch_data[ticker], glb_df, blue_df, black_df, timeframe
+                    ticker, batch_data[ticker], glb_df, blue_df, black_df, timeframe, parameter_set
                 )
                 
                 if chart_path:

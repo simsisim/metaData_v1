@@ -153,7 +153,7 @@ class ATR1ScreenerProcessor:
 
         results = {}
 
-        for timeframe in self.all_results:
+        for timeframe in list(self.all_results.keys()):
             if not self.all_results[timeframe]:
                 logger.warning(f"No valid {timeframe} ATR1 screener results to save")
                 continue

@@ -122,8 +122,14 @@ def run_screeners(batch_data, output_path, timeframe, user_config=None, data_rea
     drwish_results = []
     if user_config and hasattr(user_config, 'drwish_enable') and user_config.drwish_enable:
         print("🔍 Running Dr. Wish suite screener (GLB, Blue Dot, Black Dot)...")
-        drwish_params = get_drwish_params_for_timeframe(user_config, timeframe)
-        drwish_results = drwish_screener(batch_data, drwish_params)
+        drwish_param_sets = get_drwish_params_for_timeframe(user_config, timeframe)
+
+        for param_set in drwish_param_sets:
+            set_name = param_set.get('parameter_set_name', 'set1')
+            print(f"   📊 Processing DRWISH parameter {set_name} (lookback: {param_set['lookback_period']}, historical: {param_set['calculate_historical_GLB']})...")
+            set_results = drwish_screener(batch_data, param_set)
+            drwish_results.extend(set_results)
+
         all_results.extend(drwish_results)
     screener_summary['drwish_hits'] = len(drwish_results)
     

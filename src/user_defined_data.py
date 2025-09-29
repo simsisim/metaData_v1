@@ -501,11 +501,14 @@ class UserConfiguration:
     
     # Volume Suite Configuration
     volume_suite_enable: bool = True
+    volume_suite_daily_enable: bool = True
+    volume_suite_weekly_enable: bool = True
+    volume_suite_monthly_enable: bool = True
     volume_suite_hv_absolute: bool = True
     volume_suite_hv_stdv: bool = True
     volume_suite_enhanced_anomaly: bool = True
     volume_suite_volume_indicators: bool = True
-    volume_suite_pvb_TWmodel_integration: bool = True
+    volume_suite_pvb_clmodel_integration: bool = True
     
     # HV Absolute parameters
     volume_suite_hv_month_cutoff: int = 15
@@ -528,7 +531,17 @@ class UserConfiguration:
     volume_suite_adtv_3m_threshold: float = 2.0
     volume_suite_adtv_6m_threshold: float = 2.0
     volume_suite_adtv_1y_threshold: float = 2.0
-    
+    volume_suite_adtv_min_volume: int = 100000
+    volume_suite_output_dir: str = "results/screeners/volume_suite"
+    volume_suite_save_individual_files: bool = True
+
+    # PVB ClModel Integration parameters (separate from PVB TW)
+    volume_suite_pvb_clmodel_price_period: int = 15
+    volume_suite_pvb_clmodel_volume_period: int = 15
+    volume_suite_pvb_clmodel_trend_length: int = 50
+    volume_suite_pvb_clmodel_volume_multiplier: float = 1.5
+    volume_suite_pvb_clmodel_direction: str = "Long"
+
     # Stockbee Suite Configuration
     stockbee_suite_enable: bool = True
     stockbee_suite_9m_movers: bool = True
@@ -584,6 +597,10 @@ class UserConfiguration:
     
     # Guppy GMMA Screener Configuration
     guppy_screener_enable: bool = True
+    guppy_screener_daily_enable: bool = True
+    guppy_screener_weekly_enable: bool = False
+    guppy_screener_monthly_enable: bool = False
+    guppy_screener_ma_type: str = "EMA"  # Moving average type: EMA or SMA
     guppy_screener_short_term_emas: List[int] = field(default_factory=lambda: [3, 5, 8, 10, 12, 15])  # Trader behavior EMAs
     guppy_screener_long_term_emas: List[int] = field(default_factory=lambda: [30, 35, 40, 45, 50, 60])  # Investor behavior EMAs
     guppy_screener_min_compression_ratio: float = 0.02  # 2% compression threshold
@@ -828,9 +845,34 @@ def parse_boolean(value: str) -> bool:
     """
     if isinstance(value, bool):
         return value
-    
+
     value_str = str(value).strip().lower()
     return value_str in ['true', '1', 'yes', 'on']
+
+
+def parse_comma_separated_ints(value: str) -> List[int]:
+    """
+    Parse comma-separated integer string to List[int].
+
+    Examples:
+        "3,5,8,10,12,25" → [3, 5, 8, 10, 12, 25]
+        "30,35, 40, 45, 50, 60" → [30, 35, 40, 45, 50, 60] (handles spaces)
+
+    Args:
+        value: String with comma-separated integers
+
+    Returns:
+        List of integers, empty list if parsing fails
+    """
+    if not value or not isinstance(value, str):
+        return []
+    try:
+        # Remove quotes if present, strip whitespace, split by comma
+        cleaned = value.strip().strip('"\'')
+        return [int(x.strip()) for x in cleaned.split(',') if x.strip()]
+    except (ValueError, AttributeError) as e:
+        logger.warning(f"Failed to parse comma-separated integers '{value}': {e}")
+        return []
 
 
 def read_user_data(file_path: str = 'user_data.csv') -> UserConfiguration:
@@ -1313,6 +1355,38 @@ def read_user_data(file_path: str = 'user_data.csv') -> UserConfiguration:
             
             # Volume Suite Configuration
             'VOLUME_SUITE_enable': ('volume_suite_enable', parse_boolean),
+            'VOLUME_SUITE_daily_enable': ('volume_suite_daily_enable', parse_boolean),
+            'VOLUME_SUITE_weekly_enable': ('volume_suite_weekly_enable', parse_boolean),
+            'VOLUME_SUITE_monthly_enable': ('volume_suite_monthly_enable', parse_boolean),
+            'VOLUME_SUITE_hv_absolute': ('volume_suite_hv_absolute', parse_boolean),
+            'VOLUME_SUITE_hv_stdv': ('volume_suite_hv_stdv', parse_boolean),
+            'VOLUME_SUITE_enhanced_anomaly': ('volume_suite_enhanced_anomaly', parse_boolean),
+            'VOLUME_SUITE_volume_indicators': ('volume_suite_volume_indicators', parse_boolean),
+            'VOLUME_SUITE_pvb_Clmodel_integration': ('volume_suite_pvb_clmodel_integration', parse_boolean),
+            'VOLUME_SUITE_hv_month_cutoff': ('volume_suite_hv_month_cutoff', int),
+            'VOLUME_SUITE_hv_day_cutoff': ('volume_suite_hv_day_cutoff', int),
+            'VOLUME_SUITE_hv_std_cutoff': ('volume_suite_hv_std_cutoff', int),
+            'VOLUME_SUITE_hv_min_volume': ('volume_suite_hv_min_volume', int),
+            'VOLUME_SUITE_hv_min_price': ('volume_suite_hv_min_price', float),
+            'VOLUME_SUITE_stdv_cutoff': ('volume_suite_stdv_cutoff', int),
+            'VOLUME_SUITE_stdv_min_volume': ('volume_suite_stdv_min_volume', int),
+            'VOLUME_SUITE_vroc_threshold': ('volume_suite_vroc_threshold', int),
+            'VOLUME_SUITE_rvol_threshold': ('volume_suite_rvol_threshold', float),
+            'VOLUME_SUITE_rvol_extreme_threshold': ('volume_suite_rvol_extreme_threshold', float),
+            'VOLUME_SUITE_mfi_overbought': ('volume_suite_mfi_overbought', int),
+            'VOLUME_SUITE_mfi_oversold': ('volume_suite_mfi_oversold', int),
+            'VOLUME_SUITE_vpt_threshold': ('volume_suite_vpt_threshold', float),
+            'VOLUME_SUITE_adtv_3m_threshold': ('volume_suite_adtv_3m_threshold', float),
+            'VOLUME_SUITE_adtv_6m_threshold': ('volume_suite_adtv_6m_threshold', float),
+            'VOLUME_SUITE_adtv_1y_threshold': ('volume_suite_adtv_1y_threshold', float),
+            'VOLUME_SUITE_adtv_min_volume': ('volume_suite_adtv_min_volume', int),
+            'VOLUME_SUITE_output_dir': ('volume_suite_output_dir', str),
+            'VOLUME_SUITE_save_individual_files': ('volume_suite_save_individual_files', parse_boolean),
+            'VOLUME_SUITE_pvb_Clmodel_price_period': ('volume_suite_pvb_clmodel_price_period', int),
+            'VOLUME_SUITE_pvb_Clmodel_volume_period': ('volume_suite_pvb_clmodel_volume_period', int),
+            'VOLUME_SUITE_pvb_Clmodel_trend_length': ('volume_suite_pvb_clmodel_trend_length', int),
+            'VOLUME_SUITE_pvb_Clmodel_volume_multiplier': ('volume_suite_pvb_clmodel_volume_multiplier', float),
+            'VOLUME_SUITE_pvb_Clmodel_direction': ('volume_suite_pvb_clmodel_direction', str),
             
             # Stockbee Suite Configuration
             'STOCKBEE_SUITE_enable': ('stockbee_suite_enable', parse_boolean),
@@ -1358,6 +1432,12 @@ def read_user_data(file_path: str = 'user_data.csv') -> UserConfiguration:
             
             # Guppy GMMA Screener Configuration
             'GUPPY_SCREENER_enable': ('guppy_screener_enable', parse_boolean),
+            'GUPPY_SCREENER_daily_enable': ('guppy_screener_daily_enable', parse_boolean),
+            'GUPPY_SCREENER_weekly_enable': ('guppy_screener_weekly_enable', parse_boolean),
+            'GUPPY_SCREENER_monthly_enable': ('guppy_screener_monthly_enable', parse_boolean),
+            'GUPPY_SCREENER_ma_type': ('guppy_screener_ma_type', str),
+            'GUPPY_SCREENER_short_term_group_daily': ('guppy_screener_short_term_emas', parse_comma_separated_ints),
+            'GUPPY_SCREENER_long_term_group_daily': ('guppy_screener_long_term_emas', parse_comma_separated_ints),
             'GUPPY_SCREENER_min_compression_ratio': ('guppy_screener_min_compression_ratio', float),
             'GUPPY_SCREENER_min_expansion_ratio': ('guppy_screener_min_expansion_ratio', float),
             'GUPPY_SCREENER_crossover_confirmation_days': ('guppy_screener_crossover_confirmation_days', int),
@@ -1397,12 +1477,8 @@ def read_user_data(file_path: str = 'user_data.csv') -> UserConfiguration:
             'RTI_min_price': ('rti_min_price', float),
             'RTI_min_volume': ('rti_min_volume', int),
             'RTI_save_individual_files': ('rti_save_individual_files', parse_boolean),
-            
-            'VOLUME_SUITE_hv_absolute': ('volume_suite_hv_absolute', parse_boolean),
-            'VOLUME_SUITE_hv_stdv': ('volume_suite_hv_stdv', parse_boolean),
-            'VOLUME_SUITE_enhanced_anomaly': ('volume_suite_enhanced_anomaly', parse_boolean),
-            'VOLUME_SUITE_volume_indicators': ('volume_suite_volume_indicators', parse_boolean),
-            'VOLUME_SUITE_pvb_TWmodel_integration': ('volume_suite_pvb_TWmodel_integration', parse_boolean),
+
+            'VOLUME_SUITE_pvb_TWmodel_integration': ('volume_suite_pvb_clmodel_integration', parse_boolean),
             'VOLUME_SUITE_hv_month_cutoff': ('volume_suite_hv_month_cutoff', int),
             'VOLUME_SUITE_hv_day_cutoff': ('volume_suite_hv_day_cutoff', int),
             'VOLUME_SUITE_hv_std_cutoff': ('volume_suite_hv_std_cutoff', int),
@@ -1867,46 +1943,69 @@ def get_giusti_params_for_timeframe(config, timeframe):
     }
 
 
-def get_drwish_params_for_timeframe(config: UserConfiguration, timeframe: str) -> dict:
+def get_drwish_params_for_timeframe(config: UserConfiguration, timeframe: str) -> list:
     """
     Get Dr. Wish suite screener parameters for specific timeframe.
-    
+    Now supports multiple parameter sets via semicolon-separated configuration.
+
     Args:
         config: UserConfiguration object
         timeframe: 'daily', 'weekly', or 'monthly'
-        
+
     Returns:
-        Dictionary with Dr. Wish parameters for the timeframe
+        List of dictionaries with Dr. Wish parameters for each parameter set
     """
-    return {
-        'timeframe': timeframe,  # Add timeframe parameter
-        'min_price': config.drwish_min_price,
-        'min_volume': config.drwish_min_volume,
-        'pivot_strength': config.drwish_pivot_strength,
-        'lookback_period': config.drwish_lookback_period,
-        'calculate_historical_GLB': config.drwish_calculate_historical_GLB,
-        'confirmation_period': config.drwish_confirmation_period,
-        'require_confirmation': config.drwish_require_confirmation,
-        'enable_glb': config.drwish_enable_glb,
-        'enable_blue_dot': config.drwish_enable_blue_dot,
-        'enable_black_dot': config.drwish_enable_black_dot,
-        'blue_dot_stoch_period': config.drwish_blue_dot_stoch_period,
-        'blue_dot_stoch_threshold': config.drwish_blue_dot_stoch_threshold,
-        'blue_dot_sma_period': config.drwish_blue_dot_sma_period,
-        'black_dot_stoch_period': config.drwish_black_dot_stoch_period,
-        'black_dot_stoch_threshold': config.drwish_black_dot_stoch_threshold,
-        'black_dot_lookback': config.drwish_black_dot_lookback,
-        'black_dot_sma_period': config.drwish_black_dot_sma_period,
-        'black_dot_ema_period': config.drwish_black_dot_ema_period,
-        'show_all_stocks': config.drwish_show_all_stocks,
-        'enable_charts': config.drwish_enable_charts,
-        'chart_output_dir': config.drwish_chart_output_dir,
-        'show_historical_glb': config.drwish_show_historical_glb,
-        'show_breakout_labels': config.drwish_show_breakout_labels,
-        'generate_individual_files': config.drwish_generate_individual_files,
-        'ticker_choice': config.ticker_choice,
-        'timeframe': timeframe
-    }
+    # Parse semicolon-separated values
+    lookback_periods = [p.strip() for p in config.drwish_lookback_period.split(';') if p.strip()]
+    historical_glb_periods = [p.strip() for p in config.drwish_calculate_historical_GLB.split(';') if p.strip()]
+    confirmation_periods = [p.strip() for p in config.drwish_confirmation_period.split(';') if p.strip()]
+
+    # Ensure all lists have the same length by padding with the first value
+    max_sets = max(len(lookback_periods), len(historical_glb_periods), len(confirmation_periods))
+
+    if len(lookback_periods) < max_sets:
+        lookback_periods.extend([lookback_periods[0]] * (max_sets - len(lookback_periods)))
+    if len(historical_glb_periods) < max_sets:
+        historical_glb_periods.extend([historical_glb_periods[0]] * (max_sets - len(historical_glb_periods)))
+    if len(confirmation_periods) < max_sets:
+        confirmation_periods.extend([confirmation_periods[0]] * (max_sets - len(confirmation_periods)))
+
+    # Create parameter sets
+    param_sets = []
+    for i in range(max_sets):
+        param_set = {
+            'timeframe': timeframe,
+            'parameter_set_index': i,
+            'parameter_set_name': f"set{i+1}",
+            'min_price': config.drwish_min_price,
+            'min_volume': config.drwish_min_volume,
+            'pivot_strength': config.drwish_pivot_strength,
+            'lookback_period': lookback_periods[i],
+            'calculate_historical_GLB': historical_glb_periods[i],
+            'confirmation_period': confirmation_periods[i],
+            'require_confirmation': config.drwish_require_confirmation,
+            'enable_glb': config.drwish_enable_glb,
+            'enable_blue_dot': config.drwish_enable_blue_dot,
+            'enable_black_dot': config.drwish_enable_black_dot,
+            'blue_dot_stoch_period': config.drwish_blue_dot_stoch_period,
+            'blue_dot_stoch_threshold': config.drwish_blue_dot_stoch_threshold,
+            'blue_dot_sma_period': config.drwish_blue_dot_sma_period,
+            'black_dot_stoch_period': config.drwish_black_dot_stoch_period,
+            'black_dot_stoch_threshold': config.drwish_black_dot_stoch_threshold,
+            'black_dot_lookback': config.drwish_black_dot_lookback,
+            'black_dot_sma_period': config.drwish_black_dot_sma_period,
+            'black_dot_ema_period': config.drwish_black_dot_ema_period,
+            'show_all_stocks': config.drwish_show_all_stocks,
+            'enable_charts': config.drwish_enable_charts,
+            'chart_output_dir': config.drwish_chart_output_dir,
+            'show_historical_glb': config.drwish_show_historical_glb,
+            'show_breakout_labels': config.drwish_show_breakout_labels,
+            'generate_individual_files': config.drwish_generate_individual_files,
+            'ticker_choice': config.ticker_choice
+        }
+        param_sets.append(param_set)
+
+    return param_sets
 
 
 def get_volume_suite_params_for_timeframe(config: UserConfiguration, timeframe: str) -> dict:
@@ -1939,7 +2038,7 @@ def get_volume_suite_params_for_timeframe(config: UserConfiguration, timeframe: 
             'enable_hv_stdv': config.volume_suite_hv_stdv,
             'enable_enhanced_anomaly': config.volume_suite_enhanced_anomaly,
             'enable_volume_indicators': config.volume_suite_volume_indicators,
-            'enable_pvb_integration': config.volume_suite_pvb_TWmodel_integration,
+            'enable_pvb_clmodel_integration': config.volume_suite_pvb_clmodel_integration,
             'save_individual_files': config.volume_suite_save_individual_files,
             
             # HV Absolute parameters (timeframe-scaled)
@@ -1970,12 +2069,12 @@ def get_volume_suite_params_for_timeframe(config: UserConfiguration, timeframe: 
             'adtv_1y_threshold': config.volume_suite_adtv_1y_threshold,
             'adtv_min_volume': config.volume_suite_adtv_min_volume,
             
-            # PVB Integration parameters
-            'pvb_price_period': config.volume_suite_pvb_TWmodel_price_period,
-            'pvb_volume_period': config.volume_suite_pvb_TWmodel_volume_period,
-            'pvb_trend_length': config.volume_suite_pvb_TWmodel_trend_length,
-            'pvb_volume_multiplier': config.volume_suite_pvb_TWmodel_volume_multiplier,
-            'pvb_direction': config.volume_suite_pvb_TWmodel_direction
+            # PVB ClModel Integration parameters (separate from PVB TW)
+            'pvb_clmodel_price_period': config.volume_suite_pvb_clmodel_price_period,
+            'pvb_clmodel_volume_period': config.volume_suite_pvb_clmodel_volume_period,
+            'pvb_clmodel_trend_length': config.volume_suite_pvb_clmodel_trend_length,
+            'pvb_clmodel_volume_multiplier': config.volume_suite_pvb_clmodel_volume_multiplier,
+            'pvb_clmodel_direction': config.volume_suite_pvb_clmodel_direction
         },
         'volume_output_dir': config.volume_suite_output_dir,
         'timeframe': timeframe
@@ -2136,20 +2235,36 @@ def get_adl_screener_params_for_timeframe(config: UserConfiguration, timeframe: 
 
 def get_guppy_screener_params_for_timeframe(config: UserConfiguration, timeframe: str) -> dict:
     """
-    Get Guppy GMMA screener parameters for specific timeframe.
-    
+    Get Guppy GMMA screener parameters for specific timeframe with hierarchical flag checking.
+
     Args:
         config: UserConfiguration object
         timeframe: 'daily', 'weekly', or 'monthly'
-        
+
     Returns:
-        Dictionary with Guppy GMMA screener parameters
+        Dictionary with Guppy GMMA screener parameters, empty dict if disabled
     """
+    # Check master enable flag first
+    master_enabled = getattr(config, 'guppy_screener_enable', False)
+    if not master_enabled:
+        return {}  # Skip entirely if master disabled
+
+    # Check timeframe-specific enable flag
+    timeframe_attr = f'guppy_screener_{timeframe}_enable'
+    timeframe_enabled = getattr(config, timeframe_attr, True)  # Default True for compatibility
+
+    if not timeframe_enabled:
+        return {}  # Skip if timeframe disabled
+
+    # Both master AND timeframe flags are enabled - return full parameter set
     return {
-        'enable_guppy_screener': config.guppy_screener_enable,
+        'enable_guppy_screener': True,  # Both flags are enabled
         'timeframe': timeframe,
         'guppy_screener': {
-            # EMA periods (Daryl Guppy's standard configuration)
+            # Moving average type (NEW - from user configuration)
+            'ma_type': config.guppy_screener_ma_type,
+
+            # EMA periods (NOW from user configuration, not hardcoded)
             'short_term_emas': config.guppy_screener_short_term_emas,
             'long_term_emas': config.guppy_screener_long_term_emas,
             

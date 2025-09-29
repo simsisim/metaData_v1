@@ -41,8 +41,11 @@ class GuppyScreener:
         
         # Guppy screener specific configuration
         self.guppy_config = config.get('guppy_screener', {})
-        
-        # EMA groups (Daryl Guppy's standard periods)
+
+        # Moving average type (NEW - user configurable)
+        self.ma_type = self.guppy_config.get('ma_type', 'EMA').upper()
+
+        # MA groups (NOW from user configuration, not hardcoded)
         self.short_term_emas = self.guppy_config.get('short_term_emas', [3, 5, 8, 10, 12, 15])
         self.long_term_emas = self.guppy_config.get('long_term_emas', [30, 35, 40, 45, 50, 60])
         
@@ -178,32 +181,58 @@ class GuppyScreener:
 
     def _calculate_gmma_emas(self, data: pd.DataFrame) -> Optional[pd.DataFrame]:
         """
-        Calculate all GMMA EMAs for both short-term and long-term groups
-        
+        Calculate all GMMA moving averages for both short-term and long-term groups.
+        Now supports both EMA and SMA based on user configuration.
+
         Args:
             data: OHLCV DataFrame
-            
+
         Returns:
-            DataFrame with all EMAs added or None if calculation fails
+            DataFrame with all MAs added or None if calculation fails
         """
         try:
             data_with_emas = data.copy()
-            
-            # Calculate short-term EMAs
+
+            # Calculate short-term moving averages with user's periods
             for period in self.short_term_emas:
-                data_with_emas[f'EMA_{period}'] = data['Close'].ewm(span=period, adjust=False).mean()
-            
-            # Calculate long-term EMAs
+                if self.ma_type == 'EMA':
+                    data_with_emas[f'EMA_{period}'] = data['Close'].ewm(span=period, adjust=False).mean()
+                elif self.ma_type == 'SMA':
+                    data_with_emas[f'SMA_{period}'] = data['Close'].rolling(window=period).mean()
+                else:
+                    # Default fallback to EMA for unknown types
+                    logger.warning(f"Unknown MA type: {self.ma_type}, using EMA")
+                    data_with_emas[f'EMA_{period}'] = data['Close'].ewm(span=period, adjust=False).mean()
+
+            # Calculate long-term moving averages with user's periods
             for period in self.long_term_emas:
-                data_with_emas[f'EMA_{period}'] = data['Close'].ewm(span=period, adjust=False).mean()
-            
+                if self.ma_type == 'EMA':
+                    data_with_emas[f'EMA_{period}'] = data['Close'].ewm(span=period, adjust=False).mean()
+                elif self.ma_type == 'SMA':
+                    data_with_emas[f'SMA_{period}'] = data['Close'].rolling(window=period).mean()
+                else:
+                    # Default fallback to EMA for unknown types
+                    data_with_emas[f'EMA_{period}'] = data['Close'].ewm(span=period, adjust=False).mean()
+
             return data_with_emas
-            
+
         except Exception as e:
-            logger.warning(f"Error calculating GMMA EMAs: {e}")
+            logger.warning(f"Error calculating GMMA moving averages: {e}")
             return None
 
-    def _detect_gmma_signals(self, ticker: str, data: pd.DataFrame, 
+    def _get_ma_column_names(self) -> Tuple[List[str], List[str]]:
+        """
+        Get moving average column names based on user's MA type and periods.
+
+        Returns:
+            Tuple of (short_term_columns, long_term_columns)
+        """
+        ma_prefix = self.ma_type  # "EMA" or "SMA"
+        short_cols = [f'{ma_prefix}_{period}' for period in self.short_term_emas]
+        long_cols = [f'{ma_prefix}_{period}' for period in self.long_term_emas]
+        return short_cols, long_cols
+
+    def _detect_gmma_signals(self, ticker: str, data: pd.DataFrame,
                             rs_data: Optional[Dict] = None) -> List[Dict]:
         """
         Detect all GMMA signal types for a ticker
@@ -260,10 +289,13 @@ class GuppyScreener:
         """
         try:
             latest = data.iloc[-1]
-            
-            # Get all EMA values for latest bar
-            st_emas = [latest[f'EMA_{period}'] for period in self.short_term_emas]
-            lt_emas = [latest[f'EMA_{period}'] for period in self.long_term_emas]
+
+            # Get dynamic column names based on user's MA type
+            short_cols, long_cols = self._get_ma_column_names()
+
+            # Get all MA values for latest bar using dynamic column names
+            st_emas = [latest[col] for col in short_cols]
+            lt_emas = [latest[col] for col in long_cols]
             
             # Check for perfect bullish alignment (all ST > all LT)
             bullish_alignment = all(st > lt for st in st_emas for lt in lt_emas)
@@ -326,12 +358,15 @@ class GuppyScreener:
             
             latest = data.iloc[-1]
             
-            # Calculate EMA group spreads over time
+            # Get dynamic column names based on user's MA type
+            short_cols, long_cols = self._get_ma_column_names()
+
+            # Calculate MA group spreads over time
             spreads = []
             for i in range(-10, 0):  # Last 10 days
                 row = data.iloc[i]
-                st_emas = [row[f'EMA_{p}'] for p in self.short_term_emas]
-                lt_emas = [row[f'EMA_{p}'] for p in self.long_term_emas]
+                st_emas = [row[col] for col in short_cols]
+                lt_emas = [row[col] for col in long_cols]
                 
                 st_spread = (max(st_emas) - min(st_emas)) / min(st_emas)
                 lt_spread = (max(lt_emas) - min(lt_emas)) / min(lt_emas)
@@ -349,8 +384,8 @@ class GuppyScreener:
             if was_compressed and now_expanding:
                 # Determine breakout direction
                 price = latest['Close']
-                st_avg = np.mean([latest[f'EMA_{p}'] for p in self.short_term_emas])
-                lt_avg = np.mean([latest[f'EMA_{p}'] for p in self.long_term_emas])
+                st_avg = np.mean([latest[col] for col in short_cols])
+                lt_avg = np.mean([latest[col] for col in long_cols])
                 
                 direction = 'bullish' if st_avg > lt_avg else 'bearish'
                 volume_confirmation = self._check_volume_confirmation(data)
@@ -395,10 +430,13 @@ class GuppyScreener:
         """
         try:
             latest = data.iloc[-1]
-            
-            # Calculate current EMA group spreads
-            st_emas = [latest[f'EMA_{p}'] for p in self.short_term_emas]
-            lt_emas = [latest[f'EMA_{p}'] for p in self.long_term_emas]
+
+            # Get dynamic column names based on user's MA type
+            short_cols, long_cols = self._get_ma_column_names()
+
+            # Calculate current MA group spreads using dynamic column names
+            st_emas = [latest[col] for col in short_cols]
+            lt_emas = [latest[col] for col in long_cols]
             
             st_spread = (max(st_emas) - min(st_emas)) / min(st_emas)
             lt_spread = (max(lt_emas) - min(lt_emas)) / min(lt_emas)
@@ -462,22 +500,25 @@ class GuppyScreener:
         try:
             if len(data) < self.crossover_confirmation_days + 1:
                 return None
-            
+
             latest = data.iloc[-1]
-            
+
+            # Get dynamic column names based on user's MA type
+            short_cols, long_cols = self._get_ma_column_names()
+
             # Check crossover pattern over confirmation period
             crossover_direction = None
             crossover_strength = 0
-            
+
             for i in range(1, self.crossover_confirmation_days + 1):
                 prev_row = data.iloc[-i-1]
                 curr_row = data.iloc[-i]
-                
-                # Calculate group averages
-                prev_st_avg = np.mean([prev_row[f'EMA_{p}'] for p in self.short_term_emas])
-                prev_lt_avg = np.mean([prev_row[f'EMA_{p}'] for p in self.long_term_emas])
-                curr_st_avg = np.mean([curr_row[f'EMA_{p}'] for p in self.short_term_emas])
-                curr_lt_avg = np.mean([curr_row[f'EMA_{p}'] for p in self.long_term_emas])
+
+                # Calculate group averages using dynamic column names
+                prev_st_avg = np.mean([prev_row[col] for col in short_cols])
+                prev_lt_avg = np.mean([prev_row[col] for col in long_cols])
+                curr_st_avg = np.mean([curr_row[col] for col in short_cols])
+                curr_lt_avg = np.mean([curr_row[col] for col in long_cols])
                 
                 # Check for crossover
                 if prev_st_avg <= prev_lt_avg and curr_st_avg > curr_lt_avg:

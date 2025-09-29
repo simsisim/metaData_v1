@@ -81,19 +81,9 @@ class RSProcessor:
             'errors': []
         }
         
-        # Determine which timeframes to process - respect global timeframe permissions
-        if timeframes is not None:
-            # Global timeframes provided - use them with individual RS flags as filter
-            enabled_timeframes = []
-            for timeframe in timeframes:
-                rs_flag = f'rs_{timeframe}_enable'
-                if getattr(self.user_config, rs_flag, True):
-                    enabled_timeframes.append(timeframe)
-                else:
-                    logger.info(f"Skipping {timeframe} - RS flag {rs_flag} is disabled")
-            timeframes = enabled_timeframes
-        else:
-            # No global timeframes provided - use RS-specific config flags (legacy behavior)
+        # Use provided timeframes (from main.py YF_*_data flags) or fallback to RS-specific flags
+        if timeframes is None:
+            # Legacy behavior - use RS-specific config flags
             timeframes = []
             if getattr(self.user_config, 'rs_daily_enable', True):
                 timeframes.append('daily')
@@ -102,14 +92,17 @@ class RSProcessor:
             if getattr(self.user_config, 'rs_monthly_enable', False):
                 timeframes.append('monthly')
 
-        if not timeframes:
-            logger.warning("No timeframes enabled for RS processing")
-            return results_summary
-        
-        logger.info(f"Processing RS for timeframes: {timeframes}")
-        
-        # Process each timeframe
+        logger.info(f"Processing RS for available timeframes: {timeframes}")
+
+        # Process each timeframe - follow same pattern as basic_calculation and stage_analysis
         for timeframe in timeframes:
+            # Check RS enable flag for this timeframe (hierarchical flag logic)
+            rs_enabled = getattr(self.user_config, f'rs_{timeframe}_enable', True)
+            if not rs_enabled:
+                print(f"⏭️  RS analysis disabled for {timeframe} timeframe")
+                continue
+
+            print(f"\n📊 Processing RS {timeframe.upper()} timeframe...")
             try:
                 timeframe_results = self._process_timeframe(ticker_list, timeframe, ticker_choice, benchmark_tickers)
                 results_summary['timeframes_processed'].append(timeframe)

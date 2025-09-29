@@ -60,13 +60,14 @@ class PERProcessor:
             logger.error(f"Error extracting data date from PER DataFrame: {e}")
             return datetime.now().strftime('%Y%m%d')
         
-    def process_per_analysis(self, ticker_choice=0):
+    def process_per_analysis(self, ticker_choice=0, timeframes=None):
         """
         Run complete PER analysis by reading RS files and generating percentile rankings.
-        
+
         Args:
             ticker_choice: User ticker choice number
-            
+            timeframes: List of timeframes to process (from main.py YF_*_data flags)
+
         Returns:
             Dictionary with results summary
         """
@@ -82,24 +83,28 @@ class PERProcessor:
             'files_created': [],
             'errors': []
         }
-        
-        # Determine which timeframes to process based on RS-specific config flags
-        timeframes = []
-        if getattr(self.user_config, 'rs_daily_enable', True):
-            timeframes.append('daily')
-        if getattr(self.user_config, 'rs_weekly_enable', False):
-            timeframes.append('weekly')
-        if getattr(self.user_config, 'rs_monthly_enable', False):
-            timeframes.append('monthly')
-            
-        if not timeframes:
-            logger.warning("No timeframes enabled for PER processing")
-            return results_summary
-        
-        logger.info(f"Processing PER for timeframes: {timeframes}")
-        
-        # Process each timeframe
+        # Use provided timeframes (from main.py YF_*_data flags) or fallback to RS-specific flags
+        if timeframes is None:
+            # Legacy behavior - use RS-specific config flags
+            timeframes = []
+            if getattr(self.user_config, 'rs_daily_enable', True):
+                timeframes.append('daily')
+            if getattr(self.user_config, 'rs_weekly_enable', False):
+                timeframes.append('weekly')
+            if getattr(self.user_config, 'rs_monthly_enable', False):
+                timeframes.append('monthly')
+
+        logger.info(f"Processing PER for available timeframes: {timeframes}")
+
+        # Process each timeframe - follow same pattern as basic_calculation and stage_analysis
         for timeframe in timeframes:
+            # Check RS enable flag for this timeframe (PER depends on RS)
+            rs_enabled = getattr(self.user_config, f'rs_{timeframe}_enable', True)
+            if not rs_enabled:
+                print(f"⏭️  PER analysis disabled for {timeframe} timeframe (depends on RS)")
+                continue
+
+            print(f"\n📊 Processing PER {timeframe.upper()} timeframe...")
             try:
                 timeframe_results = self._process_timeframe(timeframe, ticker_choice, benchmark_tickers)
                 results_summary['timeframes_processed'].append(timeframe)
@@ -658,15 +663,16 @@ class PERProcessor:
             return None
 
 
-def run_per_analysis(config, user_config, ticker_choice=0):
+def run_per_analysis(config, user_config, ticker_choice=0, timeframes=None):
     """
     Standalone function to run complete PER analysis.
-    
+
     Args:
         config: Config object
         user_config: User configuration object
         ticker_choice: User ticker choice number
-        
+        timeframes: List of timeframes to process (from main.py YF_*_data flags)
+
     Returns:
         Results summary dictionary
     """
@@ -683,7 +689,7 @@ def run_per_analysis(config, user_config, ticker_choice=0):
     
     # Create PER processor and run analysis
     per_processor = PERProcessor(config, user_config)
-    results = per_processor.process_per_analysis(ticker_choice)
+    results = per_processor.process_per_analysis(ticker_choice, timeframes)
     
     logger.info("PER analysis pipeline completed")
     return results
