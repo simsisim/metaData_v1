@@ -57,7 +57,7 @@ write_info_file,TRUE,Write detailed info files during processing
 ticker_info_TW,TRUE,Get ticker info from TradingView universe file
 ticker_info_TW_file,tradingview_universe_info.csv,File name for TradingView ticker info
 ticker_info_YF,FALSE,Download ticker info from YFinance
-ticker_choice,2-5,Ticker combination choice (0-17)
+ticker_choice,2,Ticker combination choice (0-17)
 batch_size,100,Global batch size for data processing and calculations
 ,,
 # PRE-PROCESSING,,
@@ -493,6 +493,11 @@ PVB_TWmodel_enable,FALSE,Enable PVB TWmodel (Price Volume Breakout TradingView M
 PVB_TWmodel_daily_enable,TRUE,Enable PVB TWmodel daily timeframe processing
 PVB_TWmodel_weekly_enable,FALSE,Enable PVB TWmodel weekly timeframe processing
 PVB_TWmodel_monthly_enable,FALSE,Enable PVB TWmodel monthly timeframe processing
+# TradingView Watchlist Export Configuration,,
+PVB_TWmodel_export_tradingview,TRUE,Export PVB results to TradingView watchlist format
+PVB_TWmodel_watchlist_max_symbols,1000,Maximum symbols per watchlist file (TradingView limit)
+PVB_TWmodel_watchlist_include_buy,TRUE,Include Buy signals in watchlist export
+PVB_TWmodel_watchlist_include_sell,TRUE,Include Sell signals in watchlist export
 # Daily timeframe PVB TWmodel parameters,,
 PVB_TWmodel_daily_price_breakout_period,30,Daily price breakout window in days
 PVB_TWmodel_daily_volume_breakout_period,30,Daily volume breakout window in days
@@ -504,13 +509,13 @@ PVB_TWmodel_weekly_price_breakout_period,12,Weekly price breakout window in week
 PVB_TWmodel_weekly_volume_breakout_period,12,Weekly volume breakout window in weeks
 PVB_TWmodel_weekly_trendline_length,10,Weekly moving average trend period in weeks
 PVB_TWmodel_weekly_close_threshold,5,Weekly days below/above MA to trigger close signal
-PVB_TWmodel_weekly_signal_max_age,20,Weekly maximum days since signal to include
+PVB_TWmodel_weekly_signal_max_age,100,Weekly maximum days since signal to include
 # Monthly timeframe PVB TWmodel parameters,,
 PVB_TWmodel_monthly_price_breakout_period,6,Monthly price breakout window in months
 PVB_TWmodel_monthly_volume_breakout_period,6,Monthly volume breakout window in months
 PVB_TWmodel_monthly_trendline_length,4,Monthly moving average trend period in months
 PVB_TWmodel_monthly_close_threshold,1,Monthly days below/above MA to trigger close signal
-PVB_TWmodel_monthly_signal_max_age,6,Monthly maximum days since signal to include
+PVB_TWmodel_monthly_signal_max_age,100,Monthly maximum days since signal to include
 # General PVB TWmodel parameters,,
 PVB_TWmodel_order_direction,Long and Short,Trading direction (Long | Short | Long and Short)
 PVB_TWmodel_min_volume,10000,Minimum volume requirement
@@ -570,10 +575,26 @@ DRWISH_generate_individual_files,TRUE,Generate individual ticker result files
 # STOCKBEE SUITE SCREENER CONFIGURATION,,
 # =====================================,,
 STOCKBEE_SUITE_enable,FALSE,Enable Stockbee Suite comprehensive momentum analysis
+STOCKBEE_SUITE_daily_enable,TRUE,Enable Stockbee screening for daily timeframe
+STOCKBEE_SUITE_weekly_enable,FALSE,Enable Stockbee screening for weekly timeframe
+STOCKBEE_SUITE_monthly_enable,FALSE,Enable Stockbee screening for monthly timeframe
 STOCKBEE_SUITE_9m_movers,TRUE,Enable 9M MOVERS (9M+ volume with 1.25x relative volume)
 STOCKBEE_SUITE_weekly_movers,TRUE,Enable 20% Weekly Movers (20%+ weekly gains)
 STOCKBEE_SUITE_daily_gainers,TRUE,Enable 4% Daily Gainers (4%+ daily gains with high RS)
 STOCKBEE_SUITE_industry_leaders,TRUE,Enable Top 20% Industries & Top 4 Performers analysis
+STOCKBEE_SUITE_9m_volume_threshold,9000000,9M MOVERS: Minimum share volume threshold (9 million)
+STOCKBEE_SUITE_9m_relative_volume,1.25,9M MOVERS: Relative volume multiplier vs average
+STOCKBEE_SUITE_weekly_gain_threshold,20,20% Weekly Movers: Minimum weekly gain percentage
+STOCKBEE_SUITE_weekly_min_volume,100000,20% Weekly Movers: Minimum average volume
+STOCKBEE_SUITE_daily_gain_threshold,4,4% Daily Gainers: Minimum daily gain percentage
+STOCKBEE_SUITE_daily_min_volume,100000,4% Daily Gainers: Minimum average volume
+STOCKBEE_SUITE_industry_top_pct,20,Industry Leaders: Top percentage of industries to select (20%)
+STOCKBEE_SUITE_industry_top_stocks,4,Industry Leaders: Top N stocks per industry
+STOCKBEE_SUITE_industry_min_size,3,Industry Leaders: Minimum stocks per industry
+STOCKBEE_SUITE_min_market_cap,1000000000,Minimum market cap requirement ($1B)
+STOCKBEE_SUITE_min_price,5,Minimum stock price requirement
+STOCKBEE_SUITE_exclude_funds,TRUE,Exclude ETFs and mutual funds
+STOCKBEE_SUITE_save_individual_files,TRUE,Save individual screener files
 ,,
 # QULLAMAGGIE SUITE SCREENER CONFIGURATION,,
 # =========================================,,
@@ -587,6 +608,11 @@ QULLAMAGGIE_SUITE_extension_danger,11,ATR extension danger threshold (11x from S
 # ADL SCREENER CONFIGURATION,,
 # ============================,,
 ADL_SCREENER_enable,FALSE,Enable ADL (Accumulation/Distribution Line) screener for divergence analysis
+ADL_SCREENER_daily_enable,TRUE,Enable ADL screening for daily timeframe
+ADL_SCREENER_weekly_enable,FALSE,Enable ADL screening for weekly timeframe
+ADL_SCREENER_monthly_enable,FALSE,Enable ADL screening for monthly timeframe
+,,
+# BASE ADL CALCULATION PARAMETERS (existing functionality),,
 ADL_SCREENER_lookback_period,50,Period for ADL calculation and analysis
 ADL_SCREENER_divergence_period,20,Period to analyze for divergence patterns between price and ADL
 ADL_SCREENER_breakout_period,30,Period to check for ADL breakouts above/below previous levels
@@ -596,9 +622,50 @@ ADL_SCREENER_min_volume_avg,100000,Minimum average volume requirement for ADL an
 ADL_SCREENER_min_price,5,Minimum stock price requirement for ADL screening
 ADL_SCREENER_save_individual_files,TRUE,Save individual ADL component result files
 ,,
+# MONTH-OVER-MONTH ACCUMULATION ANALYSIS (Step 2),,
+ADL_SCREENER_mom_analysis_enable,TRUE,Enable month-over-month accumulation analysis module
+ADL_SCREENER_mom_period,22,Trading days per month (~22 trading days)
+ADL_SCREENER_mom_min_threshold_pct,15,Minimum acceptable monthly ADL growth percentage
+ADL_SCREENER_mom_max_threshold_pct,30,Maximum acceptable monthly ADL growth percentage
+ADL_SCREENER_mom_consecutive_months,3,Minimum consecutive months meeting growth criteria
+ADL_SCREENER_mom_lookback_months,6,Total historical months to analyze for consistency
+ADL_SCREENER_mom_min_consistency_score,60,Minimum consistency score (0-100) for strong accumulation
+,,
+# SHORT-TERM MOMENTUM ANALYSIS (Step 3),,
+ADL_SCREENER_short_term_enable,TRUE,Enable short-term momentum analysis module
+ADL_SCREENER_short_term_periods,5;10;20,Periods for ADL percentage change calculation (semicolon separated)
+ADL_SCREENER_short_term_momentum_threshold,5,Minimum percentage change to signal momentum shift
+ADL_SCREENER_short_term_acceleration_detect,TRUE,Enable acceleration/deceleration pattern detection
+ADL_SCREENER_short_term_min_score,50,Minimum short-term momentum score (0-100) for inclusion
+,,
+# MOVING AVERAGE ANALYSIS (Step 4),,
+ADL_SCREENER_ma_enable,TRUE,Enable moving average analysis module on ADL line
+ADL_SCREENER_ma_periods,20;50;100,Moving average periods to calculate (semicolon separated)
+ADL_SCREENER_ma_type,SMA,Type of moving average (SMA or EMA)
+ADL_SCREENER_ma_bullish_alignment_required,TRUE,Require bullish MA alignment (20 > 50 > 100)
+ADL_SCREENER_ma_crossover_detection,TRUE,Enable golden/death cross detection on ADL MAs
+ADL_SCREENER_ma_crossover_lookback,10,Periods to look back for recent MA crossovers
+ADL_SCREENER_ma_min_slope_threshold,0.01,Minimum positive slope threshold for MAs
+ADL_SCREENER_ma_min_alignment_score,70,Minimum MA alignment quality score (0-100)
+,,
+# COMPOSITE SCORING AND RANKING (Step 5),,
+ADL_SCREENER_composite_scoring_enable,TRUE,Enable composite scoring system combining all signals
+ADL_SCREENER_composite_weight_longterm,0.4,Weight for long-term accumulation score (must sum to 1.0)
+ADL_SCREENER_composite_weight_shortterm,0.3,Weight for short-term momentum score
+ADL_SCREENER_composite_weight_ma_align,0.3,Weight for MA alignment score
+ADL_SCREENER_composite_min_score,70,Minimum composite score (0-100) for inclusion in results
+ADL_SCREENER_ranking_method,composite,Primary ranking method (composite | momentum | accumulation)
+ADL_SCREENER_output_ranking_file,TRUE,Generate separate ranked output file
+ADL_SCREENER_top_candidates_count,50,Number of top-ranked candidates to highlight in output
+,,
+# OUTPUT CONFIGURATION,,
+ADL_SCREENER_output_separate_signals,TRUE,Save separate files for each signal type
+ADL_SCREENER_output_include_charts,FALSE,Generate ADL charts with indicators (future feature)
+ADL_SCREENER_output_summary_stats,TRUE,Include summary statistics in output files
+,,
 # GUPPY GMMA SCREENER CONFIGURATION,,
 # ===================================,,
-GUPPY_SCREENER_enable,TRUE,Enable Guppy GMMA screener for trend alignment and crossover analysis
+GUPPY_SCREENER_enable,FALSE,Enable Guppy GMMA screener for trend alignment and crossover analysis
 GUPPY_SCREENER_daily_enable,TRUE,
 GUPPY_SCREENER_weekly_enable,FALSE,
 GUPPY_SCREENER_monthly_enable,FALSE,
@@ -617,9 +684,9 @@ GUPPY_SCREENER_save_individual_files,TRUE,Save individual GMMA component result 
 # GOLD LAUNCH PAD SCREENER CONFIGURATION,,
 # =======================================,,
 GOLD_LAUNCH_PAD_enable,FALSE,Enable Gold Launch Pad screener for MA alignment and momentum detection
-GOLD_LAUNCH_PAD_daily,FALSE,
-GOLD_LAUNCH_PAD_weekly,FALSE,
-GOLD_LAUNCH_PAD_monthly,FALSE,
+GOLD_LAUNCH_PAD_daily_enable,TRUE,Enable Gold Launch Pad for daily timeframe
+GOLD_LAUNCH_PAD_weekly_enable,FALSE,Enable Gold Launch Pad for weekly timeframe
+GOLD_LAUNCH_PAD_monthly_enable,FALSE,Enable Gold Launch Pad for monthly timeframe
 GOLD_LAUNCH_PAD_ma_periods,10;20;50,Moving average periods for launch pad analysis (semicolon separated)
 GOLD_LAUNCH_PAD_ma_type,EMA,Moving average type (EMA SMA WMA)
 GOLD_LAUNCH_PAD_zscore_window,50,Z-score calculation window for MA spread analysis
@@ -634,7 +701,11 @@ GOLD_LAUNCH_PAD_save_individual_files,TRUE,Save individual Gold Launch Pad resul
 ,,
 # RANGE TIGHTENING INDICATOR (RTI) SCREENER CONFIGURATION,,
 # ========================================================,,
-RTI_enable,FALSE,Enable RTI screener for volatility compression and expansion detection
+,,
+RTI_enable,TRUE,Enable RTI screener for volatility compression and expansion detection
+RTI_daily_enable,TRUE,Enable RTI screening for daily timeframe
+RTI_weekly_enable,FALSE,Enable RTI screening for weekly timeframe
+RTI_monthly_enable,FALSE,Enable RTI screening for monthly timeframe
 RTI_period,50,RTI calculation period for long-term volatility measurement
 RTI_short_period,5,RTI short-term period for quick volatility measurement
 RTI_swing_period,15,RTI swing period for medium-term volatility measurement

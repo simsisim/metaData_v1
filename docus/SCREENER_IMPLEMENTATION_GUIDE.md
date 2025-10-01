@@ -211,6 +211,13 @@ class ScreenerNameStreamingProcessor(StreamingCalculationBase):
         """Get the output directory for this calculation."""
         return self.screener_dir
 
+    def calculate_single_ticker(self, df: pd.DataFrame, ticker: str, timeframe: str) -> Dict[str, Any]:
+        """
+        This method won't be used directly since screener processes batches.
+        Keeping for interface compatibility with StreamingCalculationBase abstract class.
+        """
+        return None
+
     def process_batch_streaming(self, batch_data: Dict[str, pd.DataFrame],
                               timeframe: str) -> Dict[str, Any]:
         """
@@ -288,6 +295,30 @@ class ScreenerNameStreamingProcessor(StreamingCalculationBase):
             "total_results": len(all_results),
             "output_files": output_files
         }
+
+    def _write_results_to_csv(self, output_file: Path, results: List[Dict]):
+        """Write screener results to CSV with memory optimization and append mode for batches"""
+        if not results:
+            return
+
+        try:
+            # Convert to DataFrame with optimized dtypes
+            df = pd.DataFrame(results)
+            df = self.optimize_dataframe_dtypes(df)
+
+            # CRITICAL: Write to CSV with append mode for streaming batches
+            # First batch creates file with header, subsequent batches append without header
+            if output_file.exists():
+                df.to_csv(output_file, mode='a', header=False, index=False)
+            else:
+                df.to_csv(output_file, index=False)
+
+            # Memory cleanup
+            del df
+            gc.collect()
+
+        except Exception as e:
+            logger.error(f"Error writing screener results to {output_file}: {e}")
 ```
 
 ## Phase 4: Main Runner Function
@@ -420,7 +451,47 @@ print(f"🔍 Screener Name Results: {screener_name_count}")
 
 ## Phase 6: Memory Management Best Practices
 
-### 6.1 Implement Comprehensive Memory Cleanup
+### 6.1 CRITICAL: Append Mode for Batch Streaming
+
+⚠️ **MUST USE APPEND MODE** when writing CSV files in batch processing loops!
+
+Without append mode, each batch **overwrites** the previous batch's results, losing all earlier data.
+
+**Example Bug** (DO NOT USE):
+```python
+# ❌ WRONG - Overwrites file every batch!
+def _write_results_to_csv(self, output_file: Path, results: List[Dict]):
+    df = pd.DataFrame(results)
+    df.to_csv(output_file, index=False)  # Each batch overwrites previous!
+```
+
+**Correct Implementation** (ALWAYS USE):
+```python
+# ✅ CORRECT - Appends results from each batch
+def _write_results_to_csv(self, output_file: Path, results: List[Dict]):
+    if not results:
+        return
+
+    df = pd.DataFrame(results)
+    df = self.optimize_dataframe_dtypes(df)
+
+    # First batch: Create file with header
+    # Subsequent batches: Append without header
+    if output_file.exists():
+        df.to_csv(output_file, mode='a', header=False, index=False)
+    else:
+        df.to_csv(output_file, index=False)
+
+    del df
+    gc.collect()
+```
+
+**Why This Matters:**
+- Processing 500 tickers in 5 batches of 100 each
+- Without append: Only last 100 tickers saved (400 lost!)
+- With append: All 500 tickers saved correctly
+
+### 6.2 Implement Comprehensive Memory Cleanup
 - Use `self.cleanup_memory(results, batch_data, other_objects)` after each batch
 - Add `gc.collect()` after heavy operations
 - Write results immediately, don't accumulate in memory
@@ -494,11 +565,20 @@ Ensure all methods have proper docstrings and implementation notes.
 
 ## Common Issues and Solutions
 
-1. **Method Name Errors**: Verify screener class method names match streaming processor calls
-2. **DataReader Methods**: Use `read_batch_data()`, not `get_batch_data()`
-3. **Memory Issues**: Always implement cleanup methods and garbage collection
-4. **Configuration Errors**: Ensure all user config fields are properly mapped
-5. **Import Errors**: Add proper imports to main.py and streaming modules
+1. **Missing Results in Output Files** ⚠️ **CRITICAL**
+   - **Symptom**: Output CSV only contains results from last batch (e.g., 100 rows instead of 500)
+   - **Cause**: Missing append mode in `_write_results_to_csv()` - each batch overwrites previous
+   - **Solution**: Use `mode='a'` with `header=False` for existing files (see Phase 6.1)
+   - **Check**: Count rows in output file should equal total signals, not just last batch
+
+2. **Abstract Method Error**: `TypeError: Can't instantiate abstract class` means you're missing the required `calculate_single_ticker()` method. Add it even if unused (see Phase 3 template).
+
+3. **Missing Write Method Error**: `'object has no attribute '_write_results_to_csv'` means you need to add the `_write_results_to_csv()` method to your streaming processor (see Phase 3 template).
+3. **Method Name Errors**: Verify screener class method names match streaming processor calls
+4. **DataReader Methods**: Use `read_batch_data()`, not `get_batch_data()`
+5. **Memory Issues**: Always implement cleanup methods and garbage collection
+6. **Configuration Errors**: Ensure all user config fields are properly mapped
+7. **Import Errors**: Add proper imports to main.py and streaming modules
 
 ## Template Files
 

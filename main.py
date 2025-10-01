@@ -382,11 +382,12 @@ def run_all_pvb_screener_streaming(config: Config, user_config: UserConfiguratio
 
     from src.screeners_streaming import PVBScreenerStreamingProcessor
 
-    # Initialize streaming processor
+    # Initialize streaming processor (ticker_info will be set per timeframe)
     processor = PVBScreenerStreamingProcessor(config, user_config)
 
     results_summary = {}
     total_processed = 0
+    pvb_output_files = []  # Track output files for TradingView export
 
     for timeframe in timeframes:
         pvb_enabled = getattr(user_config, f'pvb_TWmodel_{timeframe}_enable', True)
@@ -407,6 +408,20 @@ def run_all_pvb_screener_streaming(config: Config, user_config: UserConfiguratio
         import pandas as pd
         tickers_df = pd.read_csv(clean_file_path)
         ticker_list = tickers_df['ticker'].tolist()
+
+        # Load ticker_info from ticker_universe_all.csv for comprehensive exchange coverage
+        # This ensures exchange data is available for ALL tickers, not just current selection
+        ticker_universe_all_path = config.base_dir / 'results' / 'ticker_universes' / 'ticker_universe_all.csv'
+        ticker_info = None
+        if ticker_universe_all_path.exists():
+            try:
+                # Only load ticker and exchange columns for memory efficiency
+                ticker_info = pd.read_csv(ticker_universe_all_path, usecols=['ticker', 'exchange'])
+                logger.info(f"Loaded exchange data for {len(ticker_info)} tickers from ticker_universe_all.csv")
+            except Exception as e:
+                logger.warning(f"Could not load ticker_universe_all.csv: {e}")
+        else:
+            logger.warning(f"ticker_universe_all.csv not found at {ticker_universe_all_path}")
 
         # Process all batches with streaming approach
         total_tickers = len(ticker_list)
@@ -434,9 +449,9 @@ def run_all_pvb_screener_streaming(config: Config, user_config: UserConfiguratio
             print(f"✅ Loaded {len(batch_data)} valid tickers from batch {batch_count}")
             batches.append(batch_data)
 
-        # Process all batches with streaming
+        # Process all batches with streaming (pass ticker_info for exchange enrichment)
         if batches:
-            result = processor.process_timeframe_streaming(batches, timeframe, user_config.ticker_choice)
+            result = processor.process_timeframe_streaming(batches, timeframe, user_config.ticker_choice, ticker_info=ticker_info)
 
             if result and 'tickers_processed' in result:
                 timeframe_processed = result['tickers_processed']
@@ -445,6 +460,10 @@ def run_all_pvb_screener_streaming(config: Config, user_config: UserConfiguratio
 
                 if 'memory_saved_mb' in result:
                     print(f"💾 Memory saved: {result['memory_saved_mb']:.1f} MB")
+
+                # Track output file for TradingView export
+                if 'output_file' in result:
+                    pvb_output_files.append(Path(result['output_file']))
 
                 results_summary[timeframe] = timeframe_processed
                 total_processed += timeframe_processed
@@ -456,6 +475,25 @@ def run_all_pvb_screener_streaming(config: Config, user_config: UserConfiguratio
     print(f"\n✅ PVB SCREENER COMPLETED!")
     print(f"📊 Total results processed: {total_processed}")
     print(f"🕒 Timeframes processed: {', '.join(results_summary.keys())}")
+
+    # Export to TradingView watchlist if enabled
+    if pvb_output_files and getattr(user_config, 'pvb_TWmodel_export_tradingview', False):
+        try:
+            from src.tw_export_watchlist import export_pvb_watchlist
+
+            print(f"\n📊 Exporting to TradingView watchlist...")
+            watchlist_files = export_pvb_watchlist(
+                config=config,
+                user_config=user_config,
+                csv_files=pvb_output_files
+            )
+
+            if not watchlist_files:
+                print(f"⚠️  Watchlist export skipped - no files created")
+
+        except Exception as e:
+            logger.error(f"TradingView watchlist export failed: {e}")
+            print(f"⚠️  Watchlist export failed: {e}")
 
     return results_summary
 
@@ -1851,8 +1889,35 @@ def main() -> None:
         volume_suite_screener_results = run_all_volume_suite_screener(config, user_config, timeframes_to_process, clean_file)
 
         # 8. GUPPY Screener - All timeframes, all batches (NEW - individual screener with streaming)
-        from src.screeners_streaming import run_all_guppy_screener_streaming
+        from src.screeners_streaming import run_all_guppy_screener_streaming, run_all_gold_launch_pad_streaming, run_all_rti_streaming, run_all_adl_enhanced_streaming, run_all_stockbee_streaming
         guppy_screener_results = run_all_guppy_screener_streaming(config, user_config, timeframes_to_process, clean_file)
+
+        # 9. Gold Launch Pad Screener - All timeframes, all batches (NEW - individual screener with streaming)
+        gold_launch_pad_results = run_all_gold_launch_pad_streaming(config, user_config, timeframes_to_process, clean_file)
+
+        # 10. RTI Screener - All timeframes, all batches (NEW - individual screener with streaming)
+        try:
+            rti_results = run_all_rti_streaming(config, user_config, timeframes_to_process, clean_file)
+            logger.info(f"RTI Screener completed")
+        except Exception as e:
+            logger.error(f"Error running RTI Screener: {e}")
+            rti_results = {}
+
+        # 11. ADL Enhanced Screener - All timeframes, all batches (NEW - individual screener with streaming)
+        try:
+            adl_enhanced_results = run_all_adl_enhanced_streaming(config, user_config, timeframes_to_process, clean_file)
+            logger.info(f"ADL Enhanced Screener completed")
+        except Exception as e:
+            logger.error(f"Error running ADL Enhanced Screener: {e}")
+            adl_enhanced_results = {}
+
+        # 12. Stockbee Suite Screener - All timeframes, all batches (NEW - PHASE A implementation)
+        try:
+            stockbee_results = run_all_stockbee_streaming(config, user_config, timeframes_to_process, clean_file)
+            logger.info(f"Stockbee Suite Screener completed (PHASE A)")
+        except Exception as e:
+            logger.error(f"Error running Stockbee Suite Screener: {e}")
+            stockbee_results = {}
 
         print(f"✅ SCREENERS PHASE COMPLETED")
     else:
@@ -1862,6 +1927,10 @@ def main() -> None:
         drwish_screener_results = {}
         volume_suite_screener_results = {}
         guppy_screener_results = {}
+        gold_launch_pad_results = {}
+        rti_results = {}
+        adl_enhanced_results = {}
+        stockbee_results = {}
 
     # 7. Screeners - All timeframes, all batches (OLD - remaining mixed screeners)
     # COMMENTED OUT - Using individual screener implementations instead
@@ -1886,6 +1955,10 @@ def main() -> None:
     print(f"✅ DRWISH Screener: {sum(drwish_screener_results.values())} total tickers processed")
     print(f"✅ Volume Suite Screener: {sum(volume_suite_screener_results.values())} total tickers processed")
     print(f"✅ GUPPY Screener: {sum(guppy_screener_results.values())} total tickers processed")
+    print(f"🚀 Gold Launch Pad Screener: {sum(gold_launch_pad_results.values())} total tickers processed")
+    print(f"🔍 RTI Screener: {sum(rti_results.values())} total signals detected")
+    print(f"📊 ADL Enhanced Screener: {sum(adl_enhanced_results.values())} total tickers processed")
+    print(f"📈 Stockbee Suite Screener: {sum(stockbee_results.values())} total signals detected (PHASE A)")
     # print(f"✅ Screeners: {sum(screener_results.values())} total tickers processed")  # OLD - now using individual screeners
     print(f"✅ Additional Calculations: {sum(additional_calc_results.values())} total tickers processed")
     print(f"🕒 Timeframes completed: {', '.join(timeframes_to_process)}")

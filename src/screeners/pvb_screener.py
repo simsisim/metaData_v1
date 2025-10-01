@@ -246,6 +246,16 @@ def _pvb_TWmodel_screener_logic(batch_data: Dict, params: Optional[Dict] = None)
 
     results = []
 
+    # Extract ticker_info for exchange enrichment (if provided)
+    ticker_info = params.get('ticker_info', None)
+    exchange_map = {}
+    if ticker_info is not None:
+        try:
+            # Create a dictionary mapping ticker -> exchange for fast lookup
+            exchange_map = dict(zip(ticker_info['ticker'], ticker_info['exchange']))
+        except Exception as e:
+            logger.debug(f"Could not create exchange map: {e}")
+
     logger.info(f"Running PVB TWmodel screener on {len(batch_data)} tickers")
 
     for ticker, df in batch_data.items():
@@ -321,8 +331,10 @@ def _pvb_TWmodel_screener_logic(batch_data: Dict, params: Optional[Dict] = None)
                 # Note: performance_since_signal EXCLUDES signal day change - uses signal day close as baseline
                 performance_since_signal = ((current_price - latest_signal['close_price']) / latest_signal['close_price']) * 100
 
-                results.append({
+                # Build result dictionary
+                result = {
                     'ticker': ticker,
+                    'exchange': exchange_map.get(ticker, 'N/A'),  # Add exchange enrichment
                     'screen_type': 'pvb_TWmodel',
                     'signal_type': latest_signal['signal_type'],
                     'signal_date': latest_signal['date'],
@@ -339,7 +351,8 @@ def _pvb_TWmodel_screener_logic(batch_data: Dict, params: Optional[Dict] = None)
                     'signal_day_change_abs': signal_day_change_abs,
                     'signal_day_change_pct': signal_day_change_pct,
                     'performance_since_signal': performance_since_signal
-                })
+                }
+                results.append(result)
 
         except Exception as e:
             logger.debug(f"Error processing {ticker} in PVB TWmodel screener: {e}")

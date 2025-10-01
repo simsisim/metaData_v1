@@ -285,7 +285,8 @@ class StreamingCalculationBase(ABC):
         return processed_count
 
     def process_timeframe_streaming(self, batches: List[Dict[str, pd.DataFrame]],
-                                  timeframe: str, ticker_choice: int) -> Dict[str, Any]:
+                                  timeframe: str, ticker_choice: int,
+                                  ticker_info: Optional[pd.DataFrame] = None) -> Dict[str, Any]:
         """
         Process all batches for a timeframe using streaming approach.
 
@@ -293,10 +294,13 @@ class StreamingCalculationBase(ABC):
             batches: List of batch data dictionaries
             timeframe: Processing timeframe
             ticker_choice: User ticker choice
+            ticker_info: Optional DataFrame with ticker metadata (e.g., exchange)
 
         Returns:
             Processing results summary
         """
+        # Store ticker_info for use in result enrichment
+        self.ticker_info = ticker_info
         if not batches:
             logger.warning(f"No batches provided for {timeframe} streaming processing")
             return {}

@@ -451,7 +451,12 @@ class UserConfiguration:
     pvb_TWmodel_order_direction: str = "Long and Short"
     pvb_TWmodel_min_volume: int = 10000
     pvb_TWmodel_min_price: float = 1.0
-    
+    # TradingView Watchlist Export Configuration
+    pvb_TWmodel_export_tradingview: bool = True
+    pvb_TWmodel_watchlist_max_symbols: int = 1000
+    pvb_TWmodel_watchlist_include_buy: bool = True
+    pvb_TWmodel_watchlist_include_sell: bool = True
+
     # MINERVINI TEMPLATE SCREENER CONFIGURATION
     minervini_enable: bool = True
     minervini_rs_min_rating: float = 70.0
@@ -544,6 +549,9 @@ class UserConfiguration:
 
     # Stockbee Suite Configuration
     stockbee_suite_enable: bool = True
+    stockbee_suite_daily_enable: bool = True
+    stockbee_suite_weekly_enable: bool = False
+    stockbee_suite_monthly_enable: bool = False
     stockbee_suite_9m_movers: bool = True
     stockbee_suite_weekly_movers: bool = True
     stockbee_suite_daily_gainers: bool = True
@@ -569,9 +577,11 @@ class UserConfiguration:
     stockbee_suite_daily_min_volume: int = 100000
     
     # Industry Leaders parameters
-    stockbee_suite_industry_top_pct: float = 0.2  # Top 20%
+    stockbee_suite_industry_top_pct: float = 20.0  # Top 20% (stored as percentage)
     stockbee_suite_industry_top_stocks: int = 4  # Top 4 per industry
-    
+    stockbee_suite_industry_min_size: int = 3  # Minimum stocks per industry
+    stockbee_suite_save_individual_files: bool = True  # Save individual screener files
+
     # Qullamaggie Suite Configuration
     qullamaggie_suite_enable: bool = True
     qullamaggie_suite_rs_threshold: float = 97.0  # Top 3% RS requirement
@@ -586,6 +596,11 @@ class UserConfiguration:
     
     # ADL Screener Configuration
     adl_screener_enable: bool = True
+    adl_screener_daily_enable: bool = False
+    adl_screener_weekly_enable: bool = False
+    adl_screener_monthly_enable: bool = False
+
+    # Base ADL calculation parameters (existing functionality)
     adl_screener_lookback_period: int = 50  # Period for ADL calculation and analysis
     adl_screener_divergence_period: int = 20  # Period to analyze for divergence patterns
     adl_screener_breakout_period: int = 30  # Period to check for ADL breakouts/breakdowns
@@ -594,6 +609,47 @@ class UserConfiguration:
     adl_screener_min_volume_avg: int = 100000  # Minimum average volume requirement
     adl_screener_min_price: float = 5.0  # Minimum stock price requirement
     adl_screener_save_individual_files: bool = True  # Save individual component files
+
+    # Month-over-Month Accumulation Analysis (Step 2)
+    adl_screener_mom_analysis_enable: bool = True
+    adl_screener_mom_period: int = 22  # Trading days per month
+    adl_screener_mom_min_threshold_pct: float = 15.0  # Minimum monthly growth percentage
+    adl_screener_mom_max_threshold_pct: float = 30.0  # Maximum monthly growth percentage
+    adl_screener_mom_consecutive_months: int = 3  # Minimum consecutive months meeting criteria
+    adl_screener_mom_lookback_months: int = 6  # Total historical months to analyze
+    adl_screener_mom_min_consistency_score: float = 60.0  # Minimum consistency score (0-100)
+
+    # Short-term Momentum Analysis (Step 3)
+    adl_screener_short_term_enable: bool = True
+    adl_screener_short_term_periods: str = "5;10;20"  # Periods for percentage change calculation
+    adl_screener_short_term_momentum_threshold: float = 5.0  # Minimum % change for momentum shift
+    adl_screener_short_term_acceleration_detect: bool = True  # Enable acceleration detection
+    adl_screener_short_term_min_score: float = 50.0  # Minimum momentum score (0-100)
+
+    # Moving Average Analysis (Step 4)
+    adl_screener_ma_enable: bool = True
+    adl_screener_ma_periods: str = "20;50;100"  # MA periods (semicolon separated)
+    adl_screener_ma_type: str = "SMA"  # Type: SMA or EMA
+    adl_screener_ma_bullish_alignment_required: bool = True  # Require 20 > 50 > 100
+    adl_screener_ma_crossover_detection: bool = True  # Detect MA crossovers
+    adl_screener_ma_crossover_lookback: int = 10  # Periods to look back for crossovers
+    adl_screener_ma_min_slope_threshold: float = 0.01  # Minimum positive slope
+    adl_screener_ma_min_alignment_score: float = 70.0  # Minimum alignment score (0-100)
+
+    # Composite Scoring and Ranking (Step 5)
+    adl_screener_composite_scoring_enable: bool = True
+    adl_screener_composite_weight_longterm: float = 0.4  # Weight for long-term accumulation
+    adl_screener_composite_weight_shortterm: float = 0.3  # Weight for short-term momentum
+    adl_screener_composite_weight_ma_align: float = 0.3  # Weight for MA alignment
+    adl_screener_composite_min_score: float = 70.0  # Minimum composite score (0-100)
+    adl_screener_ranking_method: str = "composite"  # Ranking method
+    adl_screener_output_ranking_file: bool = True  # Generate ranked output file
+    adl_screener_top_candidates_count: int = 50  # Number of top candidates to highlight
+
+    # Output Configuration
+    adl_screener_output_separate_signals: bool = True  # Separate files per signal type
+    adl_screener_output_include_charts: bool = False  # Generate charts (future feature)
+    adl_screener_output_summary_stats: bool = True  # Include summary statistics
     
     # Guppy GMMA Screener Configuration
     guppy_screener_enable: bool = True
@@ -614,6 +670,9 @@ class UserConfiguration:
     
     # GOLD LAUNCH PAD SCREENER CONFIGURATION
     gold_launch_pad_enable: bool = True
+    gold_launch_pad_daily_enable: bool = True
+    gold_launch_pad_weekly_enable: bool = True
+    gold_launch_pad_monthly_enable: bool = True
     gold_launch_pad_ma_periods: List[int] = field(default_factory=lambda: [10, 20, 50])
     gold_launch_pad_ma_type: str = "EMA"  # EMA, SMA, WMA
     gold_launch_pad_zscore_window: int = 50
@@ -628,6 +687,9 @@ class UserConfiguration:
     
     # RANGE TIGHTENING INDICATOR (RTI) SCREENER CONFIGURATION
     rti_enable: bool = True
+    rti_daily_enable: bool = True
+    rti_weekly_enable: bool = False
+    rti_monthly_enable: bool = False
     rti_period: int = 50
     rti_short_period: int = 5
     rti_swing_period: int = 15
@@ -1309,7 +1371,12 @@ def read_user_data(file_path: str = 'user_data.csv') -> UserConfiguration:
             'PVB_TWmodel_order_direction': ('pvb_TWmodel_order_direction', str),
             'PVB_TWmodel_min_volume': ('pvb_TWmodel_min_volume', int),
             'PVB_TWmodel_min_price': ('pvb_TWmodel_min_price', float),
-            
+            # TradingView Watchlist Export Configuration
+            'PVB_TWmodel_export_tradingview': ('pvb_TWmodel_export_tradingview', parse_boolean),
+            'PVB_TWmodel_watchlist_max_symbols': ('pvb_TWmodel_watchlist_max_symbols', int),
+            'PVB_TWmodel_watchlist_include_buy': ('pvb_TWmodel_watchlist_include_buy', parse_boolean),
+            'PVB_TWmodel_watchlist_include_sell': ('pvb_TWmodel_watchlist_include_sell', parse_boolean),
+
             # Minervini Template Screener Configuration
             'MINERVINI_enable': ('minervini_enable', parse_boolean),
             'MINERVINI_rs_min_rating': ('minervini_rs_min_rating', float),
@@ -1390,6 +1457,9 @@ def read_user_data(file_path: str = 'user_data.csv') -> UserConfiguration:
             
             # Stockbee Suite Configuration
             'STOCKBEE_SUITE_enable': ('stockbee_suite_enable', parse_boolean),
+            'STOCKBEE_SUITE_daily_enable': ('stockbee_suite_daily_enable', parse_boolean),
+            'STOCKBEE_SUITE_weekly_enable': ('stockbee_suite_weekly_enable', parse_boolean),
+            'STOCKBEE_SUITE_monthly_enable': ('stockbee_suite_monthly_enable', parse_boolean),
             'STOCKBEE_SUITE_9m_movers': ('stockbee_suite_9m_movers', parse_boolean),
             'STOCKBEE_SUITE_weekly_movers': ('stockbee_suite_weekly_movers', parse_boolean),
             'STOCKBEE_SUITE_daily_gainers': ('stockbee_suite_daily_gainers', parse_boolean),
@@ -1407,7 +1477,11 @@ def read_user_data(file_path: str = 'user_data.csv') -> UserConfiguration:
             'STOCKBEE_SUITE_daily_min_volume': ('stockbee_suite_daily_min_volume', int),
             'STOCKBEE_SUITE_industry_top_pct': ('stockbee_suite_industry_top_pct', float),
             'STOCKBEE_SUITE_industry_top_stocks': ('stockbee_suite_industry_top_stocks', int),
-            
+            'STOCKBEE_SUITE_industry_min_size': ('stockbee_suite_industry_min_size', int),
+            'STOCKBEE_SUITE_9m_relative_volume': ('stockbee_suite_9m_relative_volume', float),
+            'STOCKBEE_SUITE_weekly_min_volume': ('stockbee_suite_weekly_min_volume', int),
+            'STOCKBEE_SUITE_save_individual_files': ('stockbee_suite_save_individual_files', parse_boolean),
+
             # Qullamaggie Suite Configuration
             'QULLAMAGGIE_SUITE_enable': ('qullamaggie_suite_enable', parse_boolean),
             'QULLAMAGGIE_SUITE_rs_threshold': ('qullamaggie_suite_rs_threshold', float),
@@ -1421,6 +1495,11 @@ def read_user_data(file_path: str = 'user_data.csv') -> UserConfiguration:
             
             # ADL Screener Configuration
             'ADL_SCREENER_enable': ('adl_screener_enable', parse_boolean),
+            'ADL_SCREENER_daily_enable': ('adl_screener_daily_enable', parse_boolean),
+            'ADL_SCREENER_weekly_enable': ('adl_screener_weekly_enable', parse_boolean),
+            'ADL_SCREENER_monthly_enable': ('adl_screener_monthly_enable', parse_boolean),
+
+            # Base ADL calculation parameters
             'ADL_SCREENER_lookback_period': ('adl_screener_lookback_period', int),
             'ADL_SCREENER_divergence_period': ('adl_screener_divergence_period', int),
             'ADL_SCREENER_breakout_period': ('adl_screener_breakout_period', int),
@@ -1429,6 +1508,47 @@ def read_user_data(file_path: str = 'user_data.csv') -> UserConfiguration:
             'ADL_SCREENER_min_volume_avg': ('adl_screener_min_volume_avg', int),
             'ADL_SCREENER_min_price': ('adl_screener_min_price', float),
             'ADL_SCREENER_save_individual_files': ('adl_screener_save_individual_files', parse_boolean),
+
+            # Month-over-Month Analysis
+            'ADL_SCREENER_mom_analysis_enable': ('adl_screener_mom_analysis_enable', parse_boolean),
+            'ADL_SCREENER_mom_period': ('adl_screener_mom_period', int),
+            'ADL_SCREENER_mom_min_threshold_pct': ('adl_screener_mom_min_threshold_pct', float),
+            'ADL_SCREENER_mom_max_threshold_pct': ('adl_screener_mom_max_threshold_pct', float),
+            'ADL_SCREENER_mom_consecutive_months': ('adl_screener_mom_consecutive_months', int),
+            'ADL_SCREENER_mom_lookback_months': ('adl_screener_mom_lookback_months', int),
+            'ADL_SCREENER_mom_min_consistency_score': ('adl_screener_mom_min_consistency_score', float),
+
+            # Short-term Momentum Analysis
+            'ADL_SCREENER_short_term_enable': ('adl_screener_short_term_enable', parse_boolean),
+            'ADL_SCREENER_short_term_periods': ('adl_screener_short_term_periods', str),
+            'ADL_SCREENER_short_term_momentum_threshold': ('adl_screener_short_term_momentum_threshold', float),
+            'ADL_SCREENER_short_term_acceleration_detect': ('adl_screener_short_term_acceleration_detect', parse_boolean),
+            'ADL_SCREENER_short_term_min_score': ('adl_screener_short_term_min_score', float),
+
+            # Moving Average Analysis
+            'ADL_SCREENER_ma_enable': ('adl_screener_ma_enable', parse_boolean),
+            'ADL_SCREENER_ma_periods': ('adl_screener_ma_periods', str),
+            'ADL_SCREENER_ma_type': ('adl_screener_ma_type', str),
+            'ADL_SCREENER_ma_bullish_alignment_required': ('adl_screener_ma_bullish_alignment_required', parse_boolean),
+            'ADL_SCREENER_ma_crossover_detection': ('adl_screener_ma_crossover_detection', parse_boolean),
+            'ADL_SCREENER_ma_crossover_lookback': ('adl_screener_ma_crossover_lookback', int),
+            'ADL_SCREENER_ma_min_slope_threshold': ('adl_screener_ma_min_slope_threshold', float),
+            'ADL_SCREENER_ma_min_alignment_score': ('adl_screener_ma_min_alignment_score', float),
+
+            # Composite Scoring and Ranking
+            'ADL_SCREENER_composite_scoring_enable': ('adl_screener_composite_scoring_enable', parse_boolean),
+            'ADL_SCREENER_composite_weight_longterm': ('adl_screener_composite_weight_longterm', float),
+            'ADL_SCREENER_composite_weight_shortterm': ('adl_screener_composite_weight_shortterm', float),
+            'ADL_SCREENER_composite_weight_ma_align': ('adl_screener_composite_weight_ma_align', float),
+            'ADL_SCREENER_composite_min_score': ('adl_screener_composite_min_score', float),
+            'ADL_SCREENER_ranking_method': ('adl_screener_ranking_method', str),
+            'ADL_SCREENER_output_ranking_file': ('adl_screener_output_ranking_file', parse_boolean),
+            'ADL_SCREENER_top_candidates_count': ('adl_screener_top_candidates_count', int),
+
+            # Output Configuration
+            'ADL_SCREENER_output_separate_signals': ('adl_screener_output_separate_signals', parse_boolean),
+            'ADL_SCREENER_output_include_charts': ('adl_screener_output_include_charts', parse_boolean),
+            'ADL_SCREENER_output_summary_stats': ('adl_screener_output_summary_stats', parse_boolean),
             
             # Guppy GMMA Screener Configuration
             'GUPPY_SCREENER_enable': ('guppy_screener_enable', parse_boolean),
@@ -1449,6 +1569,9 @@ def read_user_data(file_path: str = 'user_data.csv') -> UserConfiguration:
             
             # Gold Launch Pad CSV mappings
             'GOLD_LAUNCH_PAD_enable': ('gold_launch_pad_enable', parse_boolean),
+            'GOLD_LAUNCH_PAD_daily_enable': ('gold_launch_pad_daily_enable', parse_boolean),
+            'GOLD_LAUNCH_PAD_weekly_enable': ('gold_launch_pad_weekly_enable', parse_boolean),
+            'GOLD_LAUNCH_PAD_monthly_enable': ('gold_launch_pad_monthly_enable', parse_boolean),
             'GOLD_LAUNCH_PAD_ma_periods': ('gold_launch_pad_ma_periods', _parse_period_string),
             'GOLD_LAUNCH_PAD_ma_type': ('gold_launch_pad_ma_type', str),
             'GOLD_LAUNCH_PAD_zscore_window': ('gold_launch_pad_zscore_window', int),
@@ -1463,6 +1586,9 @@ def read_user_data(file_path: str = 'user_data.csv') -> UserConfiguration:
             
             # RTI CSV mappings
             'RTI_enable': ('rti_enable', parse_boolean),
+            'RTI_daily_enable': ('rti_daily_enable', parse_boolean),
+            'RTI_weekly_enable': ('rti_weekly_enable', parse_boolean),
+            'RTI_monthly_enable': ('rti_monthly_enable', parse_boolean),
             'RTI_period': ('rti_period', int),
             'RTI_short_period': ('rti_short_period', int),
             'RTI_swing_period': ('rti_swing_period', int),
@@ -2081,27 +2207,36 @@ def get_volume_suite_params_for_timeframe(config: UserConfiguration, timeframe: 
     }
 
 
-def get_stockbee_suite_params_for_timeframe(config: UserConfiguration, timeframe: str) -> dict:
+def get_stockbee_suite_params_for_timeframe(config: UserConfiguration, timeframe: str) -> Optional[dict]:
     """
-    Get Stockbee Suite screener parameters for specific timeframe.
+    Get Stockbee Suite screener parameters for specific timeframe with hierarchical flag checking.
     Automatically scales periods based on timeframe.
-    
+
     Args:
         config: UserConfiguration object
         timeframe: 'daily', 'weekly', or 'monthly'
-        
+
     Returns:
-        Dictionary with Stockbee Suite parameters for the timeframe
+        Dictionary with Stockbee Suite parameters for the timeframe, or None if disabled
     """
+    # Check master flag
+    if not getattr(config, "stockbee_suite_enable", False):
+        return None
+
+    # Check timeframe flag
+    timeframe_flag = f"stockbee_suite_{timeframe}_enable"
+    if not getattr(config, timeframe_flag, True):
+        return None
+
     # Timeframe scaling factors for periods
     timeframe_scaling = {
         'daily': 1.0,
         'weekly': 0.2,  # 5 weeks = 1 month daily
-        'monthly': 0.05  # 12 months = 1 year daily 
+        'monthly': 0.05  # 12 months = 1 year daily
     }
-    
+
     scale = timeframe_scaling.get(timeframe, 1.0)
-    
+
     return {
         'enable_stockbee_suite': config.stockbee_suite_enable,
         'timeframe': timeframe,
@@ -2287,19 +2422,28 @@ def get_guppy_screener_params_for_timeframe(config: UserConfiguration, timeframe
     }
 
 
-def get_gold_launch_pad_params_for_timeframe(config: UserConfiguration, timeframe: str) -> dict:
+def get_gold_launch_pad_params_for_timeframe(config: UserConfiguration, timeframe: str) -> Optional[dict]:
     """
-    Get Gold Launch Pad screener parameters for specific timeframe.
-    
+    Get Gold Launch Pad screener parameters for specific timeframe with hierarchical flag checking.
+
     Args:
         config: UserConfiguration object
         timeframe: 'daily', 'weekly', or 'monthly'
-        
+
     Returns:
-        Dictionary with Gold Launch Pad screener parameters
+        Dictionary with Gold Launch Pad screener parameters or None if disabled
     """
+    # Check master flag first
+    if not getattr(config, "gold_launch_pad_enable", False):
+        return None
+
+    # Check timeframe flag
+    timeframe_flag = f"gold_launch_pad_{timeframe}_enable"
+    if not getattr(config, timeframe_flag, True):
+        return None
+
     return {
-        'enable_gold_launch_pad': config.gold_launch_pad_enable,
+        'enable_gold_launch_pad': True,
         'timeframe': timeframe,
         'gold_launch_pad': {
             # Moving Average Configuration

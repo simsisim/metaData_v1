@@ -12,7 +12,7 @@ TW_universe_file,tradingview_universe.csv,File name for TradingView universe dat
 # ENVIRONMENT DETECTION AND PATH CONFIGURATION,,
 # ----------------------------------------------,,
 auto_detect_environment,FALSE,Automatically detect and use appropriate paths (local vs Colab)
-manual_environment_override,colab,Manual override: local | colab | (empty for auto detection)
+manual_environment_override,local,Manual override: local | colab | (empty for auto detection)
 ,,
 # LOCAL ENVIRONMENT PATHS,,
 # ------------------------,,
@@ -32,8 +32,8 @@ TW_intraday_folder_colab,/content/drive/MyDrive/_invest2024/run_python/metaData_
 # ---------------------------,,
 YF_hist_data,TRUE,Load historical OHLCV data via YFinance
 YF_daily_data,TRUE,Load daily (1d) historical data
-YF_weekly_data,FALSE,Load weekly (1wk) historical data  
-YF_monthly_data,FALSE,Load monthly (1mo) historical data
+YF_weekly_data,TRUE,Load weekly (1wk) historical data  
+YF_monthly_data,TRUE,Load monthly (1mo) historical data
 TW_intraday_data,FALSE,Process intraday data from TradingView source
 TW_intraday_file,intraday_data.csv,File name for intraday data input
 ,,
@@ -57,7 +57,7 @@ write_info_file,TRUE,Write detailed info files during processing
 ticker_info_TW,TRUE,Get ticker info from TradingView universe file
 ticker_info_TW_file,tradingview_universe_info.csv,File name for TradingView ticker info
 ticker_info_YF,FALSE,Download ticker info from YFinance
-ticker_choice,1-2-5,Ticker combination choice (0-17)
+ticker_choice,0,Ticker combination choice (0-17)
 batch_size,100,Global batch size for data processing and calculations
 ,,
 # PRE-PROCESSING,,
@@ -96,11 +96,11 @@ RS_composite_method,market_cap_weighted,Sector/industry composite method (equal_
 RS_min_group_size,3,Minimum number of stocks required for sector/industry composite
 # PERCENTILE UNIVERSE CONFIGURATION,,
 RS_percentile_universe_stocks,QQQ:NASDAQ100; SPY:SP500,Universe for stock percentiles: all | sector | industry | ticker_choice
-RS_percentile_universe_sectors,QQQ:NASDAQ100;SPY:SP500,Universe for sector percentiles: all | ticker_choice  | NASADQ100  
-RS_percentile_universe_industries,QQQ:NASDAQ100;SPY:SP500,Universe for industry percentiles: all | ticker_choice | SP500
+RS_percentile_universe_sectors,QQQ:NASDAQ100,Universe for sector percentiles: all | ticker_choice  | NASADQ100  
+RS_percentile_universe_industries,QQQ:NASDAQ100,Universe for industry percentiles: all | ticker_choice | SP500
 # TIMEFRAME CONFIGURATION,,
 RS_daily_enable,TRUE,Enable RS calculation for daily timeframe
-RS_weekly_enable,TRUE,Enable RS calculation for weekly timeframe
+RS_weekly_enable,FALSE,Enable RS calculation for weekly timeframe
 RS_monthly_enable,FALSE,Enable RS calculation for monthly timeframe
 # MOVING AVERAGE RS CONFIGURATION,,
 RS_ma_enable,TRUE,Enable Moving Average RS calculations (parallel to IBD)
@@ -239,7 +239,7 @@ stage_daily_atr_threshold_low,4,Daily: ATR low volatility threshold percentage
 stage_daily_atr_threshold_high,7,Daily: ATR high volatility threshold percentage
 stage_daily_ma_convergence_threshold,1,Daily: MA convergence threshold for Launch Pad detection (%)
 # Weekly stage analysis,,
-stage_analysis_weekly_enabled,TRUE,Enable weekly stage analysis calculations
+stage_analysis_weekly_enabled,FALSE,Enable weekly stage analysis calculations
 stage_weekly_ema_fast_period,10,Weekly: Fast EMA period for stage analysis
 stage_weekly_sma_medium_period,20,Weekly: Medium SMA period for stage analysis
 stage_weekly_sma_slow_period,50,Weekly: Slow SMA period for stage analysis
@@ -492,7 +492,7 @@ PVB_TWmodel_enable,TRUE,Enable PVB TWmodel (Price Volume Breakout TradingView Mo
 # Timeframe enable flags,,
 PVB_TWmodel_daily_enable,TRUE,Enable PVB TWmodel daily timeframe processing
 PVB_TWmodel_weekly_enable,TRUE,Enable PVB TWmodel weekly timeframe processing
-PVB_TWmodel_monthly_enable,FALSE,Enable PVB TWmodel monthly timeframe processing
+PVB_TWmodel_monthly_enable,TRUE,Enable PVB TWmodel monthly timeframe processing
 # Daily timeframe PVB TWmodel parameters,,
 PVB_TWmodel_daily_price_breakout_period,30,Daily price breakout window in days
 PVB_TWmodel_daily_volume_breakout_period,30,Daily volume breakout window in days
@@ -504,13 +504,13 @@ PVB_TWmodel_weekly_price_breakout_period,12,Weekly price breakout window in week
 PVB_TWmodel_weekly_volume_breakout_period,12,Weekly volume breakout window in weeks
 PVB_TWmodel_weekly_trendline_length,10,Weekly moving average trend period in weeks
 PVB_TWmodel_weekly_close_threshold,5,Weekly days below/above MA to trigger close signal
-PVB_TWmodel_weekly_signal_max_age,20,Weekly maximum days since signal to include
+PVB_TWmodel_weekly_signal_max_age,100,Weekly maximum days since signal to include
 # Monthly timeframe PVB TWmodel parameters,,
 PVB_TWmodel_monthly_price_breakout_period,6,Monthly price breakout window in months
 PVB_TWmodel_monthly_volume_breakout_period,6,Monthly volume breakout window in months
 PVB_TWmodel_monthly_trendline_length,4,Monthly moving average trend period in months
 PVB_TWmodel_monthly_close_threshold,1,Monthly days below/above MA to trigger close signal
-PVB_TWmodel_monthly_signal_max_age,6,Monthly maximum days since signal to include
+PVB_TWmodel_monthly_signal_max_age,100,Monthly maximum days since signal to include
 # General PVB TWmodel parameters,,
 PVB_TWmodel_order_direction,Long and Short,Trading direction (Long | Short | Long and Short)
 PVB_TWmodel_min_volume,10000,Minimum volume requirement
@@ -544,9 +544,9 @@ DRWISH_enable,TRUE,Enable Dr. Wish suite screener (GLB Blue Dot Black Dot)
 DRWISH_min_price,5,Minimum stock price requirement
 DRWISH_min_volume,100000,Minimum daily volume requirement
 DRWISH_pivot_strength,10,Number of bars on each side to confirm pivot high
-DRWISH_lookback_period,3m,Period to search for highest high (1w/2w/1m/2m/3m/6m/1y/3y/complete)
-DRWISH_calculate_historical_GLB,1y,Historical period to calculate GLB levels for chart display
-DRWISH_confirmation_period,2w,Time pivot must remain unbroken before confirmation
+DRWISH_lookback_period,3m;6w,Period to search for highest high (1w/2w/1m/2m/3m/6m/1y/3y/complete)
+DRWISH_calculate_historical_GLB,1y;6m,Historical period to calculate GLB levels for chart display
+DRWISH_confirmation_period,2w;2w,Time pivot must remain unbroken before confirmation
 DRWISH_require_confirmation,TRUE,Whether confirmation is required before GLB becomes active
 DRWISH_enable_glb,TRUE,Enable GLB (Green Line Breakout) signals
 DRWISH_enable_blue_dot,TRUE,Enable Blue Dot oversold bounce signals
@@ -560,20 +560,12 @@ DRWISH_black_dot_lookback,3,Stochastic lookback days for Black Dot signals
 DRWISH_black_dot_sma_period,30,SMA period for Black Dot trend confirmation
 DRWISH_black_dot_ema_period,21,EMA period for Black Dot trend confirmation
 DRWISH_show_all_stocks,FALSE,Show all stocks (TRUE) or only top performers (FALSE)
-DRWISH_enable_charts,TRUE,Enable chart generation for Dr. Wish signals
+DRWISH_enable_charts,FALSE,Enable chart generation for Dr. Wish signals
 DRWISH_chart_output_dir,results/screeners/drwish/charts,Directory for Dr. Wish chart outputs
 DRWISH_show_historical_glb,TRUE,Show historical GLB lines on charts
 DRWISH_show_breakout_labels,TRUE,Show breakout labels on charts
 DRWISH_generate_individual_files,TRUE,Generate individual ticker result files
 ,,
-# VOLUME SUITE SCREENER CONFIGURATION,,
-# =====================================,,
-VOLUME_SUITE_enable,TRUE,Enable Volume Suite comprehensive volume analysis
-VOLUME_SUITE_hv_absolute,TRUE,Enable HV Absolute maximum volume analysis
-VOLUME_SUITE_hv_stdv,TRUE,Enable HV Standard Deviation statistical analysis
-VOLUME_SUITE_enhanced_anomaly,TRUE,Enable Enhanced Volume Anomaly multi-method detection
-VOLUME_SUITE_volume_indicators,TRUE,Enable Volume Indicators (VROC RVOL ADTV MFI VPT)
-VOLUME_SUITE_pvb_TWmodel_integration,TRUE,Enable PVB TWmodel integration for price-volume breakouts
 ,,
 # STOCKBEE SUITE SCREENER CONFIGURATION,,
 # =====================================,,
@@ -606,7 +598,13 @@ ADL_SCREENER_save_individual_files,TRUE,Save individual ADL component result fil
 ,,
 # GUPPY GMMA SCREENER CONFIGURATION,,
 # ===================================,,
-GUPPY_SCREENER_enable,FALSE,Enable Guppy GMMA screener for trend alignment and crossover analysis
+GUPPY_SCREENER_enable,TRUE,Enable Guppy GMMA screener for trend alignment and crossover analysis
+GUPPY_SCREENER_daily_enable,TRUE,
+GUPPY_SCREENER_weekly_enable,FALSE,
+GUPPY_SCREENER_monthly_enable,FALSE,
+GUPPY_SCREENER_ma_type,EMA,"Type of ma used: ema, sma"
+GUPPY_SCREENER_short_term_group_daily,"3,5,8,10,12,25",short term group of ma
+GUPPY_SCREENER_long_term_group_daily,"30,35, 40, 45, 50, 60",long term group of ma
 GUPPY_SCREENER_min_compression_ratio,0.02,Minimum compression ratio threshold for breakout detection (2%)
 GUPPY_SCREENER_min_expansion_ratio,0.05,Minimum expansion ratio threshold for strong trend detection (5%)
 GUPPY_SCREENER_crossover_confirmation_days,3,Number of days to confirm GMMA crossover signals
@@ -619,6 +617,9 @@ GUPPY_SCREENER_save_individual_files,TRUE,Save individual GMMA component result 
 # GOLD LAUNCH PAD SCREENER CONFIGURATION,,
 # =======================================,,
 GOLD_LAUNCH_PAD_enable,FALSE,Enable Gold Launch Pad screener for MA alignment and momentum detection
+GOLD_LAUNCH_PAD_daily_enable,TRUE,Enable Gold Launch Pad for daily timeframe
+GOLD_LAUNCH_PAD_weekly_enable,FALSE,Enable Gold Launch Pad for weekly timeframe
+GOLD_LAUNCH_PAD_monthly_enable,FALSE,Enable Gold Launch Pad for monthly timeframe
 GOLD_LAUNCH_PAD_ma_periods,10;20;50,Moving average periods for launch pad analysis (semicolon separated)
 GOLD_LAUNCH_PAD_ma_type,EMA,Moving average type (EMA SMA WMA)
 GOLD_LAUNCH_PAD_zscore_window,50,Z-score calculation window for MA spread analysis
@@ -633,7 +634,11 @@ GOLD_LAUNCH_PAD_save_individual_files,TRUE,Save individual Gold Launch Pad resul
 ,,
 # RANGE TIGHTENING INDICATOR (RTI) SCREENER CONFIGURATION,,
 # ========================================================,,
+,,
 RTI_enable,FALSE,Enable RTI screener for volatility compression and expansion detection
+RTI_daily_enable,FALSE,
+RTI_weekly_enable,FALSE,
+RTI_monthly_enable,FALSE,
 RTI_period,50,RTI calculation period for long-term volatility measurement
 RTI_short_period,5,RTI short-term period for quick volatility measurement
 RTI_swing_period,15,RTI swing period for medium-term volatility measurement
@@ -650,6 +655,14 @@ RTI_min_volume,100000,Minimum average volume requirement for RTI screening
 RTI_save_individual_files,TRUE,Save individual RTI component result files
 ,,
 ,,
+# VOLUME SUITE SCREENER CONFIGURATION,,
+# =====================================,,
+VOLUME_SUITE_enable,TRUE,Enable Volume Suite comprehensive volume analysis
+VOLUME_SUITE_hv_absolute,TRUE,Enable HV Absolute maximum volume analysis
+VOLUME_SUITE_hv_stdv,TRUE,Enable HV Standard Deviation statistical analysis
+VOLUME_SUITE_enhanced_anomaly,TRUE,Enable Enhanced Volume Anomaly multi-method detection
+VOLUME_SUITE_volume_indicators,TRUE,Enable Volume Indicators (VROC RVOL ADTV MFI VPT)
+VOLUME_SUITE_pvb_Clmodel_integration,TRUE,Enable PVB TWmodel integration for price-volume breakouts
 ,,
 # HV Absolute Parameters,,
 VOLUME_SUITE_hv_month_cutoff,15,HV Absolute: analyze only last N months
@@ -658,11 +671,11 @@ VOLUME_SUITE_hv_std_cutoff,3,HV Absolute: standard deviations above mean thresho
 VOLUME_SUITE_hv_min_volume,100000,HV Absolute: minimum volume threshold
 VOLUME_SUITE_hv_min_price,20,HV Absolute: minimum stock price threshold
 # HV Standard Deviation Parameters,,
-VOLUME_SUITE_stdv_cutoff,3,HV StdDev: standard deviations above mean for anomaly
+VOLUME_SUITE_stdv_cutoff,10,HV StdDev: standard deviations above mean for anomaly
 VOLUME_SUITE_stdv_min_volume,10000,HV StdDev: minimum volume threshold
 # Volume Indicators Parameters,,
 VOLUME_SUITE_vroc_threshold,100,VROC: threshold percentage for rate of change anomalies
-VOLUME_SUITE_rvol_threshold,2,RVOL: relative volume threshold (2.0 = 2x average)
+VOLUME_SUITE_rvol_threshold,3,RVOL: relative volume threshold (2.0 = 2x average)
 VOLUME_SUITE_rvol_extreme_threshold,5,RVOL: extreme relative volume threshold
 VOLUME_SUITE_mfi_overbought,80,MFI: overbought threshold for Money Flow Index
 VOLUME_SUITE_mfi_oversold,20,MFI: oversold threshold for Money Flow Index
@@ -671,30 +684,30 @@ VOLUME_SUITE_adtv_3m_threshold,0.2,ADTV: 3-month trend increase threshold
 VOLUME_SUITE_adtv_6m_threshold,0.5,ADTV: 6-month trend increase threshold
 VOLUME_SUITE_adtv_1y_threshold,2,ADTV: 1-year trend increase threshold
 VOLUME_SUITE_adtv_min_volume,100000,ADTV: minimum volume for trend analysis
-# PVB Integration Parameters,,
-VOLUME_SUITE_pvb_TWmodel_price_period,15,PVB TWmodel: price breakout window period
-VOLUME_SUITE_pvb_TWmodel_volume_period,15,PVB TWmodel: volume breakout window period
-VOLUME_SUITE_pvb_TWmodel_trend_length,50,PVB TWmodel: moving average trend period
-VOLUME_SUITE_pvb_TWmodel_volume_multiplier,1.5,PVB TWmodel: volume multiplier for breakout confirmation
-VOLUME_SUITE_pvb_TWmodel_direction,Long,PVB TWmodel: trading direction (Long | Short | Long and Short)
+# PVB ClModel Integration Parameters,,
+VOLUME_SUITE_pvb_Clmodel_price_period,30,PVB TWmodel: price breakout window period
+VOLUME_SUITE_pvb_Clmodel_volume_period,30,PVB TWmodel: volume breakout window period
+VOLUME_SUITE_pvb_Clmodel_trend_length,50,PVB TWmodel: moving average trend period
+VOLUME_SUITE_pvb_Clmodel_volume_multiplier,1.5,PVB TWmodel: volume multiplier for breakout confirmation
+VOLUME_SUITE_pvb_Clmodel_direction ,Long,PVB TWmodel: trading direction (Long | Short | Long and Short)
 # Output Settings,,
 VOLUME_SUITE_output_dir,results/screeners/volume_suite,Volume Suite: output directory
 ,,
 # Monthly timeframe PVB parameters,,
-PVB_monthly_price_breakout_period,6,Monthly price breakout window in months
-PVB_monthly_volume_breakout_period,6,Monthly volume breakout window in months
-PVB_monthly_trendline_length,4,Monthly moving average trend period in months
-PVB_monthly_close_threshold,1,Monthly periods below/above MA to trigger close signal
-PVB_monthly_signal_max_age,6,Monthly maximum months since signal to include
+#PVB_monthly_price_breakout_period,6,Monthly price breakout window in months
+#PVB_monthly_volume_breakout_period,6,Monthly volume breakout window in months
+#PVB_monthly_trendline_length,4,Monthly moving average trend period in months
+#PVB_monthly_close_threshold,1,Monthly periods below/above MA to trigger close signal
+#PVB_monthly_signal_max_age,6,Monthly maximum months since signal to include
 # Common PVB parameters,,
-PVB_order_direction,Long and Short,Trading direction: Long | Short | Long and Short
-PVB_min_volume,10000,Minimum daily volume for PVB inclusion
-PVB_min_price,1,Minimum stock price for PVB inclusion
+#PVB_order_direction,Long and Short,Trading direction: Long | Short | Long and Short
+#PVB_min_volume,10000,Minimum daily volume for PVB inclusion
+#PVB_min_price,1,Minimum stock price for PVB inclusion
 ,,
 # AVERAGE TRUE RANGE (ATR) SCREENER CONFIGURATION,,
 # ================================================,,
 # ATR1 Screener (TradingView-validated with RMA smoothing),,
-ATR1_enable,TRUE,Enable ATR1 screener (TradingView-validated)
+ATR1_enable,FALSE,Enable ATR1 screener (TradingView-validated)
 # Daily ATR1 parameters,,
 ATR1_daily_length,20,Daily ATR calculation length for ATR1
 ATR1_daily_factor,3,Daily ATR multiplier factor for vStop
