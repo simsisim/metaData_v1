@@ -16,9 +16,9 @@ from datetime import datetime
 import logging
 
 # Import individual screener modules
-from .screeners import pvb_screener, atr1_screener, atr2_screener, giusti_screener, minervini_screener, drwish_screener, run_volume_suite_screener, run_stockbee_suite_screener, run_qullamaggie_suite_screener, run_adl_screener, run_guppy_screener, run_gold_launch_pad_screener, run_rti_screener
+from .screeners import pvb_screener, atr1_screener, atr2_screener, giusti_screener, minervini_screener, drwish_screener, run_volume_suite_screener, run_qullamaggie_suite_screener, run_adl_screener, run_guppy_screener, run_gold_launch_pad_screener, run_rti_screener
 from .screeners.basic_screeners_claude import run_basic_screeners
-from .user_defined_data import get_pvb_params_for_timeframe, get_atr1_params_for_timeframe, get_atr2_params_for_timeframe, get_giusti_params_for_timeframe, get_minervini_params_for_timeframe, get_drwish_params_for_timeframe, get_volume_suite_params_for_timeframe, get_stockbee_suite_params_for_timeframe, get_qullamaggie_suite_params_for_timeframe, get_adl_screener_params_for_timeframe, get_guppy_screener_params_for_timeframe, get_gold_launch_pad_params_for_timeframe, get_rti_screener_params_for_timeframe
+from .user_defined_data import get_pvb_params_for_timeframe, get_atr1_params_for_timeframe, get_atr2_params_for_timeframe, get_giusti_params_for_timeframe, get_minervini_params_for_timeframe, get_drwish_params_for_timeframe, get_volume_suite_params_for_timeframe, get_qullamaggie_suite_params_for_timeframe, get_adl_screener_params_for_timeframe, get_guppy_screener_params_for_timeframe, get_gold_launch_pad_params_for_timeframe, get_rti_screener_params_for_timeframe
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +47,7 @@ def has_any_screeners_enabled(user_config):
         'minervini_enable',
         'drwish_enable',
         'volume_suite_enable',
-        'stockbee_suite_enable',
+        # 'stockbee_suite_enable',  # TODO: not yet implemented
         'qullamaggie_suite_enable',
         'adl_screener_enable',
         'guppy_screener_enable',
@@ -170,16 +170,17 @@ def run_screeners(batch_data, output_path, timeframe, user_config=None, data_rea
     screener_summary['volume_suite_hits'] = len(volume_suite_results)
     
     # Run Stockbee Suite screener (9M Movers, Weekly Movers, Daily Gainers, Industry Leaders)
+    # TODO: Stockbee suite not yet implemented
     stockbee_suite_results = []
-    if user_config and hasattr(user_config, 'stockbee_suite_enable') and user_config.stockbee_suite_enable:
-        print("🔍 Running Stockbee Suite screener (9M Movers, 20% Weekly, 4% Daily, Industry Leaders)...")
-        stockbee_suite_config = get_stockbee_suite_params_for_timeframe(user_config, timeframe)
-        
-        # Use ticker info loaded at function start
-        rs_data = None  # TODO: Load RS data from previous pipeline step
-        
-        stockbee_suite_results = run_stockbee_suite_screener(batch_data, stockbee_suite_config, ticker_info, rs_data)
-        all_results.extend(stockbee_suite_results)
+    # if user_config and hasattr(user_config, 'stockbee_suite_enable') and user_config.stockbee_suite_enable:
+    #     print("🔍 Running Stockbee Suite screener (9M Movers, 20% Weekly, 4% Daily, Industry Leaders)...")
+    #     stockbee_suite_config = get_stockbee_suite_params_for_timeframe(user_config, timeframe)
+    #
+    #     # Use ticker info loaded at function start
+    #     rs_data = None  # TODO: Load RS data from previous pipeline step
+    #
+    #     stockbee_suite_results = run_stockbee_suite_screener(batch_data, stockbee_suite_config, ticker_info, rs_data)
+    #     all_results.extend(stockbee_suite_results)
     screener_summary['stockbee_suite_hits'] = len(stockbee_suite_results)
     
     # Run Qullamaggie Suite screener (RS ≥ 97, MA alignment, ATR RS ≥ 50, range position)
@@ -276,7 +277,7 @@ def run_screeners(batch_data, output_path, timeframe, user_config=None, data_rea
         
         # Create top picks summary (best from each screener)
         top_picks = []
-        for screen_type in ['momentum', 'breakout', 'value_momentum', 'pvb', 'atr1', 'atr2', 'giusti', 'minervini', 'drwish_glb', 'drwish_blue_dot', 'drwish_black_dot', 'volume_suite_hv_absolute', 'volume_suite_hv_stdv', 'volume_anomaly', 'volume_indicators', 'stockbee_9m_movers', 'stockbee_weekly_movers', 'stockbee_daily_gainers', 'stockbee_industry_leaders', 'qullamaggie_suite', 'adl_divergence', 'adl_breakout', 'adl_breakdown', 'guppy_alignment', 'guppy_compression', 'guppy_expansion', 'guppy_crossover', 'gold_launch_pad', 'rti_screener']:
+        for screen_type in ['momentum', 'breakout', 'value_momentum', 'pvb', 'atr1', 'atr2', 'giusti', 'minervini', 'drwish_glb', 'drwish_blue_dot', 'drwish_black_dot', 'volume_suite_hv_absolute', 'volume_suite_hv_stdv', 'volume_anomaly', 'volume_indicators', 'qullamaggie_suite', 'adl_divergence', 'adl_breakout', 'adl_breakdown', 'guppy_alignment', 'guppy_compression', 'guppy_expansion', 'guppy_crossover', 'gold_launch_pad', 'rti_screener']:
             screen_results = [r for r in all_results if r['screen_type'] == screen_type]
             if screen_results:
                 top_picks.extend(screen_results[:5])  # Top 5 from each screener
@@ -318,8 +319,8 @@ def run_screeners(batch_data, output_path, timeframe, user_config=None, data_rea
         enabled_screeners.append(f"Dr. Wish hits: {screener_summary['drwish_hits']}")
     if user_config and hasattr(user_config, 'volume_suite_enable') and user_config.volume_suite_enable:
         enabled_screeners.append(f"Volume Suite hits: {screener_summary['volume_suite_hits']}")
-    if user_config and hasattr(user_config, 'stockbee_suite_enable') and user_config.stockbee_suite_enable:
-        enabled_screeners.append(f"Stockbee Suite hits: {screener_summary['stockbee_suite_hits']}")
+    # if user_config and hasattr(user_config, 'stockbee_suite_enable') and user_config.stockbee_suite_enable:
+    #     enabled_screeners.append(f"Stockbee Suite hits: {screener_summary['stockbee_suite_hits']}")
     if user_config and hasattr(user_config, 'qullamaggie_suite_enable') and user_config.qullamaggie_suite_enable:
         enabled_screeners.append(f"Qullamaggie Suite hits: {screener_summary['qullamaggie_suite_hits']}")
     if user_config and hasattr(user_config, 'adl_screener_enable') and user_config.adl_screener_enable:

@@ -39,7 +39,7 @@ TW_intraday_file,intraday_data.csv,File name for intraday data input
 ,,
 # GLOBAL STRUCTURE FLAGS,,
 PRE_PROCESS,FALSE,pRrocess data from gf and tw
-BASIC,FALSE,Execute data processing and core calculations phase
+BASIC,TRUE,Execute data processing and core calculations phase
 SCREENERS,TRUE,Execute screening and analysis phase
 POST_PROCESS,FALSE,Execute post-processing and report generation phase
 BACKTESTING,FALSE,
@@ -57,7 +57,7 @@ write_info_file,TRUE,Write detailed info files during processing
 ticker_info_TW,TRUE,Get ticker info from TradingView universe file
 ticker_info_TW_file,tradingview_universe_info.csv,File name for TradingView ticker info
 ticker_info_YF,FALSE,Download ticker info from YFinance
-ticker_choice,2,Ticker combination choice (0-17)
+ticker_choice,0,Ticker combination choice (0-17)
 batch_size,100,Global batch size for data processing and calculations
 ,,
 # PRE-PROCESSING,,
@@ -86,7 +86,7 @@ PRE_PROCESS_file,user_data_pre_process.csv,
 ,,
 # RELATIVE STRENGTH (RS) CONFIGURATION - MULTI-BENCHMARK,,
 # ==========================================================,,
-RS_enable_stocks,FALSE,Enable RS calculation for individual stocks
+RS_enable_stocks,TRUE,Enable RS calculation for individual stocks
 RS_enable_sectors,FALSE,Enable RS calculation for sectors  
 RS_enable_industries,FALSE,Enable RS calculation for industries
 # MULTI-BENCHMARK CONFIGURATION,,
@@ -144,7 +144,7 @@ RTI_output_dir,results/screeners/rti,Output directory for Range Tightening Indic
 # =================================,,
 Basic_calculation_file,basic_calculations.csv,DEPRECATED: Use BASIC_CALCULATION_output_dir instead
 # TIMEFRAME CONFIGURATION (CPU-intensive calculation control),,
-Basic_calc_daily_enable,FALSE,Enable basic calculations for daily timeframe
+Basic_calc_daily_enable,TRUE,Enable basic calculations for daily timeframe
 Basic_calc_weekly_enable,FALSE,Enable basic calculations for weekly timeframe  
 Basic_calc_monthly_enable,FALSE,Enable basic calculations for monthly timeframe
 # Daily Period Percent Change Configuration,,
@@ -226,7 +226,7 @@ SR_chart_display,66,Number of historical data points to show on charts
 ,,
 # STAGE ANALYSIS CONFIGURATION,,
 # ==============================,,
-enable_stage_analysis,FALSE,Enable stage analysis module globally
+enable_stage_analysis,TRUE,Enable stage analysis module globally
 stage_analysis_min_price,1,stage_analysis_min_price
 stage_analysis_min_vol,10000,stage_analysis_min_vol
 # Daily stage analysis,,
@@ -239,7 +239,7 @@ stage_daily_atr_threshold_low,4,Daily: ATR low volatility threshold percentage
 stage_daily_atr_threshold_high,7,Daily: ATR high volatility threshold percentage
 stage_daily_ma_convergence_threshold,1,Daily: MA convergence threshold for Launch Pad detection (%)
 # Weekly stage analysis,,
-stage_analysis_weekly_enabled,TRUE,Enable weekly stage analysis calculations
+stage_analysis_weekly_enabled,FALSE,Enable weekly stage analysis calculations
 stage_weekly_ema_fast_period,10,Weekly: Fast EMA period for stage analysis
 stage_weekly_sma_medium_period,20,Weekly: Medium SMA period for stage analysis
 stage_weekly_sma_slow_period,50,Weekly: Slow SMA period for stage analysis
@@ -260,7 +260,7 @@ stage_analysis_report_enable,TRUE,enable complete pdf generation after stage ana
 #,,
 # MARKET BREADTH ANALYSIS CONFIGURATION,,
 # =======================================,,
-MARKET_BREADTH_enable,FALSE,Enable comprehensive market breadth analysis (A/D line new H/L MA breadth)
+MARKET_BREADTH_enable,TRUE,Enable comprehensive market breadth analysis (A/D line new H/L MA breadth)
 ,,
 # TIMEFRAME CONFIGURATION,,
 MARKET_BREADTH_daily_enable,TRUE,Enable daily market breadth calculations
@@ -575,7 +575,7 @@ DRWISH_generate_individual_files,TRUE,Generate individual ticker result files
 # STOCKBEE SUITE SCREENER CONFIGURATION,,
 # =====================================,,
 STOCKBEE_SUITE_enable,FALSE,Enable Stockbee Suite comprehensive momentum analysis
-STOCKBEE_SUITE_daily_enable,TRUE,Enable Stockbee screening for daily timeframe
+STOCKBEE_SUITE_daily_enable,FALSE,Enable Stockbee screening for daily timeframe
 STOCKBEE_SUITE_weekly_enable,FALSE,Enable Stockbee screening for weekly timeframe
 STOCKBEE_SUITE_monthly_enable,FALSE,Enable Stockbee screening for monthly timeframe
 STOCKBEE_SUITE_9m_movers,TRUE,Enable 9M MOVERS (9M+ volume with 1.25x relative volume)
@@ -702,8 +702,8 @@ GOLD_LAUNCH_PAD_save_individual_files,TRUE,Save individual Gold Launch Pad resul
 # RANGE TIGHTENING INDICATOR (RTI) SCREENER CONFIGURATION,,
 # ========================================================,,
 ,,
-RTI_enable,TRUE,Enable RTI screener for volatility compression and expansion detection
-RTI_daily_enable,TRUE,Enable RTI screening for daily timeframe
+RTI_enable,FALSE,Enable RTI screener for volatility compression and expansion detection
+RTI_daily_enable,FALSE,Enable RTI screening for daily timeframe
 RTI_weekly_enable,FALSE,Enable RTI screening for weekly timeframe
 RTI_monthly_enable,FALSE,Enable RTI screening for monthly timeframe
 RTI_period,50,RTI calculation period for long-term volatility measurement
