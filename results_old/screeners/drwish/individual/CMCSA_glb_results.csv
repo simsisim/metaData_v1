@@ -1,0 +1,5 @@
+level,detection_date,detection_bar,confirmation_date,confirmation_bar,breakout_date,breakout_bar,is_confirmed,is_broken
+41.65042901084246,2024-10-15,198,2024-10-15,-1,2024-10-31,210.0,True,True
+44.123944397983045,2024-10-31,210,2024-10-31,-1,,,True,False
+35.454996435005015,2025-05-20,346,2025-05-20,-1,2025-07-01,374.0,True,True
+36.400001525878906,2025-07-03,376,2025-07-03,-1,,,True,False

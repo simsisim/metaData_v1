@@ -1,0 +1,4 @@
+date,timeframe,index,current_price,fast_sma,slow_sma,fast_sma_period,slow_sma_period,fast_trending_up,slow_trending_up,fast_above_slow,current_risk_zone,trend_lookback_days,chart_timeframe,total_analysis_days,dark_green_days,light_green_days,yellow_days,light_red_days,dark_red_days,bullish_percentage,bearish_percentage,strong_trend_percentage
+20251119,daily,SPY,662.63,672.14,676.41,10,20,False,False,False,DARK_RED,5,150,131,108,5,11,5,21,94.7,19.8,98.5
+20251119,daily,QQQ,599.87,610.44,617.93,10,20,False,False,False,DARK_RED,5,150,131,102,5,13,8,22,91.6,22.9,94.7
+20251119,daily,IWM,233.43,238.78,242.61,10,20,False,False,False,DARK_RED,5,150,131,95,5,11,7,32,84.7,29.8,96.9

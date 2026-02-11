@@ -1,0 +1,2 @@
+index,date,timeframe,daily_gmi_signal,daily_gmi_score,daily_gmi_max_score,daily_gmi_threshold,daily_gmi_confirmation_days,daily_gmi_r1,daily_gmi_r2,daily_gmi_r3,daily_gmi_r4,daily_gmi_r5,daily_gmi_r6
+1,2026-02-10,daily,RED,0.0,6,3,2,0.0,0.0,0.0,0.0,0.0,0.0

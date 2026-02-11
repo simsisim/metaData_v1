@@ -1,0 +1,13 @@
+ticker,timeframe,parameter_set,strategy,signal_type,signal_date,current_price,signal_price,score,lookback_period,historical_glb_period,confirmation_period,screen_type,price,volume,glb_level,breakout_high,signal_strength,bars_since_pivot,confirmed,days_since_signal,analysis_date,screener
+GOOGL,daily,set1,,,2025-09-03,0.0000,0.0000,86.8500,3m,1y,2w,drwish_glb,235.0000,46566300,197.9500,231.3100,16.8500,28,True,26,2025-09-29,DrWish GLB
+GOOG,daily,set1,,,2025-09-03,0.0000,0.0000,86.5000,3m,1y,2w,drwish_glb,235.1700,26106200,198.9700,231.8000,16.5000,28,True,26,2025-09-29,DrWish GLB
+FAST,daily,set1,,,2025-09-05,0.0000,0.0000,85.0700,3m,1y,2w,drwish_glb,47.9900,9382500,42.9000,49.3600,15.0700,58,True,24,2025-09-29,DrWish GLB
+AVGO,daily,set1,,,2025-09-05,0.0000,0.0000,82.2900,3m,1y,2w,drwish_glb,334.8900,78335000,317.3500,356.3400,12.2900,16,True,24,2025-09-29,DrWish GLB
+ROST,daily,set1,,,2025-09-02,0.0000,0.0000,81.4700,3m,1y,2w,drwish_glb,150.9500,2438400,135.8500,151.4300,11.4700,42,True,27,2025-09-29,DrWish GLB
+APP,daily,set1,,,2025-09-04,0.0000,0.0000,77.8700,3m,1y,2w,drwish_glb,490.2400,8139600,473.7000,511.0000,7.8700,17,True,25,2025-09-29,DrWish GLB
+AZN,daily,set1,,,2025-09-02,0.0000,0.0000,77.6600,3m,1y,2w,drwish_glb,81.7000,2464400,74.8600,80.5900,7.6600,55,True,27,2025-09-29,DrWish GLB
+IWM,daily,set1,,,2025-09-02,0.0000,0.0000,73.3900,3m,1y,2w,drwish_glb,237.7700,47531600,226.7100,234.4000,3.3900,28,True,27,2025-09-29,DrWish GLB
+MAGS,daily,set1,,,2025-09-04,0.0000,0.0000,70.6600,3m,1y,2w,drwish_glb,61.2100,3593600,60.9600,61.3600,0.6600,15,True,25,2025-09-29,DrWish GLB
+XLV,daily,set1,,,2025-09-05,0.0000,0.0000,70.4500,3m,1y,2w,drwish_glb,137.9000,14663600,137.7600,138.3800,0.4500,46,True,24,2025-09-29,DrWish GLB
+XLF,daily,set1,,,2025-09-03,0.0000,0.0000,70.2100,3m,1y,2w,drwish_glb,53.0700,58361200,53.4900,53.6000,0.2100,27,True,26,2025-09-29,DrWish GLB
+XLE,daily,set1,,,2025-09-04,0.0000,0.0000,70.0100,3m,1y,2w,drwish_glb,87.3600,24090400,89.4400,89.4500,0.0100,38,True,25,2025-09-29,DrWish GLB

@@ -1,0 +1,34 @@
+ADL Enhanced Screener Summary
+==================================================
+
+total_tickers_analyzed: 101
+composite_count: 101
+top_candidates_count: 50
+mom_count: 101
+short_term_count: 101
+ma_count: 101
+divergence_count: 0
+breakout_count: 1
+total_stocks: 101
+meeting_threshold: 1
+composite_score:
+  mean: 47.81
+  median: 50.89
+  std: 11.78
+  min: 17.67
+  max: 70.33
+longterm_score:
+  mean: 21.77
+  median: 21.67
+shortterm_score:
+  mean: 56.21
+  median: 52.75
+ma_score:
+  mean: 74.14
+  median: 70.0
+category_counts:
+  good: 1
+  fair: 13
+  weak: 87
+
+==================================================

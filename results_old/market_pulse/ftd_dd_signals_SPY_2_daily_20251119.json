@@ -1,0 +1,105 @@
+{
+  "metadata": {
+    "index": "SPY",
+    "timeframe": "daily",
+    "ticker_choice": "2",
+    "data_date": "20251119",
+    "analysis_date": "2026-02-11 13:09:04",
+    "analysis_period_days": 50,
+    "recent_activity_period_days": 25,
+    "ftd_price_threshold_pct": 1.5,
+    "ftd_volume_threshold": 1.25,
+    "dd_price_threshold_pct": -0.2,
+    "dd_volume_threshold": 1.2
+  },
+  "summary_statistics": {
+    "total_ftd_signals": 0,
+    "total_dd_signals": 5,
+    "latest_20_ftd_count": 0,
+    "latest_20_dd_count": 5,
+    "market_state": "Neutral",
+    "confidence": "Low",
+    "latest_signal": "DD (2025-11-18)",
+    "signal_strength": "Neutral",
+    "ftd_dd_ratio": 0.0
+  },
+  "follow_through_days": {
+    "description": "Latest 20 Follow-Through Days (FTDs) - bullish signals with strong volume",
+    "criteria": {
+      "min_price_increase_pct": 1.5,
+      "min_volume_ratio": 1.25,
+      "lookback_period_days": 50
+    },
+    "signals": []
+  },
+  "distribution_days": {
+    "description": "Latest 20 Distribution Days (DDs) - bearish signals with heavy selling",
+    "criteria": {
+      "max_price_decline_pct": -0.2,
+      "min_volume_ratio": 1.2,
+      "lookback_period_days": 50
+    },
+    "signals": [
+      {
+        "sequence_number": 1,
+        "date": "2025-11-18",
+        "signal_type": "DD",
+        "price_change_pct": -0.84,
+        "volume_ratio": 1.45,
+        "severity": "Moderate",
+        "close_price": 660.08,
+        "volume": 114467500,
+        "volume_50ma": 0,
+        "days_ago": 1
+      },
+      {
+        "sequence_number": 2,
+        "date": "2025-11-13",
+        "signal_type": "DD",
+        "price_change_pct": -1.66,
+        "volume_ratio": 1.34,
+        "severity": "Moderate",
+        "close_price": 672.04,
+        "volume": 103457800,
+        "volume_50ma": 0,
+        "days_ago": 6
+      },
+      {
+        "sequence_number": 3,
+        "date": "2025-10-16",
+        "signal_type": "DD",
+        "price_change_pct": -0.68,
+        "volume_ratio": 1.51,
+        "severity": "Moderate",
+        "close_price": 660.64,
+        "volume": 110563300,
+        "volume_50ma": 0,
+        "days_ago": 34
+      },
+      {
+        "sequence_number": 4,
+        "date": "2025-10-10",
+        "signal_type": "DD",
+        "price_change_pct": -2.7,
+        "volume_ratio": 2.19,
+        "severity": "Severe",
+        "close_price": 653.02,
+        "volume": 159422600,
+        "volume_50ma": 0,
+        "days_ago": 40
+      },
+      {
+        "sequence_number": 5,
+        "date": "2025-09-25",
+        "signal_type": "DD",
+        "price_change_pct": -0.46,
+        "volume_ratio": 1.26,
+        "severity": "Mild",
+        "close_price": 658.05,
+        "volume": 89622100,
+        "volume_50ma": 0,
+        "days_ago": 55
+      }
+    ]
+  }
+}

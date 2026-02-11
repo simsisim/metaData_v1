@@ -39,7 +39,7 @@ TW_intraday_file,intraday_data.csv,File name for intraday data input
 ,,
 # GLOBAL STRUCTURE FLAGS,,
 PRE_PROCESS,FALSE,pRrocess data from gf and tw
-BASIC,TRUE,Execute data processing and core calculations phase
+BASIC,FALSE,Execute data processing and core calculations phase
 SCREENERS,TRUE,Execute screening and analysis phase
 POST_PROCESS,FALSE,Execute post-processing and report generation phase
 BACKTESTING,FALSE,
@@ -57,7 +57,7 @@ write_info_file,TRUE,Write detailed info files during processing
 ticker_info_TW,TRUE,Get ticker info from TradingView universe file
 ticker_info_TW_file,tradingview_universe_info.csv,File name for TradingView ticker info
 ticker_info_YF,FALSE,Download ticker info from YFinance
-ticker_choice,0,Ticker combination choice (0-17)
+ticker_choice,2,Ticker combination choice (0-17)
 batch_size,100,Global batch size for data processing and calculations
 ,,
 # PRE-PROCESSING,,
@@ -99,7 +99,7 @@ RS_percentile_universe_stocks,QQQ:NASDAQ100; SPY:SP500,Universe for stock percen
 RS_percentile_universe_sectors,QQQ:NASDAQ100,Universe for sector percentiles: all | ticker_choice  | NASADQ100  
 RS_percentile_universe_industries,QQQ:NASDAQ100,Universe for industry percentiles: all | ticker_choice | SP500
 # TIMEFRAME CONFIGURATION,,
-RS_daily_enable,FALSE,Enable RS calculation for daily timeframe
+RS_daily_enable,TRUE,Enable RS calculation for daily timeframe
 RS_weekly_enable,FALSE,Enable RS calculation for weekly timeframe
 RS_monthly_enable,FALSE,Enable RS calculation for monthly timeframe
 # MOVING AVERAGE RS CONFIGURATION,,
@@ -260,10 +260,10 @@ stage_analysis_report_enable,TRUE,enable complete pdf generation after stage ana
 #,,
 # MARKET BREADTH ANALYSIS CONFIGURATION,,
 # =======================================,,
-MARKET_BREADTH_enable,TRUE,Enable comprehensive market breadth analysis (A/D line new H/L MA breadth)
+MARKET_BREADTH_enable,FALSE,Enable comprehensive market breadth analysis (A/D line new H/L MA breadth)
 ,,
 # TIMEFRAME CONFIGURATION,,
-MARKET_BREADTH_daily_enable,TRUE,Enable daily market breadth calculations
+MARKET_BREADTH_daily_enable,FALSE,Enable daily market breadth calculations
 MARKET_BREADTH_daily_ma_periods,20;50;200,Daily moving average periods for breadth analysis (semicolon separated)
 MARKET_BREADTH_daily_new_high_lows_periods,252;63;20,Daily new highs/lows periods (semicolon separated: long;medium;short)
 ,,
@@ -488,7 +488,7 @@ movers_top_n,50,Number of top movers to highlight in reports
 ,,
 # PRICE VOLUME BREAKOUT (PVB) TWMODEL SCREENER CONFIGURATION,,
 # ============================================================,,
-PVB_TWmodel_enable,FALSE,Enable PVB TWmodel (Price Volume Breakout TradingView Model) screener
+PVB_TWmodel_enable,TRUE,Enable PVB TWmodel (Price Volume Breakout TradingView Model) screener
 # Timeframe enable flags,,
 PVB_TWmodel_daily_enable,TRUE,Enable PVB TWmodel daily timeframe processing
 PVB_TWmodel_weekly_enable,FALSE,Enable PVB TWmodel weekly timeframe processing

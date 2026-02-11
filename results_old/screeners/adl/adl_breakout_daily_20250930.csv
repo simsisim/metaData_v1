@@ -1,0 +1,2 @@
+ticker,signal_date,signal_type,price,volume,adl_value,breakout_strength,previous_high
+ASML,2025-09-05 00:00:00,adl_breakout,781.7,1885900,615824.0065121202,1.64,-956885.8119751044

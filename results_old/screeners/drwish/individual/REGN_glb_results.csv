@@ -1,0 +1,4 @@
+level,detection_date,detection_bar,confirmation_date,confirmation_bar,breakout_date,breakout_bar,is_confirmed,is_broken
+746.0533177451392,2025-03-10,296,2025-03-10,-1,,,True,False
+616.583774309537,2025-05-21,347,2025-05-21,-1,,,True,False
+582.3956680613226,2025-08-01,396,2025-08-01,-1,2025-08-20,409.0,True,True
