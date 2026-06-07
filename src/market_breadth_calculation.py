@@ -44,8 +44,9 @@ class MarketBreadthCalculator:
         self.results_dir = config.directories.get('RESULTS_DIR', Path('results'))
         self.market_data_dir = config.directories.get('MARKET_DATA_DIR', Path('data/market_data'))
         
-        # Ensure results directory exists
+        # Ensure results directory exists (output dir set by user_config at save time)
         os.makedirs(self.results_dir / 'market_breadth', exist_ok=True)
+        self.market_breadth_dir = self.results_dir / 'market_breadth'
         
         # Column naming conventions following basic_calculations pattern
         self.column_prefix = "market_breadth"
@@ -1537,7 +1538,7 @@ def save_market_breadth_matrix(config, user_config, timeframe):
     # Get user choice from configuration
     safe_user_choice = str(getattr(user_config, 'ticker_choice', 'unknown')).replace('/', '_')
     
-    output_dir = config.directories.get('RESULTS_DIR', Path('results')) / 'market_breadth'
+    output_dir = Path(getattr(user_config, 'market_breadth_output_dir', 'results/market_breadth'))
     output_dir.mkdir(parents=True, exist_ok=True)
     
     saved_files = []

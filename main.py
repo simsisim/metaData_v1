@@ -1368,8 +1368,8 @@ def run_all_market_breadth(config: Config, user_config: UserConfiguration, timef
             from src.market_pulse.reporting.breadth_reporting import BreadthReportGenerator
 
             report_generator = BreadthReportGenerator(user_config)
-            breadth_dir = config.directories['RESULTS_DIR'] / 'market_breadth'
-            reports_dir = config.directories['RESULTS_DIR'] / 'reports'
+            breadth_dir = Path(user_config.market_breadth_output_dir)
+            reports_dir = breadth_dir.parent / 'reports'
             reports_dir.mkdir(parents=True, exist_ok=True)
 
             # Generate reports for each CSV file that has a corresponding PNG
@@ -1761,33 +1761,52 @@ def main() -> None:
         print(f"\n⏭️  PRE_PROCESS PHASE SKIPPED")
 
     # ==============================
-    # PHASE 1: BASIC CALCULATIONS
+    # PHASE 1: MARKET HEALTH (Layer 1)
     # ==============================
-    if user_config.BASIC:
-        print(f"\n🔥 EXECUTING BASIC CALCULATIONS PHASE")
+    if user_config.MARKET_HEALTH:
+        print(f"\n🌍 EXECUTING MARKET HEALTH PHASE (Layer 1)")
         print("="*60)
 
-        # 1. SUSTAINABILITY RATIOS (SR) ANALYSIS - Multi-panel charts and intermarket ratios
+        # 1. Sustainability Ratios (SR) - intermarket and sector rotation analysis
         sr_results = run_sr_analysis(config, user_config, timeframes_to_process)
 
-        # 2. Basic Calculations - All timeframes, all batches
+        # 2. Market Breadth - reads component OHLCV directly, independent of Layer 2
+        market_breadth_results = run_all_market_breadth(config, user_config, timeframes_to_process)
+
+        # 3. Market Pulse - GMI reads breadth file output, must stay after breadth
+        market_pulse_results = run_all_market_pulse(config, user_config, timeframes_to_process)
+
+        print(f"✅ MARKET HEALTH PHASE COMPLETED")
+    else:
+        print(f"\n⏭️  MARKET HEALTH PHASE SKIPPED")
+        sr_results = {}
+        market_breadth_results = {}
+        market_pulse_results = {}
+
+    # ==============================
+    # PHASE 2: BASIC CALCULATIONS (Layer 2)
+    # ==============================
+    if user_config.BASIC:
+        print(f"\n🔥 EXECUTING BASIC CALCULATIONS PHASE (Layer 2)")
+        print("="*60)
+
+        # 1. Basic Calculations - All timeframes, all batches
         basic_calc_results = run_all_basic_calculations(config, user_config, timeframes_to_process, clean_file)
 
-        # 3. Stage Analysis - All timeframes, all batches
+        # 2. Stage Analysis - All timeframes, all batches
         if user_config.enable_stage_analysis:
             stage_analysis_results = run_all_stage_analysis(config, user_config, timeframes_to_process, clean_file)
 
-            # 3.5. Stage Analysis Reports - Generate PDF reports for stage analysis results
+            # 2.5. Stage Analysis Reports
             if user_config.stage_analysis_report_enable and sum(stage_analysis_results.values()) > 0:
                 try:
                     print(f"\n📄 GENERATING STAGE ANALYSIS REPORTS...")
                     from src.report_generators.stage_analysis_report_generator import process_stage_analysis_csv
 
-                    stage_dir = config.directories['RESULTS_DIR'] / 'stage_analysis'
-                    reports_dir = config.directories['RESULTS_DIR'] / 'reports'
+                    stage_dir = Path(user_config.stage_analysis_output_dir)
+                    reports_dir = stage_dir.parent / 'reports'
                     reports_dir.mkdir(parents=True, exist_ok=True)
 
-                    # Generate reports for each stage analysis CSV file
                     csv_files = list(stage_dir.glob('stage_analysis_*.csv'))
                     reports_generated = 0
 
@@ -1821,20 +1840,13 @@ def main() -> None:
             print(f"\n⏭️  Stage analysis disabled - skipping")
             stage_analysis_results = {}
 
-        # 4. Market Breadth Analysis - All timeframes (positioned after stage analysis)
-        market_breadth_results = run_all_market_breadth(config, user_config, timeframes_to_process)
-        # 5. Market Pulse Analysis - All timeframes (positioned after market breadth analysis)
-        market_pulse_results = run_all_market_pulse(config, user_config, timeframes_to_process)
-
-        # 6. RELATIVE STRENGTH ANALYSIS (moved inside BASIC conditional block)
+        # 3. Relative Strength Analysis
         print(f"\n" + "="*60)
         print("RELATIVE STRENGTH (RS) ANALYSIS")
         print("="*60)
 
-        # Import RS processing module
         from src.rs_processor import run_rs_analysis
 
-        # Run RS analysis if enabled - pass filtered timeframes
         rs_results = run_rs_analysis(
             ticker_list=tickers_df['ticker'].tolist(),
             config=config,
@@ -1843,15 +1855,13 @@ def main() -> None:
             timeframes=timeframes_to_process
         )
 
-        # 7. PERCENTILE (PER) ANALYSIS (moved inside BASIC conditional block)
+        # 4. Percentile (PER) Analysis
         print(f"\n" + "="*60)
         print("PERCENTILE (PER) ANALYSIS")
         print("="*60)
 
-        # Import PER processing module
         from src.per_processor import run_per_analysis
 
-        # Run PER analysis - it will automatically find and process RS files
         per_results = run_per_analysis(
             config=config,
             user_config=user_config,
@@ -1864,8 +1874,6 @@ def main() -> None:
         print(f"\n⏭️  BASIC CALCULATIONS PHASE SKIPPED")
         basic_calc_results = {}
         stage_analysis_results = {}
-        market_breadth_results = {}
-        market_pulse_results = {}
         rs_results = {}
         per_results = {}
 
@@ -1876,8 +1884,24 @@ def main() -> None:
         print(f"\n📊 EXECUTING SCREENERS PHASE")
         print("="*60)
 
+        # 0. SCOOTER Screeners — run first (cheapest: reads basic_calc CSV, no OHLCV)
+        from src.screeners.scooter_screener import run_scooter_screeners
+        scooter_results = run_scooter_screeners(config, user_config)
+
         # 4. PVB Screener - All timeframes, all batches (NEW - individual screener)
         pvb_screener_results = run_all_pvb_screener(config, user_config, timeframes_to_process, clean_file)
+
+        # 4b. Minervini Template Screener
+        from src.screeners_streaming import run_all_minervini_screener
+        minervini_screener_results = run_all_minervini_screener(config, user_config, timeframes_to_process, clean_file)
+
+        # 4c. Qullamaggie Screener
+        from src.screeners_streaming import run_all_qullamaggie_screener
+        qullamaggie_screener_results = run_all_qullamaggie_screener(config, user_config, timeframes_to_process, clean_file)
+
+        # 4d. Giusti Momentum Cascade Screener
+        from src.screeners_streaming import run_all_giusti_screener
+        giusti_screener_results = run_all_giusti_screener(config, user_config, timeframes_to_process, clean_file)
 
         # 5. ATR1 Screener - All timeframes, all batches (NEW - individual screener)
         atr1_screener_results = run_all_atr1_screener(config, user_config, timeframes_to_process, clean_file)
@@ -1922,7 +1946,11 @@ def main() -> None:
         print(f"✅ SCREENERS PHASE COMPLETED")
     else:
         print(f"\n⏭️  SCREENERS PHASE SKIPPED")
+        scooter_results = {}
         pvb_screener_results = {}
+        minervini_screener_results = {}
+        qullamaggie_screener_results = {}
+        giusti_screener_results = {}
         atr1_screener_results = {}
         drwish_screener_results = {}
         volume_suite_screener_results = {}
@@ -1946,11 +1974,15 @@ def main() -> None:
     print(f"\n" + "="*60)
     print("📋 CALCULATION PHASES SUMMARY")
     print("="*60)
+    print(f"🛵 stSCOOTER: {scooter_results.get('stscooter', 0)} tickers | fastSCOOTER: {scooter_results.get('fastscooter', 0)} tickers | Combined: {scooter_results.get('combined', 0)} tickers")
     print(f"✅ Basic Calculations: {sum(basic_calc_results.values())} total tickers processed")
     print(f"✅ Market Breadth Analysis: {sum(market_breadth_results.values())} total matrices processed")
     print(f"✅ Market Pulse Analysis: {sum(market_pulse_results.values())} total components processed")
     print(f"✅ Stage Analysis: {sum(stage_analysis_results.values())} total tickers processed")
     print(f"✅ PVB Screener: {sum(pvb_screener_results.values())} total tickers processed")
+    print(f"📈 Minervini Screener: {sum(minervini_screener_results.values())} total tickers processed")
+    print(f"🚀 Qullamaggie Screener: {sum(qullamaggie_screener_results.values())} total tickers processed")
+    print(f"🏆 Giusti Cascade: {sum(giusti_screener_results.values())} portfolio stocks selected")
     print(f"✅ ATR1 Screener: {sum(atr1_screener_results.values())} total tickers processed")
     print(f"✅ DRWISH Screener: {sum(drwish_screener_results.values())} total tickers processed")
     print(f"✅ Volume Suite Screener: {sum(volume_suite_screener_results.values())} total tickers processed")

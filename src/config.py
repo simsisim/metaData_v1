@@ -110,11 +110,15 @@ class Config:
             "GIUSTI_SCREENER_DIR": self._resolve_user_directory(user_config.giusti_output_dir),
             "MINERVINI_SCREENER_DIR": self._resolve_user_directory(user_config.minervini_output_dir),
             "STOCKBEE_SCREENER_DIR": self._resolve_user_directory(user_config.stockbee_output_dir),
+            "VOLUME_SUITE_SCREENER_DIR": self._resolve_user_directory(user_config.volume_suite_output_dir),
             "QULLAMAGGIE_SCREENER_DIR": self._resolve_user_directory(user_config.qullamaggie_output_dir),
             "ADL_SCREENER_DIR": self._resolve_user_directory(user_config.adl_screener_output_dir),
             "GUPPY_SCREENER_DIR": self._resolve_user_directory(user_config.guppy_screener_output_dir),
             "GOLD_LAUNCH_PAD_SCREENER_DIR": self._resolve_user_directory(user_config.gold_launch_pad_output_dir),
             "RTI_SCREENER_DIR": self._resolve_user_directory(user_config.rti_output_dir),
+            "STSCOOTER_SCREENER_DIR": self._resolve_user_directory(user_config.stscooter_output_dir),
+            "FASTSCOOTER_SCREENER_DIR": self._resolve_user_directory(user_config.fastscooter_output_dir),
+            "SCOOTER_COMBINED_DIR": self._resolve_user_directory(user_config.scooter_combined_output_dir),
 
             # Legacy screeners directory for backwards compatibility
             "SCREENERS_DIR": self.base_dir / "results" / "screeners",

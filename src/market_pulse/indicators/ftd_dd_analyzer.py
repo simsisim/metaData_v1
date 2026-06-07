@@ -656,8 +656,9 @@ class FTDDistributionAnalyzer(BaseIndicator):
         """
         try:
             # Create output directory - ensure it goes to market_pulse subdirectory
-            base_results_dir = Path(self.paths.get('results', 'results'))
-            output_dir = base_results_dir / 'market_pulse'
+            output_dir = Path(getattr(self.user_config, 'market_pulse_output_dir', 'results/market_pulse'))
+            if not output_dir.is_absolute():
+                output_dir = Path(self.paths.get('results', 'results')).parent / output_dir
             output_dir.mkdir(parents=True, exist_ok=True)
             
             # Generate filename: ftd_dd_{index}_{ticker_choice}_{timeframe}_{data_date}.csv
@@ -731,8 +732,9 @@ class FTDDistributionAnalyzer(BaseIndicator):
             self._format_chart_axes(ax1, ax2, ax3, dates)
             
             # Save chart - ensure it goes to market_pulse subdirectory
-            base_results_dir = Path(self.paths.get('results', 'results'))
-            output_dir = base_results_dir / 'market_pulse'
+            output_dir = Path(getattr(self.user_config, 'market_pulse_output_dir', 'results/market_pulse'))
+            if not output_dir.is_absolute():
+                output_dir = Path(self.paths.get('results', 'results')).parent / output_dir
             output_dir.mkdir(parents=True, exist_ok=True)
             
             chart_filename = f"ftd_dd_chart_{index}_{self.user_config.ticker_choice}_{timeframe}_{data_date}.png"
@@ -1142,8 +1144,9 @@ class FTDDistributionAnalyzer(BaseIndicator):
                 signal_export['distribution_days']['signals'].append(signal_detail)
             
             # Save to JSON file
-            base_results_dir = Path(self.paths.get('results', 'results'))
-            output_dir = base_results_dir / 'market_pulse'
+            output_dir = Path(getattr(self.user_config, 'market_pulse_output_dir', 'results/market_pulse'))
+            if not output_dir.is_absolute():
+                output_dir = Path(self.paths.get('results', 'results')).parent / output_dir
             output_dir.mkdir(parents=True, exist_ok=True)
             
             signals_filename = f"ftd_dd_signals_{index}_{ticker_choice}_{timeframe}_{data_date}.json"
@@ -1342,9 +1345,11 @@ class FTDDistributionAnalyzer(BaseIndicator):
             # Import the report generator
             from ..reporting.ftd_dd_reporting import FTDDistributionReportGenerator
 
-            # Create output directory for reports
-            base_results_dir = Path(self.paths.get('results', 'results'))
-            reports_dir = base_results_dir / 'reports'
+            # Create output directory for reports — layer1/reports next to market_pulse dir
+            reports_dir = Path(getattr(self.user_config, 'market_pulse_output_dir', 'results/market_pulse'))
+            if not reports_dir.is_absolute():
+                reports_dir = Path(self.paths.get('results', 'results')).parent / reports_dir
+            reports_dir = reports_dir.parent / 'reports'
             reports_dir.mkdir(parents=True, exist_ok=True)
 
             # Generate report filename

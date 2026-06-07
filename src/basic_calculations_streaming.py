@@ -24,7 +24,8 @@ from src.basic_calculations import (
     calculate_volume_metrics,
     calculate_ath_atl,
     calculate_candle_strength,
-    load_index_boolean_data
+    load_index_boolean_data,
+    calculate_scooter,
 )
 
 logger = logging.getLogger(__name__)
@@ -155,6 +156,17 @@ class BasicCalculationsStreamingProcessor(StreamingCalculationBase):
                     logger.debug("Advanced indicators module not available")
                 except Exception as e:
                     logger.warning(f"Error calculating advanced indicators for {ticker}: {e}")
+
+            # SCOOTER scores (stSCOOTER + fastSCOOTER) — only on daily timeframe
+            if timeframe == 'daily':
+                if getattr(self.user_config, 'stscooter_enable', True):
+                    scooter_metrics = calculate_scooter(df, self.user_config, variant='st')
+                    if scooter_metrics:
+                        ticker_result.update(scooter_metrics)
+                if getattr(self.user_config, 'fastscooter_enable', True):
+                    fast_metrics = calculate_scooter(df, self.user_config, variant='fast')
+                    if fast_metrics:
+                        ticker_result.update(fast_metrics)
 
             # Add boolean classifications if available
             if ticker in self.boolean_classifications:

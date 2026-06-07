@@ -223,14 +223,18 @@ class BreadthAnalyzer(BaseIndicator):
             else:
                 ticker_choice = '0-5'  # Default fallback
             
+            breadth_dir = Path(getattr(self.user_config, 'market_breadth_output_dir', 'results/layer1_market_health/market_breadth'))
+            if not breadth_dir.is_absolute():
+                breadth_dir = self.config.base_dir / breadth_dir
+
             breadth_data = {}
-            
+
             # Loop through each universe
             for universe in universes:
                 # Construct file path
                 filename = f"market_breadth_{universe}_{ticker_choice}_{timeframe}_{data_date}.csv"
-                file_path = self.config.directories['RESULTS_DIR'] / 'market_breadth' / filename
-                
+                file_path = breadth_dir / filename
+
                 # Load universe breadth file
                 if file_path.exists():
                     df = pd.read_csv(file_path)
@@ -241,7 +245,7 @@ class BreadthAnalyzer(BaseIndicator):
                     # Try to find latest file if date not specified
                     if not data_date:
                         pattern = f"market_breadth_{universe}_{ticker_choice}_{timeframe}_*.csv"
-                        matching_files = list((self.config.directories['RESULTS_DIR'] / 'market_breadth').glob(pattern))
+                        matching_files = list(breadth_dir.glob(pattern))
                         if matching_files:
                             latest_file = max(matching_files, key=lambda x: x.stat().st_mtime)
                             df = pd.read_csv(latest_file)
@@ -359,7 +363,9 @@ class BreadthAnalyzer(BaseIndicator):
             tuple: (Path to CSV file if found, is_forced_file, actual_date_used)
         """
         try:
-            breadth_dir = self.config.directories['RESULTS_DIR'] / 'market_breadth'
+            breadth_dir = Path(getattr(self.user_config, 'market_breadth_output_dir', 'results/layer1_market_health/market_breadth'))
+            if not breadth_dir.is_absolute():
+                breadth_dir = self.config.base_dir / breadth_dir
 
             # Try exact case and date match first
             exact_filename = f"market_breadth_{universe}_{ticker_choice}_{timeframe}_{data_date}.csv"
@@ -1094,7 +1100,9 @@ class BreadthAnalyzer(BaseIndicator):
             user_choice = str(self.user_config.ticker_choice) if self.user_config else '0-5'
             
             # Ensure results directory exists - use market_breadth since this is breadth analysis
-            results_dir = self.config.directories['RESULTS_DIR'] / 'market_breadth'
+            results_dir = Path(getattr(self.user_config, 'market_breadth_output_dir', 'results/layer1_market_health/market_breadth'))
+            if not results_dir.is_absolute():
+                results_dir = self.config.base_dir / results_dir
             results_dir.mkdir(parents=True, exist_ok=True)
             
             # Detect separator type to determine file generation strategy

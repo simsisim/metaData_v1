@@ -22,6 +22,7 @@ import pandas as pd
 import numpy as np
 from typing import Dict, List, Optional
 import os
+from pathlib import Path
 from datetime import datetime
 import logging
 
@@ -153,9 +154,10 @@ class GMICalculator:
             breath_suffix = getattr(self.user_config, 'market_pulse_gmi_breath_file_suffix', 'latest') if self.user_config else 'latest'
             
             # Set breadth directory
-            breadth_dir = os.path.join('results', 'market_breadth')
-            if not os.path.exists(breadth_dir):
-                breadth_dir = os.path.join(self.paths.get('results', ''), 'market_breadth')
+            _bd = Path(getattr(self.user_config, 'market_breadth_output_dir', 'results/layer1_market_health/market_breadth'))
+            if not _bd.is_absolute():
+                _bd = Path(self.paths.get('results', 'results')).parent / _bd
+            breadth_dir = str(_bd)
             
             # Try different universe fallbacks
             universes = [universe, 'all', 'SP500', 'NASDAQ100']
@@ -507,13 +509,14 @@ class GMICalculator:
             primary_index = self.index1  # Use index1 as primary for filename
             filename = f"gmi_{primary_index}_{user_choice}_{timeframe}_{date_str}.csv"
             
-            output_dir = self.paths.get('results', 'results')
-            market_pulse_dir = os.path.join(output_dir, 'market_pulse')
-            os.makedirs(market_pulse_dir, exist_ok=True)
-            
-            output_path = os.path.join(market_pulse_dir, filename)
+            market_pulse_dir = Path(getattr(self.user_config, 'market_pulse_output_dir', 'results/market_pulse'))
+            if not market_pulse_dir.is_absolute():
+                market_pulse_dir = Path(self.paths.get('results', 'results')).parent / market_pulse_dir
+            market_pulse_dir.mkdir(parents=True, exist_ok=True)
+
+            output_path = str(market_pulse_dir / filename)
             results_df.to_csv(output_path, index=False)
-            
+
             return output_path
             
         except Exception as e:

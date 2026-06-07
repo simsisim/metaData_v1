@@ -230,10 +230,11 @@ class GMI2Calculator:
             breath_suffix = getattr(self.user_config, 'market_pulse_gmi2_breath_file_suffix', 
                                   getattr(self.user_config, 'market_pulse_gmi_breath_file_suffix', 'latest')) if self.user_config else 'latest'
             
-            # Set breadth directory
-            breadth_dir = os.path.join('results', 'market_breadth')
-            if not os.path.exists(breadth_dir):
-                breadth_dir = os.path.join(self.paths.get('results', ''), 'market_breadth')
+            # Set breadth directory — use user_config if available, else fall back
+            _bd = Path(getattr(self.user_config, 'market_breadth_output_dir', 'results/layer1_market_health/market_breadth'))
+            if not _bd.is_absolute():
+                _bd = Path(self.paths.get('results', 'results')).parent / _bd
+            breadth_dir = str(_bd)
             
             # Try different universe fallbacks
             universes = [universe, 'all', 'SP500', 'NASDAQ100']
@@ -1040,8 +1041,11 @@ class GMI2Calculator:
         try:
             # Create filename for individual index
             filename = f"gmi2_{index_symbol}_{user_choice}_{timeframe}_{date_str}.csv"
-            output_path = Path(self.paths['results']) / 'market_pulse' / filename
-            
+            output_dir = Path(getattr(self.user_config, 'market_pulse_output_dir', 'results/market_pulse'))
+            if not output_dir.is_absolute():
+                output_dir = Path(self.paths.get('results', 'results')).parent / output_dir
+            output_path = output_dir / filename
+
             # Ensure output directory exists
             output_path.parent.mkdir(parents=True, exist_ok=True)
             

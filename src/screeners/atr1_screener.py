@@ -364,7 +364,7 @@ def _save_atr1_results(results: List[Dict], params: Optional[Dict] = None) -> No
         df = df.sort_values('Score', ascending=False)
         
         # Create output directory and filename
-        output_dir = Path('results/screeners/atr')
+        output_dir = Path(params.get('output_dir', 'results/screeners/atr')) if params else Path('results/screeners/atr')
         output_dir.mkdir(parents=True, exist_ok=True)
         
         # Use ticker_choice and timeframe from params

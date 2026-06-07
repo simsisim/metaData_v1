@@ -31,21 +31,24 @@ def get_logical_file_mapping() -> Dict[str, str]:
         Dict[str, str]: Logical name -> directory path mapping
     """
     return {
-        'basic_calculation': 'results/basic_calculation',
-        'stage_analysis': 'results/stage_analysis',
-        'rs_analysis': 'results/rs',
-        'per_analysis': 'results/per',
-        'pvb_screener': 'results/screeners/pvb',
-        'atr1_screener': 'results/screeners/atr1',
-        'drwish_screener': 'results/screeners/drwish',
-        'giusti_screener': 'results/screeners/giusti',
-        'minervini_screener': 'results/screeners/minervini',
-        'stockbee_screener': 'results/screeners/stockbee',
-        'qullamaggie_screener': 'results/screeners/qullamaggie',
-        'adl_screener': 'results/screeners/adl',
-        'guppy_screener': 'results/screeners/guppy',
-        'gold_launch_pad_screener': 'results/screeners/gold_launch_pad',
-        'rti_screener': 'results/screeners/rti'
+        # Layer 2 — Basic Calculations
+        'basic_calculation':  'results/layer2_basic_calculations/basic_calculation',
+        'stage_analysis':     'results/layer2_basic_calculations/stage_analysis',
+        'rs_analysis':        'results/layer2_basic_calculations/rs',
+        'per_analysis':       'results/layer2_basic_calculations/per',
+        # Layer 3 — Screeners
+        'pvb_screener':            'results/layer3_screeners/pvbTW',
+        'minervini_screener':      'results/layer3_screeners/minervini',
+        'qullamaggie_screener':    'results/layer3_screeners/qullamaggie',
+        'giusti_screener':         'results/layer3_screeners/giusti',
+        'atr1_screener':           'results/layer3_screeners/atr1',
+        'drwish_screener':         'results/layer3_screeners/drwish',
+        'stockbee_screener':       'results/layer3_screeners/stockbee',
+        'adl_screener':            'results/layer3_screeners/adl',
+        'guppy_screener':          'results/layer3_screeners/guppy',
+        'gold_launch_pad_screener':'results/layer3_screeners/gold_launch_pad',
+        'rti_screener':            'results/layer3_screeners/rti',
+        'volume_suite_screener':   'results/layer3_screeners/volume_suite',
     }
 
 

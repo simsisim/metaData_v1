@@ -578,14 +578,17 @@ class MarketPulseManager:
             # Import the report generator
             from .reporting.gmi_gmi2_reporting import generate_gmi_gmi2_reports
 
-            # Get output directory from user config
-            output_dir_config = getattr(self.user_config, 'report_output_dir', 'results/reports')
-            output_dir = Path(output_dir_config)
+            # Reports go to layer1 reports folder; data read from where calculators save it
+            pulse_output = Path(getattr(self.user_config, 'market_pulse_output_dir', 'results/market_pulse'))
+            output_dir = pulse_output.parent / 'reports'
             if not output_dir.is_absolute():
-                output_dir = self.config.base_dir / output_dir_config
+                output_dir = self.config.base_dir / output_dir
+            output_dir.mkdir(parents=True, exist_ok=True)
 
-            # Market pulse results directory
-            market_pulse_dir = self.config.directories['RESULTS_DIR'] / 'market_pulse'
+            # Market pulse data directory — where calculators save their CSVs
+            market_pulse_dir = Path(getattr(self.user_config, 'market_pulse_output_dir', 'results/market_pulse'))
+            if not market_pulse_dir.is_absolute():
+                market_pulse_dir = self.config.base_dir / market_pulse_dir
 
             # Generate reports for all available GMI/GMI2 files
             generated_reports = generate_gmi_gmi2_reports(
@@ -622,14 +625,17 @@ class MarketPulseManager:
             # Import the comprehensive report generator
             from .reporting.comprehensive_market_pulse_reporting import generate_comprehensive_market_pulse_reports
 
-            # Get output directory from user config
-            output_dir_config = getattr(self.user_config, 'report_output_dir', 'results/reports')
-            output_dir = Path(output_dir_config)
+            # Reports go to layer1 reports folder; data read from where calculators save it
+            pulse_output = Path(getattr(self.user_config, 'market_pulse_output_dir', 'results/market_pulse'))
+            output_dir = pulse_output.parent / 'reports'
             if not output_dir.is_absolute():
-                output_dir = self.config.base_dir / output_dir_config
+                output_dir = self.config.base_dir / output_dir
+            output_dir.mkdir(parents=True, exist_ok=True)
 
-            # Market pulse results directory
-            market_pulse_dir = self.config.base_dir / 'results' / 'market_pulse'
+            # Market pulse data directory — where calculators save their CSVs
+            market_pulse_dir = Path(getattr(self.user_config, 'market_pulse_output_dir', 'results/market_pulse'))
+            if not market_pulse_dir.is_absolute():
+                market_pulse_dir = self.config.base_dir / market_pulse_dir
             reports_dir = output_dir
 
             # Generate comprehensive reports

@@ -222,8 +222,7 @@ class ATR1ScreenerStreamingProcessor(StreamingCalculationBase):
                 logger.warning(f"No ATR1 parameters configured for {timeframe}")
                 return 0
 
-            # Don't add ticker_choice to atr1_params - it breaks the screener
-            # atr1_params['ticker_choice'] = ticker_choice
+            atr1_params['output_dir'] = str(self.atr1_dir)
 
             # Process batch using existing ATR1 screener logic
             batch_results = atr1_screener(batch_data, atr1_params)
@@ -346,6 +345,7 @@ class DRWISHScreenerStreamingProcessor(StreamingCalculationBase):
             # Process each parameter set
             for param_set in drwish_param_sets:
                 set_name = param_set.get('parameter_set_name', 'set1')
+                param_set['output_dir'] = str(self.drwish_dir)
                 logger.info(f"Processing DRWISH {set_name} for {timeframe} (lookback: {param_set['lookback_period']}, historical: {param_set['calculate_historical_GLB']})")
 
                 # Process batch using existing DRWISH screener logic
@@ -481,7 +481,7 @@ class VolumeSuiteStreamingProcessor(StreamingCalculationBase):
         super().__init__(config, user_config)
 
         # Create Volume Suite output directory
-        self.volume_suite_dir = config.directories['RESULTS_DIR'] / 'screeners' / 'volume_suite'
+        self.volume_suite_dir = config.directories['VOLUME_SUITE_SCREENER_DIR']
         self.volume_suite_dir.mkdir(parents=True, exist_ok=True)
 
         logger.info(f"Volume Suite streaming processor initialized, output dir: {self.volume_suite_dir}")
@@ -1031,7 +1031,7 @@ class GuppyScreenerStreamingProcessor(StreamingCalculationBase):
         super().__init__(config, user_config)
 
         # Create GUPPY screener output directory
-        self.guppy_dir = config.directories['RESULTS_DIR'] / 'screeners' / 'guppy'
+        self.guppy_dir = config.directories['GUPPY_SCREENER_DIR']
         self.guppy_dir.mkdir(parents=True, exist_ok=True)
 
         # Initialize GUPPY screener instance with configuration
@@ -1294,7 +1294,7 @@ class GoldLaunchPadStreamingProcessor(StreamingCalculationBase):
         super().__init__(config, user_config)
 
         # Create Gold Launch Pad output directory
-        self.glp_dir = config.directories['RESULTS_DIR'] / 'screeners' / 'gold_launch_pad'
+        self.glp_dir = config.directories['GOLD_LAUNCH_PAD_SCREENER_DIR']
         self.glp_dir.mkdir(parents=True, exist_ok=True)
 
         # Initialize Gold Launch Pad screener instance with configuration
@@ -1553,7 +1553,7 @@ class RTIStreamingProcessor(StreamingCalculationBase):
         super().__init__(config, user_config)
 
         # Create output directory
-        self.rti_dir = config.directories['RESULTS_DIR'] / 'screeners' / 'rti'
+        self.rti_dir = config.directories['RTI_SCREENER_DIR']
         self.rti_dir.mkdir(parents=True, exist_ok=True)
 
         # Initialize RTI screener with configuration
@@ -1858,7 +1858,7 @@ class ADLEnhancedStreamingProcessor(StreamingCalculationBase):
         super().__init__(config, user_config)
 
         # Create ADL screener output directory
-        self.adl_dir = config.directories['RESULTS_DIR'] / 'screeners' / 'adl'
+        self.adl_dir = config.directories['ADL_SCREENER_DIR']
         self.adl_dir.mkdir(parents=True, exist_ok=True)
 
         # Initialize ADL Enhanced screener instance
@@ -2062,7 +2062,7 @@ class StockbeeStreamingProcessor(StreamingCalculationBase):
         super().__init__(config, user_config)
 
         # Create output directory
-        self.stockbee_dir = config.directories['RESULTS_DIR'] / 'screeners' / 'stockbee'
+        self.stockbee_dir = config.directories['STOCKBEE_SCREENER_DIR']
         self.stockbee_dir.mkdir(parents=True, exist_ok=True)
 
         # Initialize Stockbee screener with configuration
@@ -2613,3 +2613,802 @@ def run_all_adl_enhanced_streaming(config, user_config, timeframes: List[str], c
         print(f"⚠️  ADL Enhanced Screener completed with no results")
 
     return results
+
+
+# =============================================================================
+# MINERVINI TEMPLATE SCREENER
+# =============================================================================
+
+class MinerviniScreenerStreamingProcessor(StreamingCalculationBase):
+    """
+    Streaming processor for Minervini Template screener.
+
+    Reads pre-computed PER data for the weighted RS rating (0-100 percentile scale),
+    computes MA criteria from raw OHLCV batches.
+    """
+
+    def __init__(self, config, user_config):
+        super().__init__(config, user_config)
+
+        self.minervini_dir = config.directories['MINERVINI_SCREENER_DIR']
+        self.minervini_dir.mkdir(parents=True, exist_ok=True)
+
+        self.rs_benchmark = getattr(user_config, 'minervini_rs_benchmark', 'QQQ')
+        self.rs_threshold  = float(getattr(user_config, 'minervini_rs_threshold', 70.0))
+        self.min_price     = float(getattr(user_config, 'minervini_min_price', 5.0))
+        self.min_volume    = int(getattr(user_config, 'minervini_min_volume', 100000))
+        self.show_all      = bool(getattr(user_config, 'minervini_show_all_stocks', False))
+
+        self.rs_weights = self._parse_rs_weights(
+            getattr(user_config, 'minervini_rs_weights',
+                    '1d:0.05;3d:0.10;7d:0.15;22d:0.20;66d:0.25;252d:0.25')
+        )
+
+        # Load PER data once — percentile rankings already 0-100 (IBD scale)
+        self.per_data = self._load_per_data(config, user_config)
+
+        logger.info(
+            f"Minervini processor initialized — output: {self.minervini_dir}, "
+            f"benchmark: {self.rs_benchmark}, threshold: {self.rs_threshold}, "
+            f"PER rows: {len(self.per_data) if self.per_data is not None else 0}"
+        )
+
+    # ------------------------------------------------------------------
+    # Helpers
+    # ------------------------------------------------------------------
+
+    def _parse_rs_weights(self, weights_str: str) -> Dict[str, float]:
+        weights = {}
+        for pair in weights_str.split(';'):
+            pair = pair.strip()
+            if ':' in pair:
+                period, weight = pair.split(':', 1)
+                try:
+                    weights[period.strip()] = float(weight.strip())
+                except ValueError:
+                    pass
+        return weights
+
+    def _load_per_data(self, config, user_config) -> Optional[pd.DataFrame]:
+        """Load the most recent PER file for the configured benchmark/universe."""
+        per_dir = config.directories['PER_DIR']
+        ticker_choice = str(user_config.ticker_choice)
+        benchmark = self.rs_benchmark
+
+        pattern = f"per_{benchmark}_*_ibd_stocks_daily_{ticker_choice}_*.csv"
+        matches = sorted(per_dir.glob(pattern))
+        if not matches:
+            logger.warning(f"Minervini: no PER file found matching {pattern} in {per_dir}")
+            return None
+
+        per_file = matches[-1]
+        df = pd.read_csv(per_file, index_col=0)
+        logger.info(f"Minervini: loaded PER data from {per_file.name} ({len(df)} rows)")
+        return df
+
+    def _compute_rs_rating(self, ticker: str) -> float:
+        """
+        Weighted average of PER percentile columns (0-100 IBD scale).
+        Weights are normalised to the available periods so missing periods
+        don't deflate the score.
+        """
+        if self.per_data is None or ticker not in self.per_data.index:
+            return 0.0
+
+        row = self.per_data.loc[ticker]
+        weighted_sum = 0.0
+        total_weight  = 0.0
+
+        for period, weight in self.rs_weights.items():
+            # PER column pattern: ..._<period>_rs_vs_<benchmark>_per_<universe>
+            needle = f'_{period}_rs_vs_{self.rs_benchmark}_per_'
+            col = next((c for c in self.per_data.columns if needle in c), None)
+            if col is None:
+                continue
+            val = row[col]
+            if pd.isna(val):
+                continue
+            weighted_sum += float(val) * weight
+            total_weight += weight
+
+        if total_weight == 0:
+            return 0.0
+
+        return round(weighted_sum / total_weight, 2)
+
+    # ------------------------------------------------------------------
+    # StreamingCalculationBase interface
+    # ------------------------------------------------------------------
+
+    def get_calculation_name(self) -> str:
+        return "minervini_screener"
+
+    def get_output_directory(self) -> Path:
+        return self.minervini_dir
+
+    def calculate_single_ticker(self, df: pd.DataFrame, ticker: str,
+                                timeframe: str) -> Dict[str, Any]:
+        return None  # batch-level processing only
+
+    def process_batch_streaming(self, batch_data: Dict[str, pd.DataFrame],
+                                timeframe: str, ticker_choice: int,
+                                output_file: str) -> int:
+        from src.screeners.minervini_screener import (
+            _calculate_minervini_indicators,
+            _evaluate_minervini_criteria,
+        )
+
+        results = []
+
+        for ticker, df in batch_data.items():
+            try:
+                if df is None or df.empty or len(df) < 252:
+                    continue
+                if not all(c in df.columns for c in ('Close', 'High', 'Low', 'Volume', 'Open')):
+                    continue
+
+                price  = df['Close'].iloc[-1]
+                volume = df['Volume'].iloc[-1]
+                if price < self.min_price or volume < self.min_volume:
+                    continue
+
+                rs_rating = self._compute_rs_rating(ticker)
+
+                df_ind = _calculate_minervini_indicators(df)
+                if pd.isna(df_ind['SMA_200'].iloc[-1]):
+                    continue
+
+                criteria = _evaluate_minervini_criteria(df_ind, rs_rating)
+                if not criteria:
+                    continue
+
+                # Override C8 with configurable threshold
+                criteria['criterion8']       = rs_rating >= self.rs_threshold
+                criteria['criterion8_score'] = rs_rating
+                criteria['pass_count'] = sum([
+                    criteria['criterion1'], criteria['criterion2'], criteria['criterion3'],
+                    criteria['criterion4'], criteria['criterion5'], criteria['criterion6'],
+                    criteria['criterion7'], criteria['criterion8'],
+                ])
+                criteria['all_pass'] = criteria['pass_count'] == 8
+
+                if not criteria['all_pass'] and not self.show_all:
+                    continue
+
+                cur = df_ind.iloc[-1]
+                results.append({
+                    'ticker':            ticker,
+                    'screen_type':       'minervini',
+                    'timeframe':         timeframe,
+                    'current_price':     round(float(price), 4),
+                    'sma_150':           round(float(cur['SMA_150']), 4),
+                    'sma_200':           round(float(cur['SMA_200']), 4),
+                    'ema_50':            round(float(cur['EMA_50']), 4),
+                    'high_52w':          round(float(cur['High_52W']), 4),
+                    'low_52w':           round(float(cur['Low_52W']), 4),
+                    'rs_rating_wa':      rs_rating,
+                    'rs_benchmark':      self.rs_benchmark,
+                    'rs_threshold':      self.rs_threshold,
+                    'volume':            int(volume),
+                    'c1_price_gt_sma':   criteria['criterion1'],
+                    'c1_score':          round(criteria['criterion1_score'], 4),
+                    'c2_sma150_gt_200':  criteria['criterion2'],
+                    'c2_score':          round(criteria['criterion2_score'], 4),
+                    'c3_sma200_uptrend': criteria['criterion3'],
+                    'c3_score':          round(criteria['criterion3_score'], 4),
+                    'c4_ema50_gt_sma':   criteria['criterion4'],
+                    'c4_score':          round(criteria['criterion4_score'], 4),
+                    'c5_price_gt_ema50': criteria['criterion5'],
+                    'c5_score':          round(criteria['criterion5_score'], 4),
+                    'c6_30pct_off_low':  criteria['criterion6'],
+                    'c6_score':          round(criteria['criterion6_score'], 4),
+                    'c7_near_52w_high':  criteria['criterion7'],
+                    'c7_score':          round(criteria['criterion7_score'], 4),
+                    'c8_rs_rating':      criteria['criterion8'],
+                    'c8_score':          rs_rating,
+                    'all_pass':          criteria['all_pass'],
+                    'pass_count':        criteria['pass_count'],
+                })
+
+            except Exception as e:
+                logger.debug(f"Minervini: error processing {ticker}: {e}")
+                continue
+
+        if results:
+            self.append_results_to_csv(output_file, results)
+
+        return len(results)
+
+
+def run_all_minervini_screener(config, user_config, timeframes: List[str],
+                               clean_file_path: str) -> dict:
+    """Run Minervini Template screener for all timeframes (streaming)."""
+    import math
+    import pandas as pd
+    from src.data_reader import DataReader
+
+    if not getattr(user_config, 'minervini_enable', False):
+        print(f"\n⏭️  Minervini screener disabled — skipping")
+        return {}
+
+    print(f"\n{'='*60}")
+    print("📈 MINERVINI TEMPLATE SCREENER — ALL TIMEFRAMES (STREAMING)")
+    print(f"{'='*60}")
+
+    processor = MinerviniScreenerStreamingProcessor(config, user_config)
+
+    if processor.per_data is None:
+        print("⚠️  Minervini: no PER data found — run Layer 2 (BASIC=TRUE) first")
+        return {}
+
+    results_summary = {}
+    total_processed  = 0
+    batch_size = getattr(user_config, 'batch_size', 100)
+
+    for timeframe in timeframes:
+        print(f"\n📊 Processing {timeframe.upper()} timeframe...")
+
+        data_reader = DataReader(config, timeframe, batch_size)
+        data_reader.load_tickers_from_file(clean_file_path)
+
+        tickers_df  = pd.read_csv(clean_file_path)
+        ticker_list = tickers_df['ticker'].tolist()
+        total_tickers = len(ticker_list)
+        total_batches = math.ceil(total_tickers / batch_size)
+
+        print(f"📦 {total_tickers} tickers in {total_batches} batches of {batch_size}")
+
+        batches = []
+        for batch_num in range(total_batches):
+            start = batch_num * batch_size
+            end   = min(start + batch_size, total_tickers)
+            batch_data = data_reader.read_batch_data(ticker_list[start:end], validate=True)
+            if batch_data:
+                batches.append(batch_data)
+
+        if batches:
+            result = processor.process_timeframe_streaming(
+                batches, timeframe, user_config.ticker_choice
+            )
+            if result and 'tickers_processed' in result:
+                n = result['tickers_processed']
+                print(f"✅ Minervini completed for {timeframe}: {n} results")
+                print(f"📁 Saved to: {result['output_file']}")
+                results_summary[timeframe] = n
+                total_processed += n
+            else:
+                print(f"⚠️  No results for {timeframe}")
+        else:
+            print(f"⚠️  No valid batches for {timeframe}")
+
+    print(f"\n✅ MINERVINI SCREENER COMPLETED!")
+    print(f"📊 Total results: {total_processed}")
+    return results_summary
+
+
+# =============================================================================
+# QULLAMAGGIE SCREENER
+# =============================================================================
+
+class QullamaggieScreenerStreamingProcessor(StreamingCalculationBase):
+    """
+    Streaming processor for Qullamaggie momentum screener.
+
+    5 criteria:
+    1. Market cap >= $1B
+    2. RS >= 97 on at least one configured period (from PER data)
+    3. MA alignment: Price >= EMA10 >= SMA20 >= SMA50 >= SMA100 >= SMA200
+    4. ATR RS >= 50 vs $1B+ universe (computed from basic_calc at init)
+    5. Price >= 50% of 20-day High/Low range
+
+    Output sorted by ATR extension from SMA50.
+    """
+
+    def __init__(self, config, user_config):
+        super().__init__(config, user_config)
+
+        self.qulla_dir = config.directories['QULLAMAGGIE_SCREENER_DIR']
+        self.qulla_dir.mkdir(parents=True, exist_ok=True)
+
+        self.rs_benchmark          = getattr(user_config, 'qullamaggie_suite_rs_benchmark', 'QQQ')
+        self.rs_threshold          = float(getattr(user_config, 'qullamaggie_suite_rs_threshold', 97.0))
+        self.atr_rs_threshold      = float(getattr(user_config, 'qullamaggie_suite_atr_rs_threshold', 50.0))
+        self.range_pos_threshold   = float(getattr(user_config, 'qullamaggie_suite_range_position_threshold', 0.5))
+        self.min_market_cap        = float(getattr(user_config, 'qullamaggie_suite_min_market_cap', 1_000_000_000))
+        self.min_price             = float(getattr(user_config, 'qullamaggie_suite_min_price', 5.0))
+        self.extension_warning     = float(getattr(user_config, 'qullamaggie_suite_extension_warning', 7.0))
+        self.extension_danger      = float(getattr(user_config, 'qullamaggie_suite_extension_danger', 11.0))
+        self.min_data_length       = int(getattr(user_config, 'qullamaggie_suite_min_data_length', 250))
+
+        rs_periods_str = getattr(user_config, 'qullamaggie_suite_rs_periods', '7d;22d;66d;132d')
+        self.rs_periods = [p.strip() for p in rs_periods_str.split(';') if p.strip()]
+
+        # PER data for RS check (percentile columns already 0-100)
+        self.per_data = self._load_per_data(config, user_config)
+
+        # ATR RS lookup: {ticker: percentile vs $1B+ universe}
+        self.atr_rs_lookup, self.market_cap_lookup = self._build_universe_lookups(config, user_config)
+
+        logger.info(
+            f"Qullamaggie processor initialized — RS>={self.rs_threshold} "
+            f"on {self.rs_periods}, ATR RS>={self.atr_rs_threshold}, "
+            f"PER rows: {len(self.per_data) if self.per_data is not None else 0}, "
+            f"ATR universe: {len(self.atr_rs_lookup)} tickers"
+        )
+
+    # ------------------------------------------------------------------
+    # Init helpers
+    # ------------------------------------------------------------------
+
+    def _load_per_data(self, config, user_config) -> Optional[pd.DataFrame]:
+        per_dir = config.directories['PER_DIR']
+        ticker_choice = str(user_config.ticker_choice)
+        pattern = f"per_{self.rs_benchmark}_*_ibd_stocks_daily_{ticker_choice}_*.csv"
+        matches = sorted(per_dir.glob(pattern))
+        if not matches:
+            logger.warning(f"Qullamaggie: no PER file found for {self.rs_benchmark} in {per_dir}")
+            return None
+        df = pd.read_csv(matches[-1], index_col=0)
+        logger.info(f"Qullamaggie: loaded PER data from {matches[-1].name}")
+        return df
+
+    def _build_universe_lookups(self, config, user_config) -> tuple:
+        """
+        Load latest basic_calc file to build:
+        - market_cap_lookup: {ticker: market_cap}
+        - atr_rs_lookup: {ticker: percentile rank of atr_pct vs $1B+ stocks}
+        """
+        atr_rs_lookup   = {}
+        market_cap_lookup = {}
+        try:
+            bc_dir        = config.directories['BASIC_CALCULATION_DIR']
+            ticker_choice = str(user_config.ticker_choice)
+            pattern       = f"basic_calculation_{ticker_choice}_daily_*.csv"
+            matches       = sorted(bc_dir.glob(pattern))
+            if not matches:
+                logger.warning(f"Qullamaggie: no basic_calc file found — market cap and ATR RS unavailable")
+                return atr_rs_lookup, market_cap_lookup
+
+            bc_file = matches[-1]
+            df = pd.read_csv(bc_file)
+            if 'ticker' in df.columns:
+                df = df.set_index('ticker')
+
+            if 'market_cap' in df.columns:
+                market_cap_lookup = df['market_cap'].dropna().to_dict()
+
+            if 'atr_pct' in df.columns and 'market_cap' in df.columns:
+                # Filter to $1B+ universe for ATR RS ranking
+                large_cap = df[df['market_cap'] >= self.min_market_cap]
+                if not large_cap.empty:
+                    atr_series = large_cap['atr_pct'].dropna()
+                    ranked     = atr_series.rank(pct=True) * 100
+                    atr_rs_lookup = ranked.to_dict()
+                    logger.info(f"Qullamaggie: ATR RS computed for {len(atr_rs_lookup)} $1B+ stocks")
+
+        except Exception as e:
+            logger.warning(f"Qullamaggie: error building universe lookups: {e}")
+
+        return atr_rs_lookup, market_cap_lookup
+
+    # ------------------------------------------------------------------
+    # Per-ticker checks
+    # ------------------------------------------------------------------
+
+    def _check_rs(self, ticker: str) -> Dict:
+        """Return best RS percentile and whether any period passes the threshold."""
+        result = {'passed': False, 'best_score': 0.0, 'best_period': None, 'qualified_periods': []}
+        if self.per_data is None or ticker not in self.per_data.index:
+            return result
+
+        row = self.per_data.loc[ticker]
+        for period in self.rs_periods:
+            needle = f'_{period}_rs_vs_{self.rs_benchmark}_per_'
+            col = next((c for c in self.per_data.columns if needle in c), None)
+            if col is None:
+                continue
+            val = row[col]
+            if pd.isna(val):
+                continue
+            score = float(val)
+            if score > result['best_score']:
+                result['best_score']  = score
+                result['best_period'] = period
+            if score >= self.rs_threshold:
+                result['qualified_periods'].append(period)
+
+        result['passed'] = len(result['qualified_periods']) > 0
+        return result
+
+    @staticmethod
+    def _check_ma_alignment(df: pd.DataFrame) -> Dict:
+        """Price >= EMA10 >= SMA20 >= SMA50 >= SMA100 >= SMA200."""
+        try:
+            close   = df['Close']
+            price   = close.iloc[-1]
+            ema10   = close.ewm(span=10, adjust=False).mean().iloc[-1]
+            sma20   = close.rolling(20).mean().iloc[-1]
+            sma50   = close.rolling(50).mean().iloc[-1]  if len(df) >= 50  else np.nan
+            sma100  = close.rolling(100).mean().iloc[-1] if len(df) >= 100 else np.nan
+            sma200  = close.rolling(200).mean().iloc[-1] if len(df) >= 200 else np.nan
+
+            if any(np.isnan(v) for v in (ema10, sma20, sma50, sma100, sma200)):
+                return {'aligned': False}
+
+            checks = [
+                price  >= ema10,
+                ema10  >= sma20,
+                sma20  >= sma50,
+                sma50  >= sma100,
+                sma100 >= sma200,
+            ]
+            return {
+                'aligned':         all(checks),
+                'alignment_score': sum(checks),
+                'price': price, 'ema10': ema10, 'sma20': sma20,
+                'sma50': sma50, 'sma100': sma100, 'sma200': sma200,
+            }
+        except Exception:
+            return {'aligned': False}
+
+    @staticmethod
+    def _check_range_position(df: pd.DataFrame, threshold: float = 0.5) -> Dict:
+        """Price in upper half of 20-day High/Low range."""
+        try:
+            recent   = df.tail(20)
+            hi20     = recent['High'].max()
+            lo20     = recent['Low'].min()
+            price    = df['Close'].iloc[-1]
+            rng      = hi20 - lo20
+            position = (price - lo20) / rng if rng > 0 else 1.0
+            return {'passed': position >= threshold, 'range_position_pct': round(position * 100, 2),
+                    'hi20': hi20, 'lo20': lo20}
+        except Exception:
+            return {'passed': False, 'range_position_pct': 0}
+
+    @staticmethod
+    def _compute_atr14(df: pd.DataFrame) -> float:
+        try:
+            prev_close = df['Close'].shift(1)
+            tr = pd.concat([
+                df['High'] - df['Low'],
+                (df['High'] - prev_close).abs(),
+                (df['Low']  - prev_close).abs(),
+            ], axis=1).max(axis=1)
+            return float(tr.tail(14).mean())
+        except Exception:
+            return 0.0
+
+    def _extension_label(self, ext: float) -> str:
+        if ext >= self.extension_danger:
+            return 'DANGER'
+        if ext >= self.extension_warning:
+            return 'WARNING'
+        return 'NORMAL'
+
+    # ------------------------------------------------------------------
+    # StreamingCalculationBase interface
+    # ------------------------------------------------------------------
+
+    def get_calculation_name(self) -> str:
+        return "qullamaggie_screener"
+
+    def get_output_directory(self) -> Path:
+        return self.qulla_dir
+
+    def calculate_single_ticker(self, df, ticker, timeframe):
+        return None
+
+    def process_batch_streaming(self, batch_data: Dict[str, pd.DataFrame],
+                                timeframe: str, ticker_choice: int,
+                                output_file: str) -> int:
+        results = []
+
+        for ticker, df in batch_data.items():
+            try:
+                if df is None or df.empty or len(df) < self.min_data_length:
+                    continue
+                if not all(c in df.columns for c in ('Close', 'High', 'Low', 'Volume', 'Open')):
+                    continue
+
+                price = float(df['Close'].iloc[-1])
+                if price < self.min_price:
+                    continue
+
+                # 1. Market cap filter
+                mktcap = self.market_cap_lookup.get(ticker, 0)
+                if mktcap and mktcap < self.min_market_cap:
+                    continue
+
+                # 2. RS filter (>= 97 on at least one period)
+                rs_result = self._check_rs(ticker)
+                if not rs_result['passed']:
+                    continue
+
+                # 3. MA alignment
+                ma = self._check_ma_alignment(df)
+                if not ma['aligned']:
+                    continue
+
+                # 4. ATR RS filter
+                atr_rs = self.atr_rs_lookup.get(ticker, 50.0)
+                if atr_rs < self.atr_rs_threshold:
+                    continue
+
+                # 5. Range position
+                rng = self._check_range_position(df, self.range_pos_threshold)
+                if not rng['passed']:
+                    continue
+
+                # Output metrics
+                atr14     = self._compute_atr14(df)
+                sma50     = ma['sma50']
+                extension = (price - sma50) / atr14 if atr14 > 0 else 0.0
+
+                results.append({
+                    'ticker':              ticker,
+                    'screen_type':         'qullamaggie',
+                    'timeframe':           timeframe,
+                    'current_price':       round(price, 4),
+                    'market_cap':          mktcap,
+                    'rs_best_score':       round(rs_result['best_score'], 2),
+                    'rs_best_period':      rs_result['best_period'],
+                    'rs_qualified_periods':';'.join(rs_result['qualified_periods']),
+                    'rs_benchmark':        self.rs_benchmark,
+                    'ma_alignment_score':  ma['alignment_score'],
+                    'ema10':               round(ma['ema10'], 4),
+                    'sma20':               round(ma['sma20'], 4),
+                    'sma50':               round(sma50, 4),
+                    'sma100':              round(ma['sma100'], 4),
+                    'sma200':              round(ma['sma200'], 4),
+                    'atr14':               round(atr14, 4),
+                    'atr_rs_score':        round(atr_rs, 2),
+                    'range_position_pct':  rng['range_position_pct'],
+                    'hi20':                round(rng['hi20'], 4),
+                    'lo20':                round(rng['lo20'], 4),
+                    'atr_extension_sma50': round(extension, 2),
+                    'extension_label':     self._extension_label(extension),
+                })
+
+            except Exception as e:
+                logger.debug(f"Qullamaggie: error for {ticker}: {e}")
+                continue
+
+        # Sort by ATR extension descending (most extended first)
+        results.sort(key=lambda x: x['atr_extension_sma50'], reverse=True)
+
+        if results:
+            self.append_results_to_csv(output_file, results)
+
+        return len(results)
+
+
+def run_all_qullamaggie_screener(config, user_config, timeframes: List[str],
+                                 clean_file_path: str) -> dict:
+    """Run Qullamaggie screener for all timeframes (streaming)."""
+    import math
+    import pandas as pd
+    from src.data_reader import DataReader
+
+    if not getattr(user_config, 'qullamaggie_suite_enable', False):
+        print(f"\n⏭️  Qullamaggie screener disabled — skipping")
+        return {}
+
+    print(f"\n{'='*60}")
+    print("🚀 QULLAMAGGIE SCREENER — ALL TIMEFRAMES (STREAMING)")
+    print(f"{'='*60}")
+
+    processor = QullamaggieScreenerStreamingProcessor(config, user_config)
+
+    if processor.per_data is None:
+        print("⚠️  Qullamaggie: no PER data — run Layer 2 (BASIC=TRUE) first")
+        return {}
+
+    results_summary = {}
+    total_processed  = 0
+    batch_size = getattr(user_config, 'batch_size', 100)
+
+    for timeframe in timeframes:
+        print(f"\n📊 Processing {timeframe.upper()} timeframe...")
+
+        data_reader = DataReader(config, timeframe, batch_size)
+        data_reader.load_tickers_from_file(clean_file_path)
+
+        tickers_df  = pd.read_csv(clean_file_path)
+        ticker_list = tickers_df['ticker'].tolist()
+        total_tickers = len(ticker_list)
+        total_batches = math.ceil(total_tickers / batch_size)
+        print(f"📦 {total_tickers} tickers in {total_batches} batches of {batch_size}")
+
+        batches = []
+        for batch_num in range(total_batches):
+            start = batch_num * batch_size
+            end   = min(start + batch_size, total_tickers)
+            batch_data = data_reader.read_batch_data(ticker_list[start:end], validate=True)
+            if batch_data:
+                batches.append(batch_data)
+
+        if batches:
+            result = processor.process_timeframe_streaming(
+                batches, timeframe, user_config.ticker_choice
+            )
+            if result and 'tickers_processed' in result:
+                n = result['tickers_processed']
+                print(f"✅ Qullamaggie completed for {timeframe}: {n} results")
+                print(f"📁 Saved to: {result['output_file']}")
+                results_summary[timeframe] = n
+                total_processed += n
+            else:
+                print(f"⚠️  No results for {timeframe}")
+        else:
+            print(f"⚠️  No valid batches for {timeframe}")
+
+    print(f"\n✅ QULLAMAGGIE SCREENER COMPLETED!")
+    print(f"📊 Total results: {total_processed}")
+    return results_summary
+
+
+# =============================================================================
+# GIUSTI MOMENTUM CASCADE SCREENER
+# =============================================================================
+# Not a streaming processor — ranks all tickers simultaneously from basic_calc.
+# Cascade: top N by 12m return → top M by 6m → top K by 3m = portfolio.
+
+def run_all_giusti_screener(config, user_config, timeframes: List[str],
+                            clean_file_path: str) -> dict:
+    """
+    Run Giusti momentum cascade screener.
+
+    Reads from the basic_calc output (Layer 2) — no OHLCV streaming needed.
+    Cascade filter:
+        Step 1 — top_12m_count  stocks by 252d pct_change (12-month)
+        Step 2 — top_6m_count   of those by 132d pct_change (6-month)
+        Step 3 — top_3m_count   of those by  66d pct_change (3-month) → portfolio
+    """
+    if not getattr(user_config, 'giusti_enable', False):
+        print(f"\n⏭️  Giusti screener disabled — skipping")
+        return {}
+
+    print(f"\n{'='*60}")
+    print("🏆 GIUSTI MOMENTUM CASCADE SCREENER")
+    print(f"{'='*60}")
+
+    giusti_dir = config.directories['GIUSTI_SCREENER_DIR']
+    giusti_dir.mkdir(parents=True, exist_ok=True)
+
+    top_12m = int(getattr(user_config, 'giusti_top_12m_count', 50))
+    top_6m  = int(getattr(user_config, 'giusti_top_6m_count',  30))
+    top_3m  = int(getattr(user_config, 'giusti_top_3m_count',  10))
+    min_price  = float(getattr(user_config, 'giusti_min_price',  5.0))
+    min_volume = int(getattr(user_config, 'giusti_min_volume', 100_000))
+
+    bc_dir        = config.directories['BASIC_CALCULATION_DIR']
+    ticker_choice = str(user_config.ticker_choice)
+
+    results_summary = {}
+
+    for timeframe in timeframes:
+        # Giusti is a daily screener — skip weekly/monthly
+        if timeframe != 'daily':
+            continue
+
+        pattern = f"basic_calculation_{ticker_choice}_{timeframe}_*.csv"
+        matches = sorted(bc_dir.glob(pattern))
+        if not matches:
+            print(f"⚠️  Giusti: no basic_calc file found for {timeframe} — run BASIC=TRUE first")
+            continue
+
+        bc_file = matches[-1]
+        print(f"\n📊 Loading basic_calc: {bc_file.name}")
+
+        try:
+            df = pd.read_csv(bc_file)
+        except Exception as e:
+            print(f"❌ Giusti: error reading {bc_file.name}: {e}")
+            continue
+
+        # Ensure ticker column is index
+        if 'ticker' in df.columns:
+            df = df.set_index('ticker')
+
+        # Column names for the three periods
+        col_12m = 'daily_daily_yearly_252d_pct_change'
+        col_6m  = 'daily_daily_quarterly_132d_pct_change'
+        col_3m  = 'daily_daily_quarterly_66d_pct_change'
+
+        missing = [c for c in (col_12m, col_6m, col_3m) if c not in df.columns]
+        if missing:
+            print(f"❌ Giusti: missing columns {missing} in basic_calc — check period config")
+            continue
+
+        # Basic filters: price and volume
+        if 'current_price' in df.columns:
+            df = df[df['current_price'] >= min_price]
+        if 'daily_avg_volume_20' in df.columns:
+            df = df[df['daily_avg_volume_20'] >= min_volume]
+
+        # Drop rows without all three return columns
+        df = df.dropna(subset=[col_12m, col_6m, col_3m])
+
+        if len(df) < top_12m:
+            print(f"⚠️  Giusti: only {len(df)} tickers after filtering (need ≥{top_12m})")
+
+        # --- Cascade filter ---
+        # Step 1: top N by 12-month return
+        step1 = df.nlargest(min(top_12m, len(df)), col_12m)
+        # Step 2: top M of those by 6-month return
+        step2 = step1.nlargest(min(top_6m, len(step1)), col_6m)
+        # Step 3: top K of those by 3-month return → final portfolio
+        step3 = step2.nlargest(min(top_3m, len(step2)), col_3m)
+
+        portfolio_tickers = step3.index.tolist()
+        data_date = df['date'].iloc[0] if 'date' in df.columns else 'unknown'
+
+        print(f"  Step 1 (12m top {top_12m}): {len(step1)} stocks")
+        print(f"  Step 2 (6m  top {top_6m}): {len(step2)} stocks")
+        print(f"  Step 3 (3m  top {top_3m}): {len(step3)} stocks → portfolio")
+        print(f"  Portfolio: {portfolio_tickers}")
+
+        # Build output rows — one row per portfolio stock with all metrics
+        output_rows = []
+        for rank, ticker in enumerate(portfolio_tickers, 1):
+            row = step3.loc[ticker]
+            output_rows.append({
+                'ticker':          ticker,
+                'rank':            rank,
+                'screen_type':     'giusti_cascade',
+                'data_date':       data_date,
+                'return_3m_pct':   round(float(row[col_3m])  * 100, 2),
+                'return_6m_pct':   round(float(row[col_6m])  * 100, 2),
+                'return_12m_pct':  round(float(row[col_12m]) * 100, 2),
+                'current_price':   round(float(row['current_price']), 4) if 'current_price' in row.index else None,
+                'avg_volume_20d':  int(row['daily_avg_volume_20']) if 'daily_avg_volume_20' in row.index else None,
+                'cascade_top12m':  top_12m,
+                'cascade_top6m':   top_6m,
+                'cascade_top3m':   top_3m,
+                'timeframe':       timeframe,
+                'ticker_choice':   ticker_choice,
+                'source_file':     bc_file.name,
+            })
+
+        if not output_rows:
+            print(f"⚠️  Giusti: no portfolio stocks selected")
+            continue
+
+        result_df = pd.DataFrame(output_rows)
+
+        # Save portfolio file
+        date_str = str(data_date).replace('-', '')[:8] if data_date != 'unknown' else datetime.now().strftime('%Y%m%d')
+        out_file = giusti_dir / f"giusti_portfolio_{ticker_choice}_{timeframe}_{date_str}.csv"
+        result_df.to_csv(out_file, index=False)
+        print(f"✅ Giusti portfolio saved: {out_file.name}")
+
+        # Also save the full cascade funnel for analysis
+        funnel_rows = []
+        for step_name, step_df, step_col in [
+            ('step1_12m_top50', step1, col_12m),
+            ('step2_6m_top30',  step2, col_6m),
+            ('step3_3m_top10',  step3, col_3m),
+        ]:
+            for ticker in step_df.index:
+                row = step_df.loc[ticker]
+                funnel_rows.append({
+                    'ticker':      ticker,
+                    'step':        step_name,
+                    'sort_col':    step_col,
+                    'sort_value':  round(float(row[step_col]) * 100, 2),
+                    'return_3m':   round(float(row[col_3m])  * 100, 2),
+                    'return_6m':   round(float(row[col_6m])  * 100, 2),
+                    'return_12m':  round(float(row[col_12m]) * 100, 2),
+                    'in_portfolio': ticker in portfolio_tickers,
+                })
+
+        funnel_file = giusti_dir / f"giusti_funnel_{ticker_choice}_{timeframe}_{date_str}.csv"
+        pd.DataFrame(funnel_rows).to_csv(funnel_file, index=False)
+        print(f"✅ Giusti funnel saved: {funnel_file.name}")
+
+        results_summary[timeframe] = len(portfolio_tickers)
+
+    print(f"\n✅ GIUSTI SCREENER COMPLETED!")
+    print(f"📊 Portfolio size: {sum(results_summary.values())} stocks")
+    return results_summary

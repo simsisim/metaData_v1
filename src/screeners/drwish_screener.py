@@ -628,7 +628,7 @@ def _save_individual_ticker_results(ticker: str, calculator: DrWishCalculator, d
         user_choice = params.get('ticker_choice', 0)
         timestamp = datetime.now().strftime('%Y%m%d')
         
-        results_dir = Path("results/screeners/drwish/individual")
+        results_dir = Path(params.get('output_dir', 'results/screeners/drwish')) / 'individual'
         results_dir.mkdir(parents=True, exist_ok=True)
         
         # Generate GLB results file
@@ -708,9 +708,8 @@ def _save_drwish_results(results: List[Dict], params: Optional[Dict] = None) -> 
         user_choice = params.get('ticker_choice', 0)
         timeframe = params.get('timeframe', 'daily')
         
-        # Create drwish subdirectory in screeners folder
-        screeners_dir = Path("results/screeners")
-        drwish_dir = screeners_dir / 'drwish'
+        # Create drwish output directory
+        drwish_dir = Path(params.get('output_dir', 'results/screeners/drwish'))
         drwish_dir.mkdir(parents=True, exist_ok=True)
         
         # Generate filename with timeframe to avoid overwriting

@@ -28,11 +28,12 @@ class UserConfiguration:
     zacks_fin_data: bool = False
     
     # GLOBAL EXECUTION PHASE CONTROL
-    PRE_PROCESS: bool = True  # Execute pre-processing of TradingView data phase
-    BASIC: bool = True        # Execute data processing and core calculations phase
-    SCREENERS: bool = True    # Execute screening and analysis phase
-    POST_PROCESS: bool = True # Execute post-processing and report generation phase
-    BACKTESTING: bool = False # Execute backtesting analysis of screener strategies
+    PRE_PROCESS: bool = True     # Execute pre-processing of TradingView data phase
+    MARKET_HEALTH: bool = False  # Layer 1: SR + market breadth + market pulse
+    BASIC: bool = True           # Layer 2: basic calcs, stage analysis, RS, percentile
+    SCREENERS: bool = True       # Layer 3: all screeners
+    POST_PROCESS: bool = True    # Execute post-processing and report generation phase
+    BACKTESTING: bool = False    # Execute backtesting analysis of screener strategies
 
     # PRE_PROCESS configuration
     PRE_PROCESS_file: str = "user_data_pre_process.csv"
@@ -104,23 +105,26 @@ class UserConfiguration:
     # Monthly RS Configuration
     index_monthly_rs_periods: str = "3;6;12"    # Monthly RS periods (months)
     
-    # Output directory configuration
-    basic_calculation_output_dir: str = "results/basic_calculation"
-    stage_analysis_output_dir: str = "results/stage_analysis"
-    rs_output_dir: str = "results/rs"
-    per_output_dir: str = "results/per"
-    # Screener output directories
-    pvb_TWmodel_output_dir: str = "results/screeners/pvb"
-    atr1_output_dir: str = "results/screeners/atr1"
-    drwish_output_dir: str = "results/screeners/drwish"
-    giusti_output_dir: str = "results/screeners/giusti"
-    minervini_output_dir: str = "results/screeners/minervini"
-    stockbee_output_dir: str = "results/screeners/stockbee"
-    qullamaggie_output_dir: str = "results/screeners/qullamaggie"
-    adl_screener_output_dir: str = "results/screeners/adl"
-    guppy_screener_output_dir: str = "results/screeners/guppy"
-    gold_launch_pad_output_dir: str = "results/screeners/gold_launch_pad"
-    rti_output_dir: str = "results/screeners/rti"
+    # Output directory configuration — Layer 2
+    basic_calculation_output_dir: str = "results/layer2_basic_calculations/basic_calculation"
+    stage_analysis_output_dir: str = "results/layer2_basic_calculations/stage_analysis"
+    rs_output_dir: str = "results/layer2_basic_calculations/rs"
+    per_output_dir: str = "results/layer2_basic_calculations/per"
+    # Screener output directories — Layer 3
+    pvb_TWmodel_output_dir: str = "results/layer3_screeners/pvbTW"
+    atr1_output_dir: str = "results/layer3_screeners/atr1"
+    drwish_output_dir: str = "results/layer3_screeners/drwish"
+    giusti_output_dir: str = "results/layer3_screeners/giusti"
+    minervini_output_dir: str = "results/layer3_screeners/minervini"
+    stockbee_output_dir: str = "results/layer3_screeners/stockbee"
+    qullamaggie_output_dir: str = "results/layer3_screeners/qullamaggie"
+    adl_screener_output_dir: str = "results/layer3_screeners/adl"
+    guppy_screener_output_dir: str = "results/layer3_screeners/guppy"
+    gold_launch_pad_output_dir: str = "results/layer3_screeners/gold_launch_pad"
+    rti_output_dir: str = "results/layer3_screeners/rti"
+    stscooter_output_dir: str = "results/layer3_screeners/scooter/stscooter"
+    fastscooter_output_dir: str = "results/layer3_screeners/scooter/fastscooter"
+    scooter_combined_output_dir: str = "results/layer3_screeners/scooter/combined"
 
     # Basic calculations (legacy)
     basic_calculation_file: str = "basic_calculations.csv"
@@ -269,7 +273,7 @@ class UserConfiguration:
     
     # ATR SCREENER CONFIGURATION
     # ATR1 Screener (TradingView-validated with RMA smoothing)
-    atr1_enable: bool = True
+    atr1_enable: bool = False
     # Daily ATR1 parameters
     atr1_daily_length: int = 20
     atr1_daily_factor: float = 3.0
@@ -380,7 +384,7 @@ class UserConfiguration:
     rs_method_for_per: str = "IBD"
 
     # TECHNICAL INDICATORS CONFIGURATION
-    indicators_enable: bool = True
+    indicators_enable: bool = False
     indicators_config_file: str = "data/indicators/ticker_indicators_config.csv"
     indicators_output_dir: str = "results/indicators/"
     indicators_charts_dir: str = "results/charts/"
@@ -458,14 +462,16 @@ class UserConfiguration:
     pvb_TWmodel_watchlist_include_sell: bool = True
 
     # MINERVINI TEMPLATE SCREENER CONFIGURATION
-    minervini_enable: bool = True
-    minervini_rs_min_rating: float = 70.0
+    minervini_enable: bool = False
+    minervini_rs_benchmark: str = "QQQ"
+    minervini_rs_weights: str = "1d:0.05;3d:0.10;7d:0.15;22d:0.20;66d:0.25;252d:0.25"
+    minervini_rs_threshold: float = 70.0
     minervini_min_volume: int = 100000
     minervini_min_price: float = 5.0
     minervini_show_all_stocks: bool = False
     
     # GIUSTI MOMENTUM SCREENER CONFIGURATION
-    giusti_enable: bool = True
+    giusti_enable: bool = False
     giusti_min_price: float = 5.0
     giusti_min_volume: int = 100000
     giusti_rolling_12m: int = 12
@@ -499,13 +505,13 @@ class UserConfiguration:
     drwish_black_dot_ema_period: int = 21
     drwish_show_all_stocks: bool = False
     drwish_enable_charts: bool = True
-    drwish_chart_output_dir: str = "results/screeners/drwish/charts"
+    drwish_chart_output_dir: str = "results/layer3_screeners/drwish/charts"
     drwish_show_historical_glb: bool = True
     drwish_show_breakout_labels: bool = True
     drwish_generate_individual_files: bool = True
     
     # Volume Suite Configuration
-    volume_suite_enable: bool = True
+    volume_suite_enable: bool = False
     volume_suite_daily_enable: bool = True
     volume_suite_weekly_enable: bool = True
     volume_suite_monthly_enable: bool = True
@@ -537,7 +543,7 @@ class UserConfiguration:
     volume_suite_adtv_6m_threshold: float = 2.0
     volume_suite_adtv_1y_threshold: float = 2.0
     volume_suite_adtv_min_volume: int = 100000
-    volume_suite_output_dir: str = "results/screeners/volume_suite"
+    volume_suite_output_dir: str = "results/layer3_screeners/volume_suite"
     volume_suite_save_individual_files: bool = True
 
     # PVB ClModel Integration parameters (separate from PVB TW)
@@ -583,19 +589,21 @@ class UserConfiguration:
     stockbee_suite_save_individual_files: bool = True  # Save individual screener files
 
     # Qullamaggie Suite Configuration
-    qullamaggie_suite_enable: bool = True
-    qullamaggie_suite_rs_threshold: float = 97.0  # Top 3% RS requirement
-    qullamaggie_suite_atr_rs_threshold: float = 50.0  # Top 50% ATR requirement
-    qullamaggie_suite_range_position_threshold: float = 0.5  # 50% of 20-day range
-    qullamaggie_suite_min_market_cap: int = 1000000000  # $1B
+    qullamaggie_suite_enable: bool = False
+    qullamaggie_suite_rs_benchmark: str = "QQQ"
+    qullamaggie_suite_rs_periods: str = "7d;22d;66d;132d"
+    qullamaggie_suite_rs_threshold: float = 97.0
+    qullamaggie_suite_atr_rs_threshold: float = 50.0
+    qullamaggie_suite_range_position_threshold: float = 0.5
+    qullamaggie_suite_min_market_cap: int = 1000000000
     qullamaggie_suite_min_price: float = 5.0
-    qullamaggie_suite_extension_warning: float = 7.0  # 7x ATR extension warning
-    qullamaggie_suite_extension_danger: float = 11.0  # 11x ATR extension danger
-    qullamaggie_suite_min_data_length: int = 250  # Minimum data for full analysis
+    qullamaggie_suite_extension_warning: float = 7.0
+    qullamaggie_suite_extension_danger: float = 11.0
+    qullamaggie_suite_min_data_length: int = 250
     volume_suite_adtv_min_volume: int = 1000000
     
     # ADL Screener Configuration
-    adl_screener_enable: bool = True
+    adl_screener_enable: bool = False
     adl_screener_daily_enable: bool = False
     adl_screener_weekly_enable: bool = False
     adl_screener_monthly_enable: bool = False
@@ -652,7 +660,7 @@ class UserConfiguration:
     adl_screener_output_summary_stats: bool = True  # Include summary statistics
     
     # Guppy GMMA Screener Configuration
-    guppy_screener_enable: bool = True
+    guppy_screener_enable: bool = False
     guppy_screener_daily_enable: bool = True
     guppy_screener_weekly_enable: bool = False
     guppy_screener_monthly_enable: bool = False
@@ -667,9 +675,50 @@ class UserConfiguration:
     guppy_screener_min_volume_avg: int = 100000  # Minimum average volume requirement
     guppy_screener_min_data_length: int = 65  # Minimum data length for analysis
     guppy_screener_save_individual_files: bool = True  # Save individual component files
-    
+
+    # SCOOTER CALCULATION CONFIGURATION (Layer 2 — added to every basic_calc row)
+    # stSCOOTER (Stock Chart Scooter — slow, trend leaders, standard SCTR weights)
+    stscooter_enable: bool = True
+    stscooter_weight_long: int = 60
+    stscooter_weight_medium: int = 30
+    stscooter_weight_short: int = 10
+    stscooter_ema_long_period: int = 200
+    stscooter_roc_long_period: int = 125
+    stscooter_ema_short_period: int = 50
+    stscooter_roc_short_period: int = 20
+    stscooter_rsi_period: int = 14
+    # fastSCOOTER (early momentum — inverted weights + shorter periods)
+    fastscooter_enable: bool = True
+    fastscooter_weight_long: int = 10
+    fastscooter_weight_medium: int = 30
+    fastscooter_weight_short: int = 60
+    fastscooter_ema_long_period: int = 50
+    fastscooter_roc_long_period: int = 20
+    fastscooter_ema_short_period: int = 21
+    fastscooter_roc_short_period: int = 5
+    fastscooter_rsi_period: int = 7
+
+    # SCOOTER SCREENER CONFIGURATION (Layer 3 — reads basic_calc, runs first)
+    stscooter_screener_enable: bool = True
+    stscooter_screener_threshold_top: int = 90
+    stscooter_screener_threshold_strong: int = 70
+    stscooter_screener_threshold_weak: int = 40
+    stscooter_screener_min_score: int = 70
+    stscooter_screener_min_price: float = 5.0
+    stscooter_screener_min_volume: int = 100000
+    stscooter_screener_save_individual_files: bool = True
+    fastscooter_screener_enable: bool = True
+    fastscooter_screener_threshold_top: int = 85
+    fastscooter_screener_threshold_strong: int = 65
+    fastscooter_screener_threshold_weak: int = 30
+    fastscooter_screener_min_score: int = 65
+    fastscooter_screener_min_price: float = 5.0
+    fastscooter_screener_min_volume: int = 100000
+    fastscooter_screener_save_individual_files: bool = True
+    scooter_combined_enable: bool = True
+
     # GOLD LAUNCH PAD SCREENER CONFIGURATION
-    gold_launch_pad_enable: bool = True
+    gold_launch_pad_enable: bool = False
     gold_launch_pad_daily_enable: bool = True
     gold_launch_pad_weekly_enable: bool = True
     gold_launch_pad_monthly_enable: bool = True
@@ -686,7 +735,7 @@ class UserConfiguration:
     gold_launch_pad_save_individual_files: bool = True
     
     # RANGE TIGHTENING INDICATOR (RTI) SCREENER CONFIGURATION
-    rti_enable: bool = True
+    rti_enable: bool = False
     rti_daily_enable: bool = True
     rti_weekly_enable: bool = False
     rti_monthly_enable: bool = False
@@ -713,7 +762,7 @@ class UserConfiguration:
     volume_suite_pvb_TWmodel_direction: str = "Long"
     
     # Output settings
-    volume_suite_output_dir: str = "results/screeners/volume_suite"
+    volume_suite_output_dir: str = "results/layer3_screeners/volume_suite"
     volume_suite_save_individual_files: bool = True
     
     # Performance optimization
@@ -783,7 +832,7 @@ class UserConfiguration:
     market_pulse_ma_cycles_min_cycle_length: int = 5
     
     # Output Configuration
-    market_pulse_output_dir: str = "results/market_pulse"
+    market_pulse_output_dir: str = "results/layer1_market_health/market_pulse"
     market_pulse_save_detailed_results: bool = True
     market_pulse_generate_alerts: bool = True
 
@@ -828,7 +877,7 @@ class UserConfiguration:
     market_breadth_chart_history_months: int = 12     # Monthly charts: 12 months (1 year)
     # Output configuration
     market_breadth_save_detailed_results: bool = True
-    market_breadth_output_dir: str = "results/market_breadth"
+    market_breadth_output_dir: str = "results/layer1_market_health/market_breadth"
     
     # Dashboard Configuration
     dashboard_enable: bool = True
@@ -951,13 +1000,27 @@ def read_user_data(file_path: str = 'user_data.csv') -> UserConfiguration:
         ticker_filenames = _read_ticker_filenames(file_path)
         
         # Read CSV file, skipping comment lines that start with #
-        df = pd.read_csv(file_path, comment='#', header=None, 
-                        names=['variable', 'value', 'description'])
-        
+        # Read all columns first — multi-value fields may have been split by commas
+        _raw = pd.read_csv(file_path, comment='#', header=None, dtype=str)
+        # Reconstruct: col0=variable, cols 1..n-2 joined with ';' = value, col n-1 = description
+        # For rows with exactly 2 cols: variable + value only (no description)
+        # For rows with exactly 1 col or all-NaN: dropped below
+        def _rebuild_row(row):
+            parts = [v for v in row if pd.notna(v)]
+            if len(parts) == 0:
+                return pd.Series({'variable': None, 'value': None, 'description': None})
+            if len(parts) == 1:
+                return pd.Series({'variable': parts[0], 'value': None, 'description': None})
+            if len(parts) == 2:
+                return pd.Series({'variable': parts[0], 'value': parts[1], 'description': None})
+            # 3+ parts: variable, value(s), description
+            return pd.Series({'variable': parts[0], 'value': ';'.join(parts[1:-1]), 'description': parts[-1]})
+        df = _raw.apply(_rebuild_row, axis=1)
+
         # Remove rows where variable is NaN (empty lines, etc.)
         df = df.dropna(subset=['variable'])
         df['variable'] = df['variable'].str.strip()
-        df['value'] = df['value'].str.strip()
+        df['value'] = df['value'].fillna('').str.strip()
         
         # Create configuration object with defaults
         config = UserConfiguration()
@@ -989,6 +1052,7 @@ def read_user_data(file_path: str = 'user_data.csv') -> UserConfiguration:
             # Global execution phase flags
             'PRE_PROCESS': ('PRE_PROCESS', parse_boolean),
             'PRE_PROCESS_file': ('PRE_PROCESS_file', str),
+            'MARKET_HEALTH': ('MARKET_HEALTH', parse_boolean),
             'BASIC': ('BASIC', parse_boolean),
             'SCREENERS': ('SCREENERS', parse_boolean),
             'POST_PROCESS': ('POST_PROCESS', parse_boolean),
@@ -1049,6 +1113,9 @@ def read_user_data(file_path: str = 'user_data.csv') -> UserConfiguration:
             'GUPPY_SCREENER_output_dir': ('guppy_screener_output_dir', str),
             'GOLD_LAUNCH_PAD_output_dir': ('gold_launch_pad_output_dir', str),
             'RTI_output_dir': ('rti_output_dir', str),
+            'STSCOOTER_output_dir': ('stscooter_output_dir', str),
+            'FASTSCOOTER_output_dir': ('fastscooter_output_dir', str),
+            'SCOOTER_combined_output_dir': ('scooter_combined_output_dir', str),
 
             # Basic calculations (legacy)
             'Basic_calculation_file': ('basic_calculation_file', str),
@@ -1379,7 +1446,9 @@ def read_user_data(file_path: str = 'user_data.csv') -> UserConfiguration:
 
             # Minervini Template Screener Configuration
             'MINERVINI_enable': ('minervini_enable', parse_boolean),
-            'MINERVINI_rs_min_rating': ('minervini_rs_min_rating', float),
+            'MINERVINI_rs_benchmark': ('minervini_rs_benchmark', str),
+            'MINERVINI_rs_weights': ('minervini_rs_weights', str),
+            'MINERVINI_rs_threshold': ('minervini_rs_threshold', float),
             'MINERVINI_min_volume': ('minervini_min_volume', int),
             'MINERVINI_min_price': ('minervini_min_price', float),
             'MINERVINI_show_all_stocks': ('minervini_show_all_stocks', parse_boolean),
@@ -1484,6 +1553,8 @@ def read_user_data(file_path: str = 'user_data.csv') -> UserConfiguration:
 
             # Qullamaggie Suite Configuration
             'QULLAMAGGIE_SUITE_enable': ('qullamaggie_suite_enable', parse_boolean),
+            'QULLAMAGGIE_SUITE_rs_benchmark': ('qullamaggie_suite_rs_benchmark', str),
+            'QULLAMAGGIE_SUITE_rs_periods': ('qullamaggie_suite_rs_periods', str),
             'QULLAMAGGIE_SUITE_rs_threshold': ('qullamaggie_suite_rs_threshold', float),
             'QULLAMAGGIE_SUITE_atr_rs_threshold': ('qullamaggie_suite_atr_rs_threshold', float),
             'QULLAMAGGIE_SUITE_range_position_threshold': ('qullamaggie_suite_range_position_threshold', float),
@@ -1566,7 +1637,45 @@ def read_user_data(file_path: str = 'user_data.csv') -> UserConfiguration:
             'GUPPY_SCREENER_min_volume_avg': ('guppy_screener_min_volume_avg', int),
             'GUPPY_SCREENER_min_data_length': ('guppy_screener_min_data_length', int),
             'GUPPY_SCREENER_save_individual_files': ('guppy_screener_save_individual_files', parse_boolean),
-            
+
+            # SCOOTER calculation CSV mappings (Layer 2)
+            'STSCOOTER_enable': ('stscooter_enable', parse_boolean),
+            'STSCOOTER_weight_long': ('stscooter_weight_long', int),
+            'STSCOOTER_weight_medium': ('stscooter_weight_medium', int),
+            'STSCOOTER_weight_short': ('stscooter_weight_short', int),
+            'STSCOOTER_ema_long_period': ('stscooter_ema_long_period', int),
+            'STSCOOTER_roc_long_period': ('stscooter_roc_long_period', int),
+            'STSCOOTER_ema_short_period': ('stscooter_ema_short_period', int),
+            'STSCOOTER_roc_short_period': ('stscooter_roc_short_period', int),
+            'STSCOOTER_rsi_period': ('stscooter_rsi_period', int),
+            'FASTSCOOTER_enable': ('fastscooter_enable', parse_boolean),
+            'FASTSCOOTER_weight_long': ('fastscooter_weight_long', int),
+            'FASTSCOOTER_weight_medium': ('fastscooter_weight_medium', int),
+            'FASTSCOOTER_weight_short': ('fastscooter_weight_short', int),
+            'FASTSCOOTER_ema_long_period': ('fastscooter_ema_long_period', int),
+            'FASTSCOOTER_roc_long_period': ('fastscooter_roc_long_period', int),
+            'FASTSCOOTER_ema_short_period': ('fastscooter_ema_short_period', int),
+            'FASTSCOOTER_roc_short_period': ('fastscooter_roc_short_period', int),
+            'FASTSCOOTER_rsi_period': ('fastscooter_rsi_period', int),
+            # SCOOTER screener CSV mappings (Layer 3)
+            'STSCOOTER_SCREENER_enable': ('stscooter_screener_enable', parse_boolean),
+            'STSCOOTER_SCREENER_threshold_top': ('stscooter_screener_threshold_top', int),
+            'STSCOOTER_SCREENER_threshold_strong': ('stscooter_screener_threshold_strong', int),
+            'STSCOOTER_SCREENER_threshold_weak': ('stscooter_screener_threshold_weak', int),
+            'STSCOOTER_SCREENER_min_score': ('stscooter_screener_min_score', int),
+            'STSCOOTER_SCREENER_min_price': ('stscooter_screener_min_price', float),
+            'STSCOOTER_SCREENER_min_volume': ('stscooter_screener_min_volume', int),
+            'STSCOOTER_SCREENER_save_individual_files': ('stscooter_screener_save_individual_files', parse_boolean),
+            'FASTSCOOTER_SCREENER_enable': ('fastscooter_screener_enable', parse_boolean),
+            'FASTSCOOTER_SCREENER_threshold_top': ('fastscooter_screener_threshold_top', int),
+            'FASTSCOOTER_SCREENER_threshold_strong': ('fastscooter_screener_threshold_strong', int),
+            'FASTSCOOTER_SCREENER_threshold_weak': ('fastscooter_screener_threshold_weak', int),
+            'FASTSCOOTER_SCREENER_min_score': ('fastscooter_screener_min_score', int),
+            'FASTSCOOTER_SCREENER_min_price': ('fastscooter_screener_min_price', float),
+            'FASTSCOOTER_SCREENER_min_volume': ('fastscooter_screener_min_volume', int),
+            'FASTSCOOTER_SCREENER_save_individual_files': ('fastscooter_screener_save_individual_files', parse_boolean),
+            'SCOOTER_combined_enable': ('scooter_combined_enable', parse_boolean),
+
             # Gold Launch Pad CSV mappings
             'GOLD_LAUNCH_PAD_enable': ('gold_launch_pad_enable', parse_boolean),
             'GOLD_LAUNCH_PAD_daily_enable': ('gold_launch_pad_daily_enable', parse_boolean),
@@ -2033,7 +2142,9 @@ def get_minervini_params_for_timeframe(config: UserConfiguration, timeframe: str
         Dictionary with Minervini parameters for the specified timeframe
     """
     return {
-        'rs_min_rating': config.minervini_rs_min_rating,
+        'rs_benchmark': config.minervini_rs_benchmark,
+        'rs_weights': config.minervini_rs_weights,
+        'rs_threshold': config.minervini_rs_threshold,
         'min_volume': config.minervini_min_volume,
         'min_price': config.minervini_min_price,
         'show_all_stocks': config.minervini_show_all_stocks,

@@ -239,7 +239,7 @@ class PERProcessor:
     
     def _find_rs_file(self, asset_level, timeframe, ticker_choice):
         """Find the corresponding RS file for an asset level and timeframe with new benchmark naming."""
-        rs_dir = self.config.directories['RESULTS_DIR'] / 'rs'
+        rs_dir = self.config.directories['RS_DIR']
 
         # Get benchmark tickers from configuration
         benchmark_tickers = self._parse_benchmark_tickers()
@@ -289,7 +289,7 @@ class PERProcessor:
 
     def _find_rs_file_for_benchmark(self, asset_level, timeframe, ticker_choice, benchmark_ticker):
         """Find RS file for a specific benchmark ticker."""
-        rs_dir = self.config.directories['RESULTS_DIR'] / 'rs'
+        rs_dir = self.config.directories['RS_DIR']
 
         # Look for recent RS file with specific benchmark
         today_date_str = datetime.now().strftime('%Y%m%d')
@@ -653,7 +653,7 @@ class PERProcessor:
             output_file = per_dir / filename
 
             # Save to CSV
-            per_df.to_csv(output_file, index=True, float_format='%.0f')
+            per_df.to_csv(output_file, index=True)
             logger.info(f"PER results saved with mapping metadata: {output_file}")
 
             return str(output_file)

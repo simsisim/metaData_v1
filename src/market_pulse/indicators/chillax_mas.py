@@ -725,7 +725,9 @@ class ChillaxMAS(BaseIndicator):
             chart_filename = f"chillax_mas_{index}_{user_choice}_{timeframe}_{latest_date}.png"
             
             # Ensure output directory exists
-            output_dir = self.config.directories['RESULTS_DIR'] / 'market_pulse'
+            output_dir = Path(getattr(self.user_config, 'market_pulse_output_dir', 'results/market_pulse'))
+            if not output_dir.is_absolute():
+                output_dir = self.config.base_dir / output_dir
             output_dir.mkdir(parents=True, exist_ok=True)
             chart_path = output_dir / chart_filename
             
@@ -801,7 +803,9 @@ class ChillaxMAS(BaseIndicator):
             output_filename = f"chillax_mas_{indexes_str}_{user_choice}_{timeframe}_{latest_date}.csv"
             
             # Ensure output directory exists
-            output_dir = self.config.directories['RESULTS_DIR'] / 'market_pulse'
+            output_dir = Path(getattr(self.user_config, 'market_pulse_output_dir', 'results/market_pulse'))
+            if not output_dir.is_absolute():
+                output_dir = self.config.base_dir / output_dir
             output_dir.mkdir(parents=True, exist_ok=True)
             output_path = output_dir / output_filename
             

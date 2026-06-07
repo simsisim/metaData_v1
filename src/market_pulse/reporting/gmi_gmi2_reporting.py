@@ -87,8 +87,8 @@ class GMI_GMI2_ReportGenerator:
         """
         try:
             # Load data
-            gmi_data = pd.read_csv(gmi_csv_path) if gmi_csv_path.exists() else None
-            gmi2_data = pd.read_csv(gmi2_csv_path) if gmi2_csv_path.exists() else None
+            gmi_data = pd.read_csv(gmi_csv_path) if gmi_csv_path and gmi_csv_path.exists() else None
+            gmi2_data = pd.read_csv(gmi2_csv_path) if gmi2_csv_path and gmi2_csv_path.exists() else None
 
             if gmi_data is None and gmi2_data is None:
                 logger.error(f"No GMI or GMI2 data found for {index_symbol}")

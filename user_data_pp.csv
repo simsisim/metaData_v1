@@ -1,109 +1,145 @@
 Filename,File_id,Generation,Output_id,PDF_enable,PDF_type,Template,template_routing_options,Step,Action,Column,Condition,Value,Order,Logic
-# Test Configuration for Multi-File Filtering System,,,,,,,,,,,,,,
-# Example 1: Simple 2-file intersection (performance + stage analysis),,,,,,,,,,,,,,
-basic_calculation,100,TRUE,momentum_bullish_simple,TRUE,basic_calculation,market_trends,,1,filter,current_price,greater_than,100,,AND
-stage_analysis,100,,,,,,,2,filter,daily_sa_name,contains,Bullish,,AND
+# ================================================================
+# POST-PROCESSING CONFIGURATION
+# ================================================================
+# Schema:
+#   Filename   — source file type: basic_calculation | stage_analysis |
+#                pvb_screener | minervini_screener | qullamaggie_screener |
+#                giusti_screener | rs/per
+#   File_id    — groups rows into one operation (same id = same output)
+#                Multi-file intersection: same id, different Filename
+#                Multi-filter on same file: same id+Filename, different Step
+#   Generation — TRUE = run this operation | FALSE = skip
+#   Output_id  — output filename prefix
+#   PDF_*      — PDF report settings (only on first row of each group)
+#   Step       — filter/sort execution order within a group
+#   Action     — filter | sort
+#   Column     — column name from the source file
+#   Condition  — greater_than | less_than | equals | not_equals | contains | between
+#   Value      — comparison value (for between: lower bound)
+#   Order      — for sort: desc/asc | for between: upper bound
+#   Logic      — AND | OR (how filters combine within a source file)
+# ================================================================
+#
+# SECTION 0 — ACTIVE OPERATIONS (toggle Generation here)
+# ================================================================
+# File_id 101  Generation=TRUE   PVB breakout + Stage 2 intersection
+# File_id 102  Generation=TRUE   Minervini all-pass confirmed
+# File_id 103  Generation=FALSE  Minervini near-miss (7 of 8 criteria)
+# File_id 104  Generation=FALSE  Qullamaggie — non-extended only
+# File_id 105  Generation=FALSE  PVB ∩ Minervini — highest conviction
+# File_id 106  Generation=FALSE  PVB ∩ Stage 2 ∩ RS ≥ 80
+# File_id 201  Generation=TRUE   NASDAQ100 Electronic Technology sector
+# File_id 202  Generation=FALSE  SP500 momentum leaders (252d > 20%)
+# File_id 203  Generation=FALSE  Large-cap growth ($10B+, up 20%+/yr)
+# File_id 204  Generation=FALSE  Stage 2 (Advancing) universe
+# File_id 205  Generation=FALSE  Overbought RSI (> 70)
+# File_id 206  Generation=FALSE  Near 52w high (within 10%)
+# File_id 207  Generation=FALSE  Semiconductors top performers
+# File_id 301  Generation=TRUE   QQQ IBD daily RS/PER report
+# File_id 302  Generation=FALSE  SPY IBD daily RS/PER report
+# File_id 401  Generation=TRUE   SP500 top performers evolution
+# File_id 402  Generation=FALSE  Semiconductor top performers evolution
+#
+# ================================================================
+# SECTION 1 — MULTI-SCREENER INTERSECTIONS
+# Finds tickers that appear in ALL listed sources simultaneously.
+# ================================================================
+#
+# 101: PVB breakout in Stage 2 uptrend
+# Tickers with a PVB signal AND currently in Stage 2 (Advancing)
+pvb_screener,101,TRUE,pvb_stage2_breakouts,FALSE,,,,,filter,ticker,not_equals,SKIP_PLACEHOLDER,,AND
+stage_analysis,101,,,,,,,2,filter,daily_sa_code,contains,2,,AND
 ,,,,,,,,,,,,,,
-# Example 2: Complex 3-file intersection with multiple criteria,,,,,,,,,,,,,,
-#basic_calculation,200,FALSE,comprehensive_growth_screen,TRUE,basic_calculation,,,1,filter,daily_daily_monthly_22d_pct_change,greater_than,15,,AND
-#basic_calculation,200,,,,,,,filter,current_price,greater_than,20,,AND,
-#stage_analysis,200,,,,,,,filter,daily_sa_name,contains,Bullish,,AND,stage_analysis
-#stage_analysis,200,,,,,,,filter,daily_sa_code,not_equals,4A,,AND,stage_analysis
+# 102: Minervini confirmed — all 8 criteria pass
+minervini_screener,102,TRUE,minervini_all_pass,FALSE,,,,1,filter,all_pass,equals,True,,AND
 ,,,,,,,,,,,,,,
-# Example 3: High momentum with bullish stage OR launch pad,,,,,,,,,,,,,,
-#basic_calculation,300,FALSE,momentum_with_stage_options,FALSE,,,,1,filter,daily_daily_monthly_22d_pct_change,greater_than,25,,AND
-#stage_analysis,300,,,,,,,filter,daily_sa_name,contains,Bullish,,OR,stage_analysis
-#stage_analysis,300,,,,,,,filter,daily_sa_name,contains,Launch Pad,,OR,stage_analysis
+# 103: Minervini near-miss — 7 or more criteria pass (watch list)
+minervini_screener,103,FALSE,minervini_near_miss,FALSE,,,,1,filter,pass_count,greater_than,6,,AND
 ,,,,,,,,,,,,,,
-# Example 4: Traditional single-file processing (should use existing workflow),,,,,,,,,,,,,,
-#basic_calculation,400,FALSE,simple_momentum,FALSE,basic_calculation,,,1,filter,daily_daily_monthly_22d_pct_change,greater_than,30,,AND
-#basic_calculation,400,,,,,,,sort,daily_daily_monthly_22d_pct_change,desc,1,,,
+# 104: Qullamaggie — exclude dangerously extended stocks
+qullamaggie_screener,104,FALSE,qullamaggie_safe,FALSE,,,,1,filter,extension_label,not_equals,DANGER,,AND
 ,,,,,,,,,,,,,,
-# Example 5: Price and volume filters with technical analysis,,,,,,,,,,,,,,
-#basic_calculation,500,FALSE,high_volume_breakout,FALSE,,,,1,filter,current_price,greater_than,50,,AND
-#basic_calculation,500,,,,,,,filter,daily_daily_weekly_7d_pct_change,greater_than,10,,AND,
-#stage_analysis,500,,,,,,,filter,daily_sa_name,contains,Bullish,,AND,stage_analysis
-#stage_analysis,500,,,,,,,filter,daily_rsi_14,between,30,70,AND,stage_analysis
+# 105: PVB + Minervini intersection — highest conviction breakouts
+# Stock has a PVB volume breakout signal AND passes all Minervini criteria
+pvb_screener,105,FALSE,pvb_minervini_intersection,FALSE,,,,1,filter,ticker,not_equals,SKIP_PLACEHOLDER,,AND
+minervini_screener,105,,,,,,,2,filter,all_pass,equals,True,,AND
 ,,,,,,,,,,,,,,
-#######################################################,,,,,,,,,,,,,,
-stage_analysis,1,FALSE,,FALSE,stage_analysis,,,1,Filter,current_price,greater_than,1000,,
-stage_analysis,1,,,,stage_analysis,,Filter,SP500,equals,True,,AND,,
-stage_analysis,2,FALSE,,FALSE,stage_analysis,stage_analysis,,1,Filter,NASDAQ100,equals,True,,
+# 106: PVB + Stage 2 + RS ≥ 80 — 3-way intersection
+# Volume breakout, in uptrend stage, with strong relative strength
+pvb_screener,106,FALSE,pvb_stage2_rs80,FALSE,,,,1,filter,ticker,not_equals,SKIP_PLACEHOLDER,,AND
+stage_analysis,106,,,,,,,2,filter,daily_sa_code,contains,2,,AND
+basic_calculation,106,,,,,,,3,filter,daily_daily_yearly_252d_pct_change,greater_than,0.20,,AND
 ,,,,,,,,,,,,,,
-# Basic calculation template configurations with auto-selection logic,,,,,,,,,,,,,,
-# Market trends template (default/comprehensive analysis),,,,,,,,,,,,,,
-#basic_calculation,1,FALSE,market_overview,FALSE,basic_calculation,auto,,1,filter,current_price,greater_than,10,,
-#basic_calculation,1,,,,,,2,sort,daily_daily_yearly_252d_pct_change,desc,,1,,
+# ================================================================
+# SECTION 2 — LAYER 2 UNIVERSE ANALYSIS (single-file filters)
+# Filters basic_calc or stage_analysis by sector/universe/condition.
+# ================================================================
+#
+# 201: NASDAQ100 — Electronic Technology sector
+basic_calculation,201,TRUE,nasdaq100_tech_sector,FALSE,basic_calculation,sector_analysis,,1,filter,NASDAQ100,equals,True,,AND
+basic_calculation,201,,,,,,2,filter,sector,equals,Electronic technology,,AND,
+basic_calculation,201,,,,,,3,filter,current_price,greater_than,5,,AND,
+basic_calculation,201,,,,,,4,sort,daily_daily_yearly_252d_pct_change,desc,,1,,
 ,,,,,,,,,,,,,,
-# Sector analysis template (triggered by sector filter),,,,,,,,,,,,,,
-basic_calculation,2,FALSE,tech_sector_analysis,FALSE,basic_calculation,sector_analysis,,1,filter,sector,equals,Electronic technology,,
-basic_calculation,3,FALSE,healthcare_sector_analysis,FALSE,basic_calculation,sector_analysis,,1,filter,sector,equals,Health technology,,
-basic_calculation,4,FALSE,financial_sector_analysis,FALSE,basic_calculation,sector_analysis,,1,filter,sector,equals,Finance,,
-basic_calculation,5,FALSE,energy_sector_analysis,FALSE,basic_calculation,sector_analysis,,1,filter,sector,equals,Energy minerals,,
+# 202: SP500 momentum leaders — strong year + month performance
+basic_calculation,202,FALSE,sp500_momentum_leaders,FALSE,basic_calculation,market_trends,,1,filter,SP500,equals,True,,AND
+basic_calculation,202,,,,,,2,filter,daily_daily_yearly_252d_pct_change,greater_than,0.20,,AND,
+basic_calculation,202,,,,,,3,filter,daily_daily_monthly_22d_pct_change,greater_than,0.03,,AND,
+basic_calculation,202,,,,,,4,filter,current_price,greater_than,10,,AND,
+basic_calculation,202,,,,,,5,sort,daily_daily_yearly_252d_pct_change,desc,,1,,
 ,,,,,,,,,,,,,,
-# Industry analysis template (triggered by industry filter),,,,,,,,,,,,,,
-basic_calculation,6,FALSE,semiconductor_industry,TRUE,basic_calculation,industry_analysis,,1,filter,industry,equals,Semiconductors,,
-basic_calculation,7,FALSE,biotech_industry,FALSE,basic_calculation,industry_analysis,,1,filter,industry,equals,Biotechnology,,
-basic_calculation,8,FALSE,banking_industry,FALSE,basic_calculation,industry_analysis,,1,filter,industry,equals,Major banks,,
-basic_calculation,9,FALSE,software_industry,FALSE,basic_calculation,industry_analysis,,1,filter,industry,equals,Packaged software,,
+# 203: Large-cap growth — $10B+ market cap with strong year performance
+basic_calculation,203,FALSE,large_cap_growth,FALSE,basic_calculation,market_trends,,1,filter,market_cap,greater_than,10000000000,,AND
+basic_calculation,203,,,,,,2,filter,daily_daily_yearly_252d_pct_change,greater_than,0.20,,AND,
+basic_calculation,203,,,,,,3,filter,current_price,greater_than,10,,AND,
+basic_calculation,203,,,,,,4,sort,daily_daily_yearly_252d_pct_change,desc,,1,,
 ,,,,,,,,,,,,,,
-# Universe analysis template (triggered by universe filters),,,,,,,,,,,,,,
-basic_calculation,10,FALSE,sp500_universe,FALSE,basic_calculation,universe_analysis,,1,filter,SP500,equals,TRUE,,
-basic_calculation,11,FALSE,nasdaq100_universe,FALSE,basic_calculation,universe_analysis,,1,filter,NASDAQ100,equals,TRUE,,
-basic_calculation,12,FALSE,russell1000_universe,FALSE,basic_calculation,universe_analysis,,1,filter,Russell1000,equals,TRUE,,
-basic_calculation,13,FALSE,dow_jones_universe,FALSE,basic_calculation,universe_analysis,,1,filter,DowJonesIndustrialAverage,equals,TRUE,,
+# 204: Stage 2 (Advancing) stocks only
+stage_analysis,204,FALSE,stage2_advancing_universe,FALSE,stage_analysis,,,1,filter,daily_sa_code,contains,2,,AND
+stage_analysis,204,,,,,,2,filter,current_price,greater_than,5,,AND,
+stage_analysis,204,,,,,,3,sort,daily_atr_ratio_sma_50,desc,,1,,
 ,,,,,,,,,,,,,,
-# Risk analysis template (triggered by risk metric filters),,,,,,,,,,,,,,
-basic_calculation,14,FALSE,high_volatility_analysis,FALSE,basic_calculation,risk_analysis,,1,filter,atr_pct,greater_than,5,,
-basic_calculation,15,FALSE,overbought_analysis,FALSE,basic_calculation,risk_analysis,,1,filter,daily_rsi_14,greater_than,70,,
-basic_calculation,16,FALSE,oversold_analysis,FALSE,basic_calculation,risk_analysis,,1,filter,daily_rsi_14,less_than,30,,
-basic_calculation,17,FALSE,momentum_analysis,FALSE,basic_calculation,risk_analysis,,1,filter,daily_distance_from_ATH_pct,greater_than,-10,,
+# 205: Overbought RSI — potential reversal watch
+basic_calculation,205,FALSE,overbought_rsi70,FALSE,basic_calculation,risk_analysis,,1,filter,daily_rsi_14,greater_than,70,,AND
+basic_calculation,205,,,,,,2,filter,current_price,greater_than,5,,AND,
+basic_calculation,205,,,,,,3,sort,daily_rsi_14,desc,,1,,
 ,,,,,,,,,,,,,,
-# Combined analysis examples (multi-step filtering),,,,,,,,,,,,,,
-basic_calculation,18,FALSE,large_cap_growth,FALSE,basic_calculation,market_trends,,1,filter,market_cap,greater_than,10000000000,,
-basic_calculation,18,,,,,,2,filter,daily_daily_yearly_252d_pct_change,greater_than,20,,AND,
-basic_calculation,18,,,,,,3,sort,daily_daily_yearly_252d_pct_change,desc,,1,,
+# 206: Near 52-week high — within 10% of ATH
+basic_calculation,206,FALSE,near_52w_high,FALSE,basic_calculation,market_trends,,1,filter,daily_distance_from_ATH_pct,greater_than,-0.10,,AND
+basic_calculation,206,,,,,,2,filter,current_price,greater_than,10,,AND,
+basic_calculation,206,,,,,,3,filter,daily_avg_volume_20,greater_than,100000,,AND,
+basic_calculation,206,,,,,,4,sort,daily_distance_from_ATH_pct,desc,,1,,
 ,,,,,,,,,,,,,,
-basic_calculation,19,FALSE,value_opportunities,FALSE,basic_calculation,market_trends,,1,filter,pe_ratio,less_than,20,,
-basic_calculation,19,,,,,,2,filter,pb_ratio,less_than,3,,AND,
-basic_calculation,19,,,,,,3,filter,current_price,greater_than,10,,AND,
-basic_calculation,19,,,,,,4,sort,dividend_yield,desc,,1,,
+# 207: Semiconductor industry — top performers
+basic_calculation,207,FALSE,semiconductors_top_performers,TRUE,top_performers_evolution,,,1,filter,industry,equals,Semiconductors,,AND
+basic_calculation,207,,,,,,2,filter,current_price,greater_than,5,,AND,
+basic_calculation,207,,,,,,3,sort,daily_daily_yearly_252d_pct_change,desc,,1,,
 ,,,,,,,,,,,,,,
-basic_calculation,20,FALSE,momentum_leaders,FALSE,basic_calculation,market_trends,,1,filter,daily_daily_weekly_5d_pct_change,greater_than,5,,
-basic_calculation,20,,,,,,2,filter,daily_daily_monthly_22d_pct_change,greater_than,15,,AND,
-basic_calculation,20,,,,,,3,sort,daily_daily_yearly_252d_pct_change,desc,,1,,
+# ================================================================
+# SECTION 3 — RS/PER REPORTS
+# Generates charts and PDF analysis from RS and percentile data.
+# template_routing_options: glob pattern to select specific RS/PER files.
+# ================================================================
+#
+# 301: QQQ IBD daily — RS and percentile report for all stocks vs QQQ
+rs/per,301,TRUE,qqq_ibd_daily_rs_per,TRUE,rs_per_template,,*QQQ*stocks*daily*,1,filter,current_price,greater_than,1,,
 ,,,,,,,,,,,,,,
-# Top Performers Evolution Templates (multi-timeframe performance tracking),,,,,,,,,,,,,,
-basic_calculation,50,FALSE,sp500_top_performers,TRUE,top_performers_evolution_v1,,,1,filter,SP500,equals,TRUE,,
-#basic_calculation,51,FALSE,nasdaq100_top_performers,TRUE,top_performers_evolution,,,1,filter,NASDAQ100,equals,TRUE,,
-#basic_calculation,52,FALSE,tech_sector_top_performers,FALSE,top_performers_evolution,,,1,filter,sector,equals,Electronic technology,,
-basic_calculation,53,FALSE,semiconductor_top_performers,TRUE,top_performers_evolution,,,1,filter,industry,equals,Semiconductors,,
-#basic_calculation,54,FALSE,all_market_top_performers,TRUE,top_performers_evolution,,,1,filter,current_price,greater_than,1,,
-#basic_calculation,55,FALSE,healthcare_top_performers,FALSE,top_performers_evolution,,,1,filter,sector,equals,Health technology,,
-#basic_calculation,56,FALSE,financial_top_performers,FALSE,top_performers_evolution,,,1,filter,sector,equals,Finance,,
+# 302: SPY IBD daily — RS and percentile report for all stocks vs SPY
+rs/per,302,FALSE,spy_ibd_daily_rs_per,FALSE,rs_per_template,,*SPY*stocks*daily*,1,filter,current_price,greater_than,1,,
 ,,,,,,,,,,,,,,
-# Overview V1 Template (comprehensive daily market analysis),,,,,,,,,,,,,,
-#basic_calculation,60,TRUE,daily_market_overview,TRUE,overview_v1,,,1,filter,current_price,greater_than,1,,
+# ================================================================
+# SECTION 4 — TOP PERFORMERS EVOLUTION REPORTS
+# Multi-timeframe performance tracking — shows 1d/1w/1m/3m/1y rankings.
+# ================================================================
+#
+# 401: SP500 top performers across all timeframes
+basic_calculation,401,TRUE,sp500_top_performers,TRUE,top_performers_evolution_v1,,,1,filter,SP500,equals,True,,AND
+basic_calculation,401,,,,,,2,filter,current_price,greater_than,5,,AND,
+basic_calculation,401,,,,,,3,sort,daily_daily_yearly_252d_pct_change,desc,,1,,
 ,,,,,,,,,,,,,,
-# RS/PER Template (comprehensive multi-timeframe RS and percentile analysis),,,,,,,,,,,,,,
-#rs/per,200,TRUE,comprehensive_rs_per_analysis,TRUE,rs_per_template,,,1,filter,current_price,greater_than,1,,
+# 402: Semiconductor top performers
+basic_calculation,402,FALSE,semiconductor_top_performers,TRUE,top_performers_evolution,,,1,filter,industry,equals,Semiconductors,,AND
+basic_calculation,402,,,,,,2,filter,current_price,greater_than,5,,AND,
+basic_calculation,402,,,,,,3,sort,daily_daily_yearly_252d_pct_change,desc,,1,,
 ,,,,,,,,,,,,,,
-# New Enhanced Configurations with Template Routing Options,,,,,,,,,,,,,,
-# Enhanced single-file routing,,,,,,,,,,,,,,
-#basic_calculation,61,FALSE,tech_focus_daily,TRUE,overview_v1,,1,filter,sector,equals,Electronic technology,,,
-#basic_calculation,62,FALSE,finance_focus_weekly,FALSE,overview_v1,,1,filter,sector,equals,Finance,,,
-,,,,,,,,,,,,,,
-# Multi-directory with specific routing patterns,,,,,,,,,,,,,,
-#rs/per,201,TRUE,ibd_daily_analysis,TRUE,rs_per_template,,*ibd*daily*,1,filter,current_price,greater_than,1,,
-#rs/per,202,FALSE,ma_weekly_analysis,FALSE,rs_per_template,,1,filter,current_price,greater_than,1,,,
-#rs/per,203,FALSE,qqq_benchmark_focus,TRUE,rs_per_template,,1,filter,current_price,greater_than,50,,,
-#rs/per,204,FALSE,stocks_only_analysis,FALSE,rs_per_template,,1,filter,current_price,greater_than,10,,,
-,,,,,,,,,,,,,,
-# Advanced routing combinations,,,,,,,,,,,,,,
-#rs/per,205,TRUE,qqq_ibd_daily_stocks,TRUE,rs_per_template,,1,filter,current_price,greater_than,25,,,
-#rs/per,206,FALSE,spy_ma_weekly_comprehensive,FALSE,rs_per_template,,1,filter,current_price,greater_than,5,,,
-,,,,,,,,,,,,,,
-# Benchmark comparison analysis,,,,,,,,,,,,,,
-rs/per,207,TRUE,method_comparison_daily,FALSE,rs_per_template,,*QQQ*sectors*daily*,filter,current_price,greater_than,1,,,
-rs/per,208,TRUE,method_comparison_daily,FALSE,rs_per_template,,*QQQ*industries*daily*,filter,current_price,greater_than,1,,,
-rs/per,209,TRUE,benchmark_comparison_daily,TRUE,rs_per_template,,*QQQ*stocks*daily*,filter,current_price,greater_than,1,,,

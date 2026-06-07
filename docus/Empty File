@@ -1,0 +1,480 @@
+base) imagda@aldo:~/_invest2024/python/metaData_v1$ python main.py
+🚀 FINANCIAL DATA POST-PROCESSING SYSTEM
+============================================================
+Phase 2: Batch Analysis of Downloaded Market Data
+============================================================
+📁 Creating required directories...
+📋 User choice: 2
+
+============================================================
+UNIFIED TICKER FILE GENERATION
+============================================================
+User choice: 2
+🔄 Removed existing universe data for regeneration
+🔄 Creating boolean-enhanced universe data...
+📊 Loaded 6732 tickers from root universe
+🧹 Cleaning ticker names...
+📊 Original tickers: 6732
+🚫 Filtered out: 384 tickers with '/' characters
+✅ Clean tickers: 6348
+🏗️  Created 51 boolean index columns
+🎯 Top indexes: NASDAQComposite(3300), Russell3000(2586), Russell2000(1961), MiniRussell2000(1961), NASDAQIndustrials(1107), Russell1000(1008), NasdaqUSSmallCapGrowth(990), SP500(503), NASDAQComputer(463), SPMidCap400(400)
+🏗️  Created 3 boolean exchange columns
+🎯 Exchanges: exchange_NASDAQ(3612), exchange_NYSE(2393), exchange_AMEX(277)
+🏗️  Created 5 boolean rating columns
+🎯 Ratings: rating_Neutral(2839), rating_Buy(1811), rating_Sell(71), rating_Strong_buy(1553), rating_Strong_sell(8)
+✅ Created boolean-enhanced universe: 6348 tickers, 70 columns
+
+📊 STEP 1: Generating universe files (choice 0)...
+  • No filtering applied - using full universe (6348 tickers)
+✅ Force-generated files for choice 0: 6348 tickers
+
+📊 STEP 2: Generating files for user choices: [2]
+  • Applied filters: NASDAQ100(101)
+  • Choice 2: 101 tickers after filtering
+✅ Force-generated files for choice 2: 101 tickers
+
+✅ All ticker files generated successfully!
+
+📋 FILE GENERATION SUMMARY
+========================================
+User choice: 2
+Individual choices processed: [2]
+  Choice 0: 3 files
+  Choice 2: 3 files
+Total files generated: 6
+📊 Using clean ticker file for processing: /home/imagda/_invest2024/python/metaData_v1/data/tickers/combined_info_tickers_clean_2.csv
+📊 Total tickers for processing: 101
+🔍 Sample tickers: ['BKNG', 'MELI', 'REGN', 'CHTR', 'KLAC', 'META', 'ASML', 'NFLX', 'COST', 'ADBE']
+📈 Processing timeframes: daily
+
+============================================================
+UNIVERSE GENERATION
+============================================================
+✅ Generated 220 universe files:
+  🌐 Master universe: 6348 tickers (source of truth)
+  📈 Index universes: 58
+    • NASDAQComposite: 3300 tickers
+    • SP500: 503 tickers
+    • SP500ConsumerDiscretionary: 51 tickers
+    • Russell3000: 2586 tickers
+    • Russell1000: 1008 tickers
+    ... and 53 more
+  🏭 Sector universes: 24
+    • Health_technology: 950 tickers
+    • Finance: 1440 tickers
+    • Consumer_durables: 152 tickers
+    ... and 21 more
+  🔧 Industry universes: 130
+    • Pharmaceuticals_major: 379 tickers
+    • Property_Casualty_insurance: 52 tickers
+    • Homebuilding: 27 tickers
+    ... and 127 more
+  💰 Market cap universes: 6
+    • mega_cap: 62 tickers
+    • large_cap: 890 tickers
+    • mid_cap: 1133 tickers
+    • small_cap: 1738 tickers
+    • micro_cap: 1345 tickers
+    • nano_cap: 950 tickers
+📊 Universe files directory: /home/imagda/_invest2024/python/metaData_v1/results/ticker_universes
+
+⏭️  PRE_PROCESS PHASE SKIPPED
+
+🌍 EXECUTING MARKET HEALTH PHASE (Layer 1)
+============================================================
+
+⏭️ Sustainability Ratios (SR) analysis disabled - skipping
+
+============================================================
+📊 MARKET BREADTH ANALYSIS - ALL TIMEFRAMES
+============================================================
+
+📊 Processing DAILY timeframe...
+✅ Market breadth matrix calculated for daily
+  • Universes processed: 2
+  • SP500: 1604 trading days
+  • NASDAQ100: 1604 trading days
+💾 Saving market breadth matrices for daily...
+✅ Market Breadth Matrix Saved (DAILY DATA):
+  • Output file: results/layer1_market_health/market_breadth/market_breadth_SP500_2_daily_20260520.csv
+  • Universe: SP500
+  • Total trading days: 1604
+  • Total indicators: 90
+  • Data date: 20260520
+  • Key breadth indicators: 7 (advance/decline, highs/lows, MA breadth)
+  • Date range: 2020-01-02 00:00:00 to 2026-05-20 00:00:00
+✅ Market Breadth Matrix Saved (DAILY DATA):
+  • Output file: results/layer1_market_health/market_breadth/market_breadth_NASDAQ100_2_daily_20260520.csv
+  • Universe: NASDAQ100
+  • Total trading days: 1604
+  • Total indicators: 90
+  • Data date: 20260520
+  • Key breadth indicators: 7 (advance/decline, highs/lows, MA breadth)
+  • Date range: 2020-01-02 00:00:00 to 2026-05-20 00:00:00
+
+📊 Market Breadth Matrix Generation Summary (DAILY):
+  • Configuration type: separate
+  • Files generated: 2
+  • Universes processed: ['SP500', 'NASDAQ100']
+  • Separate analysis: Each universe analyzed independently
+✅ Market breadth matrices saved for daily:
+  • SP500: results/layer1_market_health/market_breadth/market_breadth_SP500_2_daily_20260520.csv
+    📅 Data date: 2026-05-20
+  • NASDAQ100: results/layer1_market_health/market_breadth/market_breadth_NASDAQ100_2_daily_20260520.csv
+    📅 Data date: 2026-05-20
+🎨 Generating breadth charts for daily...
+✅ Generated 2 charts for daily
+   📊 market_breadth_SP500_2_daily_20260520.png
+   📊 market_breadth_NASDAQ100_2_daily_20260520.png
+2026-06-05 01:13:02,317 - WARNING - Breadth file not found: results/layer1_market_health/market_breadth/market_breadth_SP500_2-5_daily_20260520.csv
+2026-06-05 01:13:02,317 - WARNING - Breadth file not found: results/layer1_market_health/market_breadth/market_breadth_NASDAQ100_2-5_daily_20260520.csv
+
+✅ MARKET BREADTH ANALYSIS COMPLETED!
+📊 Total matrices processed: 2
+🕒 Timeframes processed: daily
+
+📄 GENERATING BREADTH REPORTS...
+  ✅ Generated: breadth_report_NASDAQ100_2_daily_20260520.pdf
+  ✅ Generated: breadth_report_SP500_2_daily_20260520.pdf
+📄 BREADTH REPORTS COMPLETED: 2 reports generated
+
+============================================================
+📊 MARKET PULSE ANALYSIS - ALL TIMEFRAMES
+============================================================
+
+📊 Processing DAILY timeframe...
+
+📄 GENERATING GMI/GMI2 REPORTS...
+📄 GMI/GMI2 REPORTS COMPLETED: 1 reports generated
+  ✅ Generated: gmi_gmi2_SPY_2_daily_20260520.pdf
+
+📄 GENERATING COMPREHENSIVE MARKET PULSE REPORTS...
+📄 COMPREHENSIVE MARKET PULSE REPORTS COMPLETED: 6 reports generated
+  ✅ Generated: market_pulse_IWM_2_daily_20260218.pdf
+  ✅ Generated: market_pulse_IWM_2_daily_20260520.pdf
+  ✅ Generated: market_pulse_QQQ_2_daily_20260218.pdf
+  ✅ Generated: market_pulse_QQQ_2_daily_20260520.pdf
+  ✅ Generated: market_pulse_SPY_2_daily_20260218.pdf
+  ✅ Generated: market_pulse_SPY_2_daily_20260520.pdf
+  📊 timestamp: results available
+  📊 success: results available
+  📊 timeframe: results available
+  📊 data_date: results available
+  ⚠️  indexes: unknown issue
+  ⚠️  market_summary: unknown issue
+  📊 alerts: results available
+  ⚠️  analysis_metadata: unknown issue
+✅ Market pulse analysis completed for daily
+  • Components processed: 5
+
+✅ MARKET PULSE ANALYSIS COMPLETED!
+📊 Total components processed: 5
+🕒 Timeframes processed: daily
+✅ MARKET HEALTH PHASE COMPLETED
+
+🔥 EXECUTING BASIC CALCULATIONS PHASE (Layer 2)
+============================================================
+
+============================================================
+🔧 BASIC CALCULATIONS - ALL TIMEFRAMES, ALL BATCHES (STREAMING)
+============================================================
+
+📊 Processing DAILY timeframe...
+📦 Processing 101 tickers in 2 batches of 100
+🔄 Loading batch 1/2 (100 tickers) - 50.0%
+✅ Loaded 100 valid tickers from batch 1
+🔄 Loading batch 2/2 (1 tickers) - 100.0%
+✅ Loaded 1 valid tickers from batch 2
+✅ Basic calculations completed for daily: 101 tickers
+📁 Results saved to: /home/imagda/_invest2024/python/metaData_v1/results/layer2_basic_calculations/basic_calculation/basic_calculation_2_daily_20260520.csv
+💾 Memory saved: -0.1 MB
+
+✅ BASIC CALCULATIONS COMPLETED!
+📊 Total tickers processed: 101
+🕒 Timeframes processed: daily
+
+============================================================
+🎯 STAGE ANALYSIS - ALL TIMEFRAMES, ALL BATCHES (STREAMING)
+============================================================
+
+📊 Processing DAILY timeframe...
+📦 Processing 101 tickers in 2 batches of 100
+🔄 Loading batch 1/2 (100 tickers) - 50.0%
+✅ Loaded 100 valid tickers from batch 1
+🔄 Loading batch 2/2 (1 tickers) - 100.0%
+✅ Loaded 1 valid tickers from batch 2
+✅ Stage analysis completed for daily: 101 tickers
+📁 Results saved to: /home/imagda/_invest2024/python/metaData_v1/results/layer2_basic_calculations/stage_analysis/stage_analysis_2_daily_20260520.csv
+💾 Memory saved: -0.0 MB
+
+✅ STAGE ANALYSIS COMPLETED!
+📊 Total tickers processed: 101
+🕒 Timeframes processed: daily
+
+🔗 ENRICHING STAGE ANALYSIS FILES WITH BUSINESS METADATA...
+✅ Stage analysis files enriched with sector, industry, index membership, and market cap data
+
+📄 GENERATING STAGE ANALYSIS REPORTS...
+  🎯 Processing: stage_analysis_2_daily_20260520.csv
+  ✅ Generated: stage_analysis_2_daily_20260520.pdf (171.3 KB)
+📄 STAGE ANALYSIS REPORTS COMPLETED: 1 reports generated
+
+============================================================
+RELATIVE STRENGTH (RS) ANALYSIS
+============================================================
+
+📊 Processing RS DAILY timeframe...
+✅ RS analysis completed: 101 tickers, 1 timeframes
+
+============================================================
+PERCENTILE (PER) ANALYSIS
+============================================================
+
+📊 Processing PER DAILY timeframe...
+✅ BASIC CALCULATIONS PHASE COMPLETED
+
+📊 EXECUTING SCREENERS PHASE
+============================================================
+2026-06-05 01:13:27,088 - WARNING - SCOOTER screeners: no basic_calc daily file found — run BASIC phase first
+
+============================================================
+🔍 PVB SCREENER - ALL TIMEFRAMES, ALL BATCHES (STREAMING)
+============================================================
+
+📊 Processing DAILY timeframe...
+📦 Processing 101 tickers in 2 batches of 100
+🔄 Loading batch 1/2 (100 tickers) - 50.0%
+✅ Loaded 100 valid tickers from batch 1
+🔄 Loading batch 2/2 (1 tickers) - 100.0%
+✅ Loaded 1 valid tickers from batch 2
+✅ PVB screener completed for daily: 84 results
+📁 Results saved to: /home/imagda/_invest2024/python/metaData_v1/results/layer3_screeners/pvbTW/pvb_screener_2_daily_20260520.csv
+💾 Memory saved: -0.0 MB
+
+✅ PVB SCREENER COMPLETED!
+📊 Total results processed: 84
+🕒 Timeframes processed: daily
+
+📊 Exporting to TradingView watchlist...
+
+📊 TradingView Watchlist Export Complete!
+   📁 pvb_watchlist_2_20260605.txt
+   📍 Location: /home/imagda/_invest2024/python/metaData_v1/results/layer3_screeners/pvbTW
+
+============================================================
+📈 MINERVINI TEMPLATE SCREENER — ALL TIMEFRAMES (STREAMING)
+============================================================
+
+📊 Processing DAILY timeframe...
+📦 101 tickers in 2 batches of 100
+✅ Minervini completed for daily: 101 results
+📁 Saved to: /home/imagda/_invest2024/python/metaData_v1/results/layer3_screeners/minervini/minervini_screener_2_daily_20260520.csv
+
+✅ MINERVINI SCREENER COMPLETED!
+📊 Total results: 101
+
+============================================================
+🚀 QULLAMAGGIE SCREENER — ALL TIMEFRAMES (STREAMING)
+============================================================
+
+📊 Processing DAILY timeframe...
+📦 101 tickers in 2 batches of 100
+✅ Qullamaggie completed for daily: 6 results
+📁 Saved to: /home/imagda/_invest2024/python/metaData_v1/results/layer3_screeners/qullamaggie/qullamaggie_screener_2_daily_20260520.csv
+
+✅ QULLAMAGGIE SCREENER COMPLETED!
+📊 Total results: 6
+
+============================================================
+🏆 GIUSTI MOMENTUM CASCADE SCREENER
+============================================================
+
+📊 Loading basic_calc: basic_calculation_2_daily_20260520.csv
+  Step 1 (12m top 50): 50 stocks
+  Step 2 (6m  top 30): 30 stocks
+  Step 3 (3m  top 10): 10 stocks → portfolio
+  Portfolio: ['INTC', 'MRVL', 'AMD', 'ARM', 'MU', 'FTNT', 'ON', 'CSCO', 'GFS', 'TXN']
+✅ Giusti portfolio saved: giusti_portfolio_2_daily_20260520.csv
+✅ Giusti funnel saved: giusti_funnel_2_daily_20260520.csv
+
+✅ GIUSTI SCREENER COMPLETED!
+📊 Portfolio size: 10 stocks
+
+============================================================
+🔍 ATR1 SCREENER - ALL TIMEFRAMES, ALL BATCHES
+============================================================
+
+📊 Processing DAILY timeframe...
+📦 Processing 101 tickers in 2 batches of 100
+🔄 Processing batch 1/2 (100 tickers) - 50.0%
+✅ Loaded 100 valid tickers from batch 1
+⚡ Data optimization: 83.9% reduction (daily, limit=252)
+🔄 Processing batch 2/2 (1 tickers) - 100.0%
+✅ Loaded 1 valid tickers from batch 2
+⚡ Data optimization: 84.3% reduction (daily, limit=252)
+✅ ATR1 screener completed for daily: 101 tickers
+💾 Saving ATR1 screener matrix for daily...
+✅ Matrix saved: /home/imagda/_invest2024/python/metaData_v1/results/screeners/atr1/atr1_screener_2_daily_20260415.csv
+
+✅ ATR1 SCREENER COMPLETED!
+📊 Total tickers processed: 101
+🕒 Timeframes processed: daily
+
+============================================================
+🔍 DRWISH SCREENER - ALL TIMEFRAMES, ALL BATCHES (ACCUMULATION)
+============================================================
+
+📊 Processing DAILY timeframe...
+📦 Processing 101 tickers in 2 batches of 100
+🔄 Processing batch 1/2 (100 tickers) - 50.0%
+✅ Loaded 100 valid tickers from batch 1
+🔄 Processing batch 2/2 (1 tickers) - 100.0%
+✅ Loaded 1 valid tickers from batch 2
+💾 Saving DRWISH screener matrix for daily...
+📁 Saved 4 results to: /home/imagda/_invest2024/python/metaData_v1/results/screeners/drwish/drwish_screener_2_set1_daily_20260518.csv
+📁 Saved 7 results to: /home/imagda/_invest2024/python/metaData_v1/results/screeners/drwish/drwish_screener_2_set2_daily_20260507.csv
+✅ DRWISH screener completed for daily: 11 total results across all parameter sets
+
+📈 DRWISH SCREENER SUMMARY:
+📊 Total results processed: 11
+⏱️  Processing completed successfully
+
+============================================================
+🔍 VOLUME SUITE SCREENER - ALL TIMEFRAMES, ALL BATCHES (STREAMING)
+============================================================
+
+📊 Processing DAILY timeframe...
+📦 Processing 101 tickers in 2 batches of 100
+🔄 Loading batch 1/2 (100 tickers) - 50.0%
+✅ Loaded 100 valid tickers from batch 1
+🔄 Loading batch 2/2 (1 tickers) - 100.0%
+✅ Loaded 1 valid tickers from batch 2
+
+🚀 Processing 2 valid batches with Volume Suite screener...
+🔄 Processing batch 1/2 with Volume Suite...
+✅ Batch 1 completed: 97001 results processed across 5 components
+🔄 Processing batch 2/2 with Volume Suite...
+✅ Batch 2 completed: 1077 results processed across 5 components
+✅ Volume Suite screener completed for daily: 98078 total results
+📁 Component files created:
+   - /home/imagda/_invest2024/python/metaData_v1/results/layer3_screeners/volume_suite/volume_suite_hv_absolute_daily_20260605.csv
+   - /home/imagda/_invest2024/python/metaData_v1/results/layer3_screeners/volume_suite/volume_suite_hv_stdv_daily_20260605.csv
+   - /home/imagda/_invest2024/python/metaData_v1/results/layer3_screeners/volume_suite/volume_suite_enhanced_anomaly_daily_20260605.csv
+   - /home/imagda/_invest2024/python/metaData_v1/results/layer3_screeners/volume_suite/volume_suite_volume_indicators_daily_20260605.csv
+   - /home/imagda/_invest2024/python/metaData_v1/results/layer3_screeners/volume_suite/volume_suite_pvb_clmodel_daily_20260605.csv
+   - /home/imagda/_invest2024/python/metaData_v1/results/layer3_screeners/volume_suite/volume_suite_hv_absolute_daily_20260605.csv
+   - /home/imagda/_invest2024/python/metaData_v1/results/layer3_screeners/volume_suite/volume_suite_hv_stdv_daily_20260605.csv
+   - /home/imagda/_invest2024/python/metaData_v1/results/layer3_screeners/volume_suite/volume_suite_enhanced_anomaly_daily_20260605.csv
+   - /home/imagda/_invest2024/python/metaData_v1/results/layer3_screeners/volume_suite/volume_suite_volume_indicators_daily_20260605.csv
+   - /home/imagda/_invest2024/python/metaData_v1/results/layer3_screeners/volume_suite/volume_suite_pvb_clmodel_daily_20260605.csv
+
+✅ VOLUME SUITE SCREENER COMPLETED!
+📊 Total results processed: 98078
+🕒 Timeframes processed: daily
+
+🔍 GUPPY SCREENER - Processing timeframes: daily
+
+📊 Processing GUPPY DAILY timeframe...
+📦 Processing 101 tickers in 2 batches of 100
+✅ GUPPY screener processing completed
+
+🚀 GOLD LAUNCH PAD SCREENER - Processing timeframes: daily
+
+📊 Processing Gold Launch Pad DAILY timeframe...
+📦 Processing 101 tickers in 2 batches of 100
+✅ Gold Launch Pad screener processing completed
+
+🔍 RTI SCREENER - Processing timeframes: daily
+
+📊 Processing RTI DAILY timeframe...
+📦 Processing 101 tickers in 2 batches of 100
+🔄 Loading batch 1/2 (100 tickers) - 50.0%
+✅ Loaded 100 valid tickers from batch 1
+🔄 Loading batch 2/2 (1 tickers) - 100.0%
+✅ Loaded 1 valid tickers from batch 2
+✅ RTI completed for daily: 202 signals
+✅ RTI SCREENER COMPLETED!
+📊 Total signals: 202
+🕒 Timeframes processed: daily
+
+🔍 ADL ENHANCED SCREENER - Processing timeframes: daily
+
+📊 Processing ADL Enhanced DAILY timeframe...
+📦 Processing 101 tickers in 2 batches of 100
+✅ ADL Enhanced Screener processing completed
+
+📊 STOCKBEE SUITE SCREENER - Processing timeframes: daily
+⚠️  PHASE A: 3 of 4 screeners at 100%, Industry Leaders at ~60% (limited RS data)
+2026-06-05 01:20:34,236 - ERROR - Could not load ticker_universe_all.csv: cannot access local variable 'pd' where it is not associated with a value
+2026-06-05 01:20:34,236 - WARNING - ⚠️ Market cap and industry filters will be DISABLED
+
+📊 Processing Stockbee DAILY timeframe...
+📦 Processing 101 tickers in 2 batches of 100
+🔄 Loading batch 1/2 (100 tickers) - 50.0%
+✅ Loaded 100 valid tickers from batch 1
+2026-06-05 01:20:35,158 - ERROR - ❌ No ticker_info provided - market cap and industry filters DISABLED
+2026-06-05 01:20:35,158 - WARNING - ⚠️ No RS data provided - Industry Leaders will use fallback logic (~60% accuracy)
+2026-06-05 01:20:35,191 - WARNING - Industry Leaders screener skipped - no ticker info available
+🔄 Loading batch 2/2 (1 tickers) - 100.0%
+✅ Loaded 1 valid tickers from batch 2
+2026-06-05 01:20:35,556 - ERROR - ❌ No ticker_info provided - market cap and industry filters DISABLED
+2026-06-05 01:20:35,556 - WARNING - ⚠️ No RS data provided - Industry Leaders will use fallback logic (~60% accuracy)
+2026-06-05 01:20:35,556 - WARNING - Industry Leaders screener skipped - no ticker info available
+
+✅ Stockbee completed for daily: 6 total signals
+   📈 9M Movers: 4
+   📈 Weekly Movers: 1
+   📈 Daily Gainers: 1
+   📈 Industry Leaders: 0 (⚠️ limited RS data)
+
+✅ STOCKBEE SUITE SCREENER COMPLETED!
+📊 Total signals: 6
+🕒 Timeframes processed: daily
+⚠️  NOTE: PHASE A results - Industry Leaders at ~60% accuracy (full accuracy requires Phase B)
+✅ SCREENERS PHASE COMPLETED
+
+============================================================
+📋 CALCULATION PHASES SUMMARY
+============================================================
+🛵 stSCOOTER: 0 tickers | fastSCOOTER: 0 tickers | Combined: 0 tickers
+✅ Basic Calculations: 101 total tickers processed
+✅ Market Breadth Analysis: 2 total matrices processed
+✅ Market Pulse Analysis: 5 total components processed
+✅ Stage Analysis: 101 total tickers processed
+✅ PVB Screener: 84 total tickers processed
+📈 Minervini Screener: 101 total tickers processed
+🚀 Qullamaggie Screener: 6 total tickers processed
+🏆 Giusti Cascade: 10 portfolio stocks selected
+✅ ATR1 Screener: 101 total tickers processed
+✅ DRWISH Screener: 11 total tickers processed
+✅ Volume Suite Screener: 98078 total tickers processed
+✅ GUPPY Screener: 155 total tickers processed
+🚀 Gold Launch Pad Screener: 21 total tickers processed
+🔍 RTI Screener: 202 total signals detected
+📊 ADL Enhanced Screener: 101 total tickers processed
+📈 Stockbee Suite Screener: 6 total signals detected (PHASE A)
+✅ Additional Calculations: 0 total tickers processed
+🕒 Timeframes completed: daily
+
+📈 EXECUTING POST-PROCESSING PHASE
+============================================================
+
+🔄 RUNNING POST-PROCESSING WORKFLOW...
+✅ Post-processing completed successfully!
+📁 Processed 3 file types:
+   • multi_file_f101 -> multi_file_pvb_stage2_breakouts_20260605_012035.csv
+   • multi_file_f105 -> multi_file_pvb_minervini_intersection_20260605_012036.csv
+   • multi_file_f106 -> multi_file_pvb_stage2_rs80_20260605_012036.csv
+📂 Output directory: results/post_process/
+✅ POST-PROCESSING PHASE COMPLETED
+
+🎯 Next steps:
+  • Review results in the results/ directory
+  • Check generated PDF report for comprehensive overview
+  • Check percentage movers reports for significant movements
+  • Implement specific calculation modules in src/
+  • Customize screeners and models as needed
+
+Finished.
+

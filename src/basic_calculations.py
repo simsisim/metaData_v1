@@ -32,31 +32,27 @@ def find_latest_basic_calculation_file(config, timeframe, user_choice):
         Path: Path to the most recent basic_calculation file or None if not found
     """
     from src.config import get_file_safe_user_choice
-    
+
     # Try new hyphen format first (0-5), then fall back to legacy underscore format (0_5)
     user_choice_formats = [
         get_file_safe_user_choice(user_choice, preserve_hyphens=True),   # 0-5 format
         get_file_safe_user_choice(user_choice, preserve_hyphens=False)   # 0_5 format (legacy)
     ]
-    
-    from datetime import timedelta
-    
+
     for user_choice_format in user_choice_formats:
         base_name = f'basic_calculation_{user_choice_format}_{timeframe}'
-        
-        # Try date-stamped version first (newest format) - check today and recent dates
-        for days_back in range(7):  # Look back up to 7 days for date-stamped files
-            check_date = (datetime.now() - timedelta(days=days_back)).strftime("%Y%m%d")
-            dated_file = config.directories['BASIC_CALCULATION_DIR'] / f'{base_name}_{check_date}.csv'
-            if dated_file.exists():
-                return dated_file
-        
+        calc_dir = config.directories['BASIC_CALCULATION_DIR']
+
+        # Glob all date-stamped files and return the most recent (YYYYMMDD sorts lexicographically)
+        dated_files = sorted(calc_dir.glob(f'{base_name}_????????.csv'))
+        if dated_files:
+            return dated_files[-1]
+
         # Fall back to non-dated version (legacy format)
-        legacy_file = config.directories['BASIC_CALCULATION_DIR'] / f'{base_name}.csv'
+        legacy_file = calc_dir / f'{base_name}.csv'
         if legacy_file.exists():
             return legacy_file
-    
-    # If no files found in either format
+
     return None
 
 
@@ -750,6 +746,128 @@ def load_index_boolean_data(config):
         logger.error(f"Error loading ticker universe data: {e}")
 
     return universe_data
+
+
+def calculate_scooter(df: pd.DataFrame, user_config, variant: str = 'st') -> dict:
+    """
+    Calculate SCOOTER score (stSCOOTER or fastSCOOTER) for a single ticker.
+
+    Formula (John Murphy / StockCharts SCTR):
+      long_score  = (var1 + var2) / 2  * weight_long  / 100
+      med_score   = (var3 + var4) / 2  * weight_medium / 100
+      short_score = (var5 + var6) / 2  * weight_short  / 100
+      scooter = clamp(50 + 2.5 * (long + med + short), 0, 99.9)
+
+    PPO constants (fixed): fast=12, slow=26, signal=9, slope_window=3 bars.
+
+    Args:
+        df: OHLCV DataFrame indexed by date, must have 'Close' column.
+        user_config: UserConfiguration with stscooter_* / fastscooter_* attrs.
+        variant: 'st' for stSCOOTER, 'fast' for fastSCOOTER.
+
+    Returns:
+        dict with 8 keys (prefix = 'stscooter_' or 'fastscooter_'), or empty dict
+        if there is insufficient data.
+    """
+    prefix = 'stscooter' if variant == 'st' else 'fastscooter'
+
+    if variant == 'st':
+        w_long   = getattr(user_config, 'stscooter_weight_long',   60)
+        w_med    = getattr(user_config, 'stscooter_weight_medium',  30)
+        w_short  = getattr(user_config, 'stscooter_weight_short',   10)
+        p_ema_l  = getattr(user_config, 'stscooter_ema_long_period',  200)
+        p_roc_l  = getattr(user_config, 'stscooter_roc_long_period',  125)
+        p_ema_s  = getattr(user_config, 'stscooter_ema_short_period',  50)
+        p_roc_s  = getattr(user_config, 'stscooter_roc_short_period',  20)
+        p_rsi    = getattr(user_config, 'stscooter_rsi_period',        14)
+    else:
+        w_long   = getattr(user_config, 'fastscooter_weight_long',   10)
+        w_med    = getattr(user_config, 'fastscooter_weight_medium',  30)
+        w_short  = getattr(user_config, 'fastscooter_weight_short',   60)
+        p_ema_l  = getattr(user_config, 'fastscooter_ema_long_period',  50)
+        p_roc_l  = getattr(user_config, 'fastscooter_roc_long_period',  20)
+        p_ema_s  = getattr(user_config, 'fastscooter_ema_short_period', 21)
+        p_roc_s  = getattr(user_config, 'fastscooter_roc_short_period',  5)
+        p_rsi    = getattr(user_config, 'fastscooter_rsi_period',        7)
+
+    # Warn if weights don't sum to 100 (once, via logger)
+    if w_long + w_med + w_short != 100:
+        logger.warning(
+            f"{prefix} weights sum to {w_long + w_med + w_short}, expected 100 — score will be off"
+        )
+
+    min_bars = max(p_ema_l, p_roc_l, 26 + 9)  # 26+9 for PPO signal line warm-up
+    if df is None or len(df) < min_bars or 'Close' not in df.columns:
+        return {}
+
+    close = df['Close']
+
+    # --- var1: % above/below long EMA ---
+    ema_long = close.ewm(span=p_ema_l, adjust=False).mean()
+    var1 = ((close - ema_long) / ema_long * 100).iloc[-1]
+
+    # --- var2: long-term ROC ---
+    if len(close) > p_roc_l:
+        var2 = (close.iloc[-1] - close.iloc[-(p_roc_l + 1)]) / close.iloc[-(p_roc_l + 1)] * 100
+    else:
+        var2 = 0.0
+
+    # --- var3: % above/below short EMA ---
+    ema_short = close.ewm(span=p_ema_s, adjust=False).mean()
+    var3 = ((close - ema_short) / ema_short * 100).iloc[-1]
+
+    # --- var4: short-term ROC ---
+    if len(close) > p_roc_s:
+        var4 = (close.iloc[-1] - close.iloc[-(p_roc_s + 1)]) / close.iloc[-(p_roc_s + 1)] * 100
+    else:
+        var4 = 0.0
+
+    # --- var5: 3-bar slope of PPO histogram (PPO fixed: 12/26/9) ---
+    ppo_fast = close.ewm(span=12, adjust=False).mean()
+    ppo_slow = close.ewm(span=26, adjust=False).mean()
+    ppo_line = (ppo_fast - ppo_slow) / ppo_slow * 100
+    ppo_signal = ppo_line.ewm(span=9, adjust=False).mean()
+    ppo_hist = ppo_line - ppo_signal
+    var5 = (ppo_hist.iloc[-1] - ppo_hist.iloc[-3]) / 3 if len(ppo_hist) >= 3 else 0.0
+
+    # --- var6: RSI centered ---
+    delta = close.diff()
+    gain = delta.clip(lower=0).rolling(p_rsi).mean()
+    loss = (-delta.clip(upper=0)).rolling(p_rsi).mean()
+    rs = gain / loss.replace(0, np.nan)
+    rsi = 100 - (100 / (1 + rs))
+    var6 = float(rsi.iloc[-1]) - 50 if not np.isnan(rsi.iloc[-1]) else 0.0
+
+    # --- Composite score ---
+    long_score  = ((var1 + var2) / 2) * (w_long  / 100)
+    med_score   = ((var3 + var4) / 2) * (w_med   / 100)
+    short_score = ((var5 + var6) / 2) * (w_short / 100)
+    raw = long_score + med_score + short_score
+    score = float(np.clip(50 + 2.5 * raw, 0, 99.9))
+
+    # --- Label ---
+    threshold_top    = 90 if variant == 'st' else 85
+    threshold_strong = 70 if variant == 'st' else 65
+    threshold_weak   = 40 if variant == 'st' else 30
+    if score >= threshold_top:
+        label = 'leader'
+    elif score >= threshold_strong:
+        label = 'strong'
+    elif score >= threshold_weak:
+        label = 'average'
+    else:
+        label = 'weak'
+
+    return {
+        f'{prefix}_var1_ema_long_pct':  round(float(var1), 4),
+        f'{prefix}_var2_roc_long':       round(float(var2), 4),
+        f'{prefix}_var3_ema_short_pct': round(float(var3), 4),
+        f'{prefix}_var4_roc_short':      round(float(var4), 4),
+        f'{prefix}_var5_ppo_slope':      round(float(var5), 6),
+        f'{prefix}_var6_rsi_centered':   round(float(var6), 4),
+        f'{prefix}_score':               round(score, 2),
+        f'{prefix}_label':               label,
+    }
 
 
 def basic_calculations(batch_data, output_path, timeframe, user_config, config=None):
