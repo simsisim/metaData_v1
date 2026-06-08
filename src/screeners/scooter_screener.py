@@ -87,8 +87,8 @@ class ScooterScreener:
             return pd.DataFrame()
         common = set(st_result[ticker_col]) & set(fast_result[ticker_col])
         combined = st_result[st_result[ticker_col].isin(common)].copy()
-        fast_scores = fast_result[[ticker_col, 'fastscooter_score', 'fastscooter_tier']].set_index(ticker_col)
-        combined = combined.join(fast_scores, on=ticker_col, how='left')
+        fast_tiers = fast_result[[ticker_col, 'fastscooter_tier']].set_index(ticker_col)
+        combined = combined.join(fast_tiers, on=ticker_col, how='left')
         combined['combined_avg_score'] = (
             combined['stscooter_score'] + combined['fastscooter_score']
         ) / 2

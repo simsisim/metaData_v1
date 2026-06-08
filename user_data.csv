@@ -36,7 +36,7 @@ MARKET_BREADTH_universe,SP500;NASDAQ100,Universe for breadth analysis (all SP500
 # SECTION 1 — ENVIRONMENT & PATHS,,
 # ================================================================,,
 auto_detect_environment,FALSE,Automatically detect local vs Colab environment
-manual_environment_override,colab,Manual override: local | colab | (empty for auto)
+manual_environment_override,local,Manual override: local | colab | (empty for auto)
 ,,
 # Local paths,,
 YF_daily_data_files_local,../downloadData_v1/data/market_data/daily/,Local: daily (1d) OHLCV files
