@@ -10,24 +10,24 @@ ticker_choice,2,Ticker combination choice (0-8)
 PRE_PROCESS,FALSE,Pre-process TradingView data
 MARKET_HEALTH,TRUE,Layer 1: SR + market breadth + market pulse
 BASIC,TRUE,Layer 2: basic calcs + stage analysis + RS + percentile
-SCREENERS,TRUE,Layer 3: all screeners
-POST_PROCESS,TRUE,Post-processing and report generation
+SCREENERS,FALSE,Layer 3: all screeners
+POST_PROCESS,FALSE,Post-processing and report generation
 BACKTESTING,FALSE,Backtesting analysis
 # --- Screener enable flags (all screeners) ---,,
-PVB_TWmodel_enable,TRUE,Enable PVB TWmodel screener
-MINERVINI_enable,TRUE,Enable Minervini Template screener
-QULLAMAGGIE_SUITE_enable,TRUE,Enable Qullamaggie screener
-GIUSTI_enable,TRUE,Enable Giusti momentum cascade screener (12m→6m→3m top 10)
-DRWISH_enable,TRUE,Enable Dr. Wish suite screener
-STOCKBEE_SUITE_enable,TRUE,Enable Stockbee Suite screener
-ATR1_enable,TRUE,Enable ATR1 screener
-ADL_SCREENER_enable,TRUE,Enable ADL screener
+PVB_TWmodel_enable,FALSE,Enable PVB TWmodel screener
+MINERVINI_enable,FALSE,Enable Minervini Template screener
+QULLAMAGGIE_SUITE_enable,FALSE,Enable Qullamaggie screener
+GIUSTI_enable,FALSE,Enable Giusti momentum cascade screener (12m→6m→3m top 10)
+DRWISH_enable,FALSE,Enable Dr. Wish suite screener
+STOCKBEE_SUITE_enable,FALSE,Enable Stockbee Suite screener
+ATR1_enable,FALSE,Enable ATR1 screener
+ADL_SCREENER_enable,FALSE,Enable ADL screener
 GUPPY_SCREENER_enable,TRUE,Enable Guppy GMMA screener
-GOLD_LAUNCH_PAD_enable,TRUE,Enable Gold Launch Pad screener
-RTI_enable,TRUE,Enable RTI (Range Tightening) screener
+GOLD_LAUNCH_PAD_enable,FALSE,Enable Gold Launch Pad screener
+RTI_enable,FALSE,Enable RTI (Range Tightening) screener
 VOLUME_SUITE_enable,TRUE,Enable Volume Suite screener
-STSCOOTER_SCREENER_enable,TRUE,Enable stSCOOTER screener (runs first — reads basic_calc only)
-FASTSCOOTER_SCREENER_enable,TRUE,Enable fastSCOOTER screener (runs first — reads basic_calc only)
+STSCOOTER_SCREENER_enable,FALSE,Enable stSCOOTER screener (runs first — reads basic_calc only)
+FASTSCOOTER_SCREENER_enable,FALSE,Enable fastSCOOTER screener (runs first — reads basic_calc only)
 # --- Breadth universe (must match downloaded data scope) ---,,
 MARKET_BREADTH_universe,SP500;NASDAQ100,Universe for breadth analysis (all SP500 NASDAQ100 exchange_NYSE)
 ,,
@@ -36,19 +36,31 @@ MARKET_BREADTH_universe,SP500;NASDAQ100,Universe for breadth analysis (all SP500
 # SECTION 1 — ENVIRONMENT & PATHS,,
 # ================================================================,,
 auto_detect_environment,FALSE,Automatically detect local vs Colab environment
-manual_environment_override,colab,Manual override: local | colab | (empty for auto)
+manual_environment_override,local,Manual override: local | colab | (empty for auto)
 ,,
 # Local paths,,
 YF_daily_data_files_local,../downloadData_v1/data/market_data/daily/,Local: daily (1d) OHLCV files
 YF_weekly_data_files_local,../downloadData_v1/data/market_data/weekly/,Local: weekly (1wk) OHLCV files
 YF_monthly_data_files_local,../downloadData_v1/data/market_data/monthly/,Local: monthly (1mo) OHLCV files
 TW_intraday_folder_local,data/intraday/,Local: TradingView intraday data folder
+TW_supplement_enable,TRUE,Stitch TW daily snapshots onto market_data before calculations
+TW_native_folder_local,../downloadData_v1/data/tw_files/daily/native/,Local: raw TW export files (input)
+TW_snapshot_folder_local,../downloadData_v1/data/tw_files/daily/,Local: normalized TW snapshots (output)
 ,,
 # Colab paths,,
 YF_daily_data_files_colab,/content/drive/MyDrive/_invest2024/run_python/downloadData_v1/data/market_data/daily/,Colab: daily OHLCV files
 YF_weekly_data_files_colab,/content/drive/MyDrive/_invest2024/run_python/downloadData_v1/data/market_data/weekly/,Colab: weekly OHLCV files
 YF_monthly_data_files_colab,/content/drive/MyDrive/_invest2024/run_python/downloadData_v1/data/market_data/monthly/,Colab: monthly OHLCV files
 TW_intraday_folder_colab,/content/drive/MyDrive/_invest2024/run_python/metaData_v1/data/intraday/,Colab: TradingView intraday folder
+TW_native_folder_colab,/content/drive/MyDrive/_invest2024/run_python/downloadData_v1/data/tw_files/daily/native/,Colab: raw TW export files (input)
+TW_snapshot_folder_colab,/content/drive/MyDrive/_invest2024/run_python/downloadData_v1/data/tw_files/daily/,Colab: normalized TW snapshots (output)
+YF_batch_supplement_enable,TRUE,Stitch YF batch snapshots onto market_data before calculations
+YF_batch_folder_daily_local,../downloadData_v1/data/market_data_batch/daily/,Local: YF batch daily files
+YF_batch_folder_weekly_local,../downloadData_v1/data/market_data_batch/weekly/,Local: YF batch weekly files
+YF_batch_folder_monthly_local,../downloadData_v1/data/market_data_batch/monthly/,Local: YF batch monthly files
+YF_batch_folder_daily_colab,/content/drive/MyDrive/_invest2024/run_python/downloadData_v1/data/market_data_batch/daily/,Colab: YF batch daily files
+YF_batch_folder_weekly_colab,/content/drive/MyDrive/_invest2024/run_python/downloadData_v1/data/market_data_batch/weekly/,Colab: YF batch weekly files
+YF_batch_folder_monthly_colab,/content/drive/MyDrive/_invest2024/run_python/downloadData_v1/data/market_data_batch/monthly/,Colab: YF batch monthly files
 ,,
 ,,
 # ================================================================,,
@@ -372,7 +384,7 @@ RS_enable_industries,FALSE,Enable RS calculation for industries
 RS_benchmark_tickers,QQQ;SPY,Benchmark tickers (semicolon separated)
 RS_composite_method,market_cap_weighted,Sector/industry composite method (equal_weighted | market_cap_weighted)
 RS_min_group_size,3,Minimum stocks required for sector/industry composite
-RS_percentile_universe_stocks,QQQ:NASDAQ100;SPY:SP500,Universe for stock percentiles
+RS_percentile_universe_stocks,QQQ:NASDAQ100;SPY:SP500;SPY:ticker_choice,Universe for stock percentiles (benchmark:universe pairs - ticker_choice ranks all screener tickers against each other)
 RS_percentile_universe_sectors,QQQ:NASDAQ100,Universe for sector percentiles
 RS_percentile_universe_industries,QQQ:NASDAQ100,Universe for industry percentiles
 # Timeframe flags,,
@@ -553,6 +565,8 @@ STOCKBEE_SUITE_daily_min_volume,100000,Daily Gainers: minimum average volume
 STOCKBEE_SUITE_industry_top_pct,20,Industry Leaders: top % of industries to select
 STOCKBEE_SUITE_industry_top_stocks,4,Industry Leaders: top N stocks per industry
 STOCKBEE_SUITE_industry_min_size,3,Industry Leaders: minimum stocks per industry
+STOCKBEE_SUITE_industry_rs_universe,ticker_choice;SP500;NASDAQ100,Industry Leaders RS percentile universe (priority order semicolon-separated): ticker_choice | SP500 | NASDAQ100 | all
+STOCKBEE_SUITE_industry_rs_weights,1;2;4,Industry Leaders RS weights for (1d;7d;22d) — higher = more influence on avg_rs
 STOCKBEE_SUITE_min_market_cap,1000000000,Minimum market cap ($1B)
 STOCKBEE_SUITE_min_price,5,Minimum stock price
 STOCKBEE_SUITE_exclude_funds,TRUE,Exclude ETFs and mutual funds
@@ -681,6 +695,8 @@ GUPPY_SCREENER_min_price,5,Minimum stock price
 GUPPY_SCREENER_min_volume_avg,100000,Minimum average volume
 GUPPY_SCREENER_min_data_length,65,Minimum data length for GMMA analysis
 GUPPY_SCREENER_save_individual_files,TRUE,Save individual GMMA result files
+GUPPY_SCREENER_convergence_threshold,0.02,Max band width across ALL EMAs to count as converged (2% = tight squeeze)
+GUPPY_SCREENER_convergence_lookback,30,Days to look back when searching for a convergence event
 ,,
 ,,
 # ---------------------------------------------------------------,,

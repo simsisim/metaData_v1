@@ -7,6 +7,7 @@ import os
 import logging
 from pathlib import Path
 from datetime import datetime
+from typing import Optional
 from src.user_defined_data import read_user_data_legacy, read_user_data, _get_default_ticker_filenames
 
 logger = logging.getLogger(__name__)
@@ -89,6 +90,10 @@ class Config:
             "WEEKLY_DATA_DIR": Path(self._get_environment_specific_path('weekly') or "data/market_data/weekly"),
             "MONTHLY_DATA_DIR": Path(self._get_environment_specific_path('monthly') or "data/market_data/monthly"),
             "INTRADAY_DATA_DIR": Path(self._get_environment_specific_path('intraday') or "data/intraday"),
+
+            # TW daily snapshot supplement directories
+            "TW_NATIVE_DIR":   Path(self._get_tw_specific_path('native')   or str(self.base_dir / "data/tw_files/daily/native")),
+            "TW_SNAPSHOT_DIR": Path(self._get_tw_specific_path('snapshot') or str(self.base_dir / "data/tw_files/daily")),
 
             # Base output directories
             "RESULTS_DIR": self.base_dir / "results",
@@ -308,7 +313,47 @@ class Config:
             logger.warning(f"Failed to read environment-specific path for {timeframe}: {e}")
 
         return None
-    
+
+    def get_batch_data_dir(self, timeframe='daily') -> Optional[Path]:
+        """Return YF batch data directory for the given timeframe, or None if not configured."""
+        path = self._get_batch_specific_path(timeframe)
+        if path:
+            return Path(path)
+        return None
+
+    def _get_batch_specific_path(self, timeframe: str):
+        """Get environment-specific YF batch data path from user configuration."""
+        try:
+            user_config = read_user_data()
+            config_key = f'yf_batch_folder_{timeframe}_{self.environment}'
+            path = getattr(user_config, config_key, None)
+            if path and str(path).strip() and str(path).lower() != 'nan':
+                path_str = str(path).strip()
+                if not os.path.isabs(path_str):
+                    path_str = os.path.join(str(self.base_dir), path_str)
+                return path_str
+        except Exception as e:
+            logger.warning(f"Failed to read batch path for {timeframe}: {e}")
+        return None
+
+    def _get_tw_specific_path(self, path_type: str):
+        """
+        Get environment-specific TW path for 'native' or 'snapshot'.
+        Reads tw_native_folder_{env} or tw_snapshot_folder_{env} from user config.
+        """
+        try:
+            user_config = read_user_data()
+            config_key = f'tw_{path_type}_folder_{self.environment}'
+            path = getattr(user_config, config_key, None)
+            if path and str(path).strip() and str(path).lower() != 'nan':
+                path_str = str(path).strip()
+                if not os.path.isabs(path_str):
+                    path_str = os.path.join(str(self.base_dir), path_str)
+                return path_str
+        except Exception as e:
+            logger.warning(f"Failed to read TW path for {path_type}: {e}")
+        return None
+
     def get_output_filename(self, file_type, user_choice=None):
         """
         Generate timestamped output filename based on file type and user choice.

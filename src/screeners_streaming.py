@@ -2094,12 +2094,13 @@ class StockbeeStreamingProcessor(StreamingCalculationBase):
                 'industry_top_pct': getattr(user_config, 'stockbee_suite_industry_top_pct', 20.0),
                 'industry_top_stocks': getattr(user_config, 'stockbee_suite_industry_top_stocks', 4),
                 'industry_min_size': getattr(user_config, 'stockbee_suite_industry_min_size', 3),
+                'industry_rs_weights': getattr(user_config, 'stockbee_suite_industry_rs_weights', '1;2;4'),
 
                 # General filters
                 'min_market_cap': getattr(user_config, 'stockbee_suite_min_market_cap', 1_000_000_000),
                 'min_price': getattr(user_config, 'stockbee_suite_min_price', 5.0),
                 'exclude_funds': getattr(user_config, 'stockbee_suite_exclude_funds', True),
-                'save_individual_files': getattr(user_config, 'stockbee_suite_save_individual_files', True),
+                'save_individual_files': False,  # streaming processor owns all file saving
             },
             'stockbee_output_dir': str(self.stockbee_dir)
         }
@@ -2108,7 +2109,10 @@ class StockbeeStreamingProcessor(StreamingCalculationBase):
         self.stockbee_screener = StockbeeScreener(stockbee_config)
 
         logger.info(f"Stockbee streaming processor initialized, output dir: {self.stockbee_dir}")
-        logger.info("⚠️ PHASE A: Running with limited RS data (Industry Leaders at ~60% accuracy)")
+
+        # Accumulate stock metrics across all batches for universe-wide industry ranking
+        self._accumulated_metrics: Dict[str, Dict] = {}  # timeframe → ticker → metrics
+        self._accumulated_dates: Dict[str, str] = {}     # timeframe → last data date
 
     def get_calculation_name(self) -> str:
         """Get the name of this calculation for file naming"""
@@ -2184,22 +2188,24 @@ class StockbeeStreamingProcessor(StreamingCalculationBase):
             if ticker_info is None:
                 logger.error(f"❌ No ticker_info provided - market cap and industry filters DISABLED")
             if rs_data is None:
-                logger.warning(f"⚠️ No RS data provided - Industry Leaders will use fallback logic (~60% accuracy)")
+                logger.warning("⚠️ No RS data provided - Industry Leaders will use fallback logic (~60% accuracy)")
 
-            # TODO PHASE B: Load RS data for enhanced Industry Leaders accuracy
-            # rs_data = self._load_rs_data(timeframe, current_date)
-            # When RS data available:
-            # - Industry Leaders will rank industries by composite RS
-            # - Stock rankings within industries will use RS scores
-            # - Expected improvement: 60% → 100% accuracy
-
-            # Run Stockbee screening for entire batch
+            # Run Stockbee screening for entire batch (industry leaders skipped here;
+            # they are computed once after all batches via finalize_industry_leaders)
             batch_results = self.stockbee_screener.run_stockbee_screening(
                 batch_data,
                 ticker_info=ticker_info,
-                rs_data=rs_data,  # None in Phase A
-                batch_info={'timeframe': timeframe}
+                rs_data=rs_data,
+                batch_info={'timeframe': timeframe, 'skip_industry_leaders': True}
             )
+
+            # Accumulate per-ticker metrics for universe-wide industry ranking
+            filtered = self.stockbee_screener._apply_base_filters(batch_data, ticker_info)
+            batch_metrics = self.stockbee_screener.calculate_all_stock_metrics(filtered, rs_data)
+            if timeframe not in self._accumulated_metrics:
+                self._accumulated_metrics[timeframe] = {}
+            self._accumulated_metrics[timeframe].update(batch_metrics)
+            self._accumulated_dates[timeframe] = current_date
 
             if batch_results:
                 all_results.extend(batch_results)
@@ -2281,15 +2287,176 @@ class StockbeeStreamingProcessor(StreamingCalculationBase):
         except Exception as e:
             logger.error(f"Error writing Stockbee results to {output_file}: {e}")
 
+    def _load_rs_data(self, timeframe: str, ticker_choice: int) -> Optional[Dict]:
+        """
+        Load PER percentile rankings and build the rs_data structure expected by
+        StockbeeScreener._get_rs_score():
+            { timeframe: { 'period_N': DataFrame(index=ticker, col='rs_percentile_N') } }
+
+        Universe priority is controlled by STOCKBEE_SUITE_industry_rs_universe in user_data.csv
+        (semicolon-separated, e.g. "SP500;NASDAQ100;ticker_choice").  For each ticker and period
+        slot the first universe that has a non-NaN value wins.  This means non-SP500 stocks (e.g.
+        ARM, ASML, MRVL) can fall back to NASDAQ100 data, and completely custom universes
+        (ticker_choice, all) cover any remaining tickers.
+        """
+        try:
+            per_dir = self.config.directories.get('PER_DIR')
+            if not per_dir:
+                logger.warning("PER_DIR not configured — Industry Leaders RS data unavailable")
+                return None
+            per_dir = Path(per_dir)
+            if not per_dir.exists():
+                logger.warning(f"PER_DIR does not exist ({per_dir}) — Industry Leaders RS data unavailable")
+                return None
+
+            # ── Load and merge ALL available PER files for this timeframe/choice ──
+            pattern = f"per_*_{timeframe}_{ticker_choice}_*.csv"
+            per_files = sorted(per_dir.glob(pattern))
+            if not per_files:
+                logger.warning(f"No PER files found matching '{pattern}' in {per_dir}")
+                return None
+
+            merged: Optional[pd.DataFrame] = None
+            for f in per_files:
+                try:
+                    df = pd.read_csv(f)
+                    if df.empty or 'ticker' not in df.columns:
+                        continue
+                    df = df.set_index('ticker')
+                    if merged is None:
+                        merged = df
+                    else:
+                        new_cols = [c for c in df.columns if c not in merged.columns]
+                        if new_cols:
+                            merged = merged.join(df[new_cols], how='outer')
+                    logger.debug(f"Loaded PER file: {f.name}")
+                except Exception as e:
+                    logger.warning(f"Skipping PER file {f.name}: {e}")
+
+            if merged is None or merged.empty:
+                logger.warning("All PER files empty or unreadable")
+                return None
+
+            # ── Period slot definitions: (timeframe, period_key, rs_col, period_pattern) ──
+            # period_pattern is a substring that uniquely identifies the period in column names.
+            SLOTS = [
+                ('daily',   'period_1', 'rs_percentile_1', 'daily_1d_rs_vs_'),
+                ('weekly',  'period_1', 'rs_percentile_1', 'weekly_7d_rs_vs_'),
+                ('weekly',  'period_4', 'rs_percentile_4', 'weekly_14d_rs_vs_'),
+                ('monthly', 'period_1', 'rs_percentile_1', 'monthly_22d_rs_vs_'),
+                ('monthly', 'period_3', 'rs_percentile_3', 'quarterly_66d_rs_vs_'),
+            ]
+
+            # ── Universe priority from user config ──
+            universe_str = getattr(self.user_config, 'stockbee_suite_industry_rs_universe', 'SP500;NASDAQ100')
+            universe_priority = [u.strip() for u in universe_str.split(';') if u.strip()]
+            if not universe_priority:
+                universe_priority = ['SP500', 'NASDAQ100']
+
+            all_cols = list(merged.columns)
+
+            def _find_col(period_pattern: str, universe: str) -> Optional[str]:
+                """Return the first column that matches both the period and universe."""
+                suffix = f'_per_{universe}'
+                for col in all_cols:
+                    if period_pattern in col and col.endswith(suffix):
+                        return col
+                return None
+
+            # ── Build merged series per slot using priority fallback ──
+            rs_data: Dict[str, Dict[str, pd.DataFrame]] = {}
+            for (tf, period_key, rs_col, period_pattern) in SLOTS:
+                # Collect candidate columns in priority order, skip missing ones
+                candidates = []
+                for universe in universe_priority:
+                    col = _find_col(period_pattern, universe)
+                    if col:
+                        candidates.append((universe, col))
+
+                if not candidates:
+                    logger.debug(f"No PER column found for {period_pattern} in universes {universe_priority}")
+                    continue
+
+                # Start with highest-priority universe, fill NaN from lower-priority ones
+                primary_universe, primary_col = candidates[0]
+                series = merged[primary_col].copy().astype(float)
+                sources_used = [primary_universe]
+
+                for fallback_universe, fallback_col in candidates[1:]:
+                    missing = series.isna()
+                    if not missing.any():
+                        break
+                    series.loc[missing] = merged.loc[missing, fallback_col].astype(float)
+                    filled = missing & series.notna()
+                    if filled.any():
+                        sources_used.append(f"{fallback_universe}(fallback:{int(filled.sum())})")
+
+                logger.debug(f"Slot {tf}/{period_key}: sources={sources_used}, "
+                             f"scored={series.notna().sum()}/{len(series)}")
+
+                if tf not in rs_data:
+                    rs_data[tf] = {}
+                rs_data[tf][period_key] = series.rename(rs_col).to_frame()
+
+            if not rs_data:
+                logger.warning(f"No usable PER columns found for universes {universe_priority}")
+                return None
+
+            scored_counts = {
+                tf: {pk: int(df.notna().sum().iloc[0]) for pk, df in periods.items()}
+                for tf, periods in rs_data.items()
+            }
+            logger.info(f"RS data loaded: {len(merged)} tickers, universe priority={universe_priority}, "
+                        f"scored per slot={scored_counts}")
+            return rs_data
+
+        except Exception as e:
+            logger.error(f"Error loading RS data from PER files: {e}")
+            return None
+
+    def finalize_industry_leaders(self, timeframe: str, ticker_info,
+                                   rs_data: Optional[Dict], current_date: str) -> List[Dict]:
+        """
+        Run universe-wide industry leaders ranking from metrics accumulated across all batches.
+        Writes 4 debug CSVs to results/layer3_screeners/stockbee/debug/ and the final CSV.
+        """
+        all_metrics = self._accumulated_metrics.get(timeframe, {})
+        if not all_metrics:
+            logger.warning(f"No accumulated metrics for {timeframe} — skipping industry leaders")
+            return []
+
+        if ticker_info is None:
+            logger.warning("No ticker_info — cannot determine industry membership")
+            return []
+
+        logger.info(f"Industry Leaders finalization: {len(all_metrics)} tickers for {timeframe}")
+
+        debug_dir = self.stockbee_dir / 'debug'
+        debug_dir.mkdir(exist_ok=True)
+
+        results = self.stockbee_screener.run_industry_leaders_from_metrics(
+            all_metrics, ticker_info, rs_data, debug_dir=debug_dir
+        )
+
+        if results:
+            output_file = self.stockbee_dir / f"stockbee_industry_leaders_{timeframe}_{current_date}.csv"
+            # Fresh write (not append) — this is a single finalization pass
+            df = pd.DataFrame(results)
+            df = self.optimize_dataframe_dtypes(df)
+            df.to_csv(output_file, index=False)
+            logger.info(f"Industry Leaders saved: {len(results)} results → {output_file}")
+
+        self._accumulated_metrics.pop(timeframe, None)
+        return results
+
 
 def run_all_stockbee_streaming(config, user_config, timeframes: List[str], clean_file_path: str) -> Dict[str, int]:
     """
     Run Stockbee Suite screener using streaming processing with hierarchical flag validation.
 
-    PHASE A Implementation:
-    - 9M Movers, Weekly Movers, Daily Gainers: 100% functional
-    - Industry Leaders: ~60% functional (fallback logic without RS data)
-    - RS data: NOT YET IMPLEMENTED (Industry Leaders uses simplified ranking)
+    All four screeners run at full accuracy:
+    - 9M Movers, Weekly Movers, Daily Gainers: price/volume signals
+    - Industry Leaders: RS percentile rankings loaded from PER output files
 
     Args:
         config: System configuration
@@ -2318,7 +2485,6 @@ def run_all_stockbee_streaming(config, user_config, timeframes: List[str], clean
         return {}
 
     print(f"\n📊 STOCKBEE SUITE SCREENER - Processing timeframes: {', '.join(enabled_timeframes)}")
-    print(f"⚠️  PHASE A: 3 of 4 screeners at 100%, Industry Leaders at ~60% (limited RS data)")
     logger.info(f"Stockbee enabled for: {', '.join(enabled_timeframes)}")
 
     # Initialize processor
@@ -2339,11 +2505,6 @@ def run_all_stockbee_streaming(config, user_config, timeframes: List[str], clean
     else:
         logger.warning(f"⚠️ ticker_universe_all.csv not found - market cap and industry filters DISABLED")
 
-    # PHASE A: RS data NOT YET IMPLEMENTED
-    rs_data = None
-    # TODO PHASE B: Load RS data for enhanced Industry Leaders
-    # rs_data = processor._load_rs_data(timeframe, current_date)
-
     # Process each enabled timeframe
     for timeframe in enabled_timeframes:
         stockbee_enabled = getattr(user_config, f'stockbee_suite_{timeframe}_enable', False)
@@ -2354,6 +2515,14 @@ def run_all_stockbee_streaming(config, user_config, timeframes: List[str], clean
         print(f"\n📊 Processing Stockbee {timeframe.upper()} timeframe...")
         logger.info(f"Starting Stockbee for {timeframe} timeframe...")
 
+        # Load RS percentile data for Industry Leaders (from PER output)
+        ticker_choice = getattr(user_config, 'ticker_choice', 0)
+        rs_data = processor._load_rs_data(timeframe, ticker_choice)
+        if rs_data:
+            logger.info(f"RS data loaded for {timeframe} — Industry Leaders running at full accuracy")
+        else:
+            logger.warning(f"RS data unavailable for {timeframe} — Industry Leaders using fallback (~60% accuracy)")
+
         # Initialize DataReader for this timeframe
         batch_size = getattr(user_config, 'batch_size', 100)
         from src.data_reader import DataReader
@@ -2363,13 +2532,12 @@ def run_all_stockbee_streaming(config, user_config, timeframes: List[str], clean
         data_reader.load_tickers_from_file(clean_file_path)
 
         # Get ticker list for batch processing
-        import pandas as pd
         tickers_df = pd.read_csv(clean_file_path)
         ticker_list = tickers_df['ticker'].tolist()
 
         # Process all batches with streaming approach
-        total_tickers = len(ticker_list)
         import math
+        total_tickers = len(ticker_list)
         total_batches = math.ceil(total_tickers / batch_size)
 
         print(f"📦 Processing {total_tickers} tickers in {total_batches} batches of {batch_size}")
@@ -2410,6 +2578,13 @@ def run_all_stockbee_streaming(config, user_config, timeframes: List[str], clean
             else:
                 print(f"⚠️  No valid data in batch {batch_num + 1}")
 
+        # Finalize Industry Leaders across the full ticker universe (single pass after all batches)
+        il_date = processor._accumulated_dates.get(timeframe, datetime.now().strftime('%Y%m%d'))
+        il_results = processor.finalize_industry_leaders(timeframe, ticker_info, rs_data, il_date)
+        if il_results:
+            component_totals['industry_leaders'] = len(il_results)
+            total_signals += len(il_results)
+
         results[timeframe] = total_signals
 
         # Display component breakdown
@@ -2417,7 +2592,9 @@ def run_all_stockbee_streaming(config, user_config, timeframes: List[str], clean
         print(f"   📈 9M Movers: {component_totals['9m_movers']}")
         print(f"   📈 Weekly Movers: {component_totals['weekly_movers']}")
         print(f"   📈 Daily Gainers: {component_totals['daily_gainers']}")
-        print(f"   📈 Industry Leaders: {component_totals['industry_leaders']} (⚠️ limited RS data)")
+        print(f"   📈 Industry Leaders: {component_totals['industry_leaders']}")
+        if il_results:
+            print(f"   📁 Debug CSVs: {processor.stockbee_dir / 'debug'}")
 
         logger.info(f"Stockbee completed for {timeframe}: {total_signals} signals, component breakdown: {component_totals}")
 
@@ -2425,7 +2602,6 @@ def run_all_stockbee_streaming(config, user_config, timeframes: List[str], clean
         print(f"\n✅ STOCKBEE SUITE SCREENER COMPLETED!")
         print(f"📊 Total signals: {sum(results.values())}")
         print(f"🕒 Timeframes processed: {', '.join(results.keys())}")
-        print(f"⚠️  NOTE: PHASE A results - Industry Leaders at ~60% accuracy (full accuracy requires Phase B)")
     else:
         print(f"⚠️  Stockbee completed with no results")
 

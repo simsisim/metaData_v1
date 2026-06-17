@@ -512,7 +512,7 @@ class ChillaxMAS(BaseIndicator):
     def _calculate_zone_statistics(self, df: pd.DataFrame) -> Dict[str, Any]:
         """Calculate statistics about Qullamaggie color zones."""
         try:
-            total_days = len(df.dropna())
+            total_days = len(df.dropna(subset=['risk_zone']))
             zone_counts = df['risk_zone'].value_counts()
             
             return {
@@ -551,7 +551,7 @@ class ChillaxMAS(BaseIndicator):
                 
             # Get processed data from analysis
             df = analysis['data'].copy()
-            df = df.dropna()
+            df = df.dropna(subset=[f'SMA_{self.fast_sma}', f'SMA_{self.slow_sma}', 'risk_zone'])
             
             if len(df) == 0:
                 logger.warning(f"No valid data for charting {index}")

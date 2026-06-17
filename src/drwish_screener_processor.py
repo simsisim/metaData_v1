@@ -27,6 +27,22 @@ from src.user_defined_data import get_drwish_params_for_timeframe
 
 logger = logging.getLogger(__name__)
 
+# Canonical column order — must stay consistent across all parameter sets and signal types
+_DRWISH_COLUMN_ORDER = [
+    'ticker', 'timeframe', 'parameter_set', 'strategy', 'signal_type',
+    'signal_date', 'current_price', 'signal_price', 'score',
+    'lookback_period', 'historical_glb_period', 'confirmation_period',
+    'screen_type', 'price', 'volume',
+    # GLB-specific
+    'glb_level', 'breakout_high', 'signal_strength', 'bars_since_pivot', 'confirmed',
+    # shared
+    'days_since_signal', 'analysis_date', 'screener',
+    # black_dot-specific
+    'min_stoch_lookback', 'above_sma', 'above_ema', 'sma_30', 'ema_21',
+    # blue_dot-specific
+    'stoch_yesterday', 'stoch_today', 'sma_50', 'sma_rising',
+]
+
 
 class DRWISHScreenerProcessor:
     """
@@ -46,7 +62,7 @@ class DRWISHScreenerProcessor:
         self.user_config = user_config
 
         # Create DRWISH screener output directory
-        self.drwish_dir = config.directories['RESULTS_DIR'] / 'screeners' / 'drwish'
+        self.drwish_dir = config.directories['DRWISH_SCREENER_DIR']
         self.drwish_dir.mkdir(parents=True, exist_ok=True)
 
         logger.info(f"DRWISH screener processor initialized, output dir: {self.drwish_dir}")
@@ -196,8 +212,10 @@ class DRWISHScreenerProcessor:
                     logger.warning(f"No valid {timeframe} {set_name} DRWISH screener results after filtering")
                     continue
 
-                # Create output DataFrame
+                # Create output DataFrame with enforced canonical column order
                 results_df = pd.DataFrame(drwish_results)
+                extra_cols = [c for c in results_df.columns if c not in _DRWISH_COLUMN_ORDER]
+                results_df = results_df.reindex(columns=_DRWISH_COLUMN_ORDER + extra_cols)
 
                 # Sort by score (descending) then by ticker
                 if 'score' in results_df.columns:
@@ -205,18 +223,14 @@ class DRWISHScreenerProcessor:
                 else:
                     results_df = results_df.sort_values('ticker')
 
-                # Generate output filename using consistent date format
+                # Generate output filename using the LATEST signal date across all results
                 data_date = None
                 if not results_df.empty and 'signal_date' in results_df.columns:
-                    # Use the latest signal date from the results
                     try:
-                        # Handle both string and datetime signal_date
-                        latest_signal = results_df['signal_date'].iloc[0]
-                        if isinstance(latest_signal, str):
-                            data_date = latest_signal.replace('-', '')  # Convert 2025-08-29 to 20250829
-                        else:
-                            data_date = latest_signal.strftime('%Y%m%d')  # Handle datetime
-                    except:
+                        latest_signal = pd.to_datetime(results_df['signal_date'], errors='coerce').max()
+                        if pd.notna(latest_signal):
+                            data_date = latest_signal.strftime('%Y%m%d')
+                    except Exception:
                         pass
 
                 # Fallback to current date if no signal date found

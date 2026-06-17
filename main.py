@@ -1625,6 +1625,14 @@ def main() -> None:
         config.create_directories()
         logger.info("All required directories created/verified")
 
+        # TW supplement: convert any new native exports into normalized snapshots
+        if getattr(user_config, 'tw_supplement_enable', False):
+            from src.tw_preprocessor import TwPreprocessor
+            TwPreprocessor(
+                config.directories['TW_NATIVE_DIR'],
+                config.directories['TW_SNAPSHOT_DIR'],
+            ).run()
+
         # Generate all ticker files using unified system
         print(f"📋 User choice: {user_config.ticker_choice}")
         success = generate_all_ticker_files(config, user_config.ticker_choice)

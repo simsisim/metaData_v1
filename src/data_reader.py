@@ -18,6 +18,171 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+class BatchDataSupplementer:
+    """
+    Loads YF batch files (prices_{interval}_YYYY-MM-DD.csv) and provides
+    per-ticker rows to append to historical market_data DataFrames.
+
+    Usage:
+        sup = BatchDataSupplementer(batch_dir)
+        sup.load(cutoff_date)                        # once, at DataReader init
+        rows = sup.get_rows('AAPL', last_timestamp)  # per ticker in read_stock_data
+    """
+
+    def __init__(self, batch_dir: Path):
+        self.batch_dir = Path(batch_dir)
+        self._data: Dict[str, list] = {}  # {SYMBOL: [{date, Open, High, Low, Close, Volume}]}
+        self._loaded = False
+
+    def load(self, cutoff_date: pd.Timestamp) -> int:
+        """Load all batch files with date > cutoff_date. Returns number of symbols loaded."""
+        if not self.batch_dir.exists():
+            logger.warning(f"YF batch dir not found: {self.batch_dir}")
+            self._loaded = True
+            return 0
+
+        files_loaded = 0
+        for f in sorted(self.batch_dir.glob('prices_*.csv')):
+            # Extract date from filename: prices_1d_2026-06-12.csv → 2026-06-12
+            stem_parts = f.stem.split('_')
+            date_str = stem_parts[-1]  # last part is YYYY-MM-DD
+            try:
+                batch_ts = pd.Timestamp(date_str)
+            except Exception:
+                continue
+            if batch_ts <= cutoff_date:
+                continue
+            try:
+                df = pd.read_csv(f)
+                required = {'Date', 'Symbol', 'Open', 'High', 'Low', 'Close', 'Volume'}
+                if not required.issubset(df.columns):
+                    logger.warning(f"Batch file {f.name} missing columns, skipping")
+                    continue
+                for _, row in df.iterrows():
+                    sym = str(row['Symbol']).upper()
+                    self._data.setdefault(sym, []).append({
+                        'date':   pd.Timestamp(row['Date']),
+                        'Open':   float(row['Open'])   if pd.notna(row['Open'])   else None,
+                        'High':   float(row['High'])   if pd.notna(row['High'])   else None,
+                        'Low':    float(row['Low'])    if pd.notna(row['Low'])    else None,
+                        'Close':  float(row['Close']),
+                        'Volume': float(row['Volume']) if pd.notna(row['Volume']) else 0.0,
+                    })
+                files_loaded += 1
+            except Exception as e:
+                logger.warning(f"Could not load batch file {f.name}: {e}")
+
+        for sym in self._data:
+            self._data[sym].sort(key=lambda r: r['date'])
+
+        self._loaded = True
+        total_syms = len(self._data)
+        if files_loaded:
+            logger.info(
+                f"BatchDataSupplementer: {files_loaded} file(s) loaded, {total_syms} symbols"
+            )
+        return total_syms
+
+    def get_rows(self, ticker: str, after_ts: pd.Timestamp) -> Optional[pd.DataFrame]:
+        """Return OHLCV DataFrame for rows with date > after_ts, or None if none."""
+        if not self._loaded or not self._data:
+            return None
+        sym = ticker.upper()
+        rows = (
+            self._data.get(sym)
+            or self._data.get(sym.replace('.', '-'))  # BRK.B → BRK-B (yf format)
+            or self._data.get(sym.replace('-', '.'))  # BRK-B → BRK.B (tv format)
+        )
+        if not rows:
+            return None
+        filtered = [r for r in rows if r['date'] > after_ts]
+        if not filtered:
+            return None
+        df = pd.DataFrame(filtered).set_index('date')
+        df.index.name = 'Date'
+        return df
+
+
+class TwSupplementer:
+    """
+    Loads normalized TW daily snapshots (tw_snapshot_YYYYMMDD.csv) and provides
+    per-ticker rows to append to historical market_data DataFrames.
+
+    Usage:
+        sup = TwSupplementer(snapshot_dir)
+        sup.load(cutoff_date)          # once, at DataReader init
+        rows = sup.get_rows('AAPL', last_timestamp)  # per ticker in read_stock_data
+    """
+
+    def __init__(self, snapshot_dir: Path):
+        self.snapshot_dir = Path(snapshot_dir)
+        self._data: Dict[str, list] = {}  # {SYMBOL: [{date, Open, High, Low, Close, Volume}]}
+        self._loaded = False
+
+    def load(self, cutoff_date: pd.Timestamp) -> int:
+        """Load all snapshots with date > cutoff_date. Returns number of symbols loaded."""
+        if not self.snapshot_dir.exists():
+            logger.warning(f"TW snapshot dir not found: {self.snapshot_dir}")
+            self._loaded = True
+            return 0
+
+        snapshots_loaded = 0
+        for f in sorted(self.snapshot_dir.glob('tw_snapshot_????????.csv')):
+            date_str = f.stem.split('_')[-1]  # YYYYMMDD
+            try:
+                snap_ts = pd.Timestamp(
+                    f'{date_str[:4]}-{date_str[4:6]}-{date_str[6:]}'
+                )
+            except Exception:
+                continue
+            if snap_ts <= cutoff_date:
+                continue
+            try:
+                df = pd.read_csv(f)
+                required = {'Symbol', 'Date', 'Open', 'High', 'Low', 'Close', 'Volume'}
+                if not required.issubset(df.columns):
+                    logger.warning(f"Snapshot {f.name} missing columns, skipping")
+                    continue
+                for _, row in df.iterrows():
+                    sym = str(row['Symbol']).upper()
+                    self._data.setdefault(sym, []).append({
+                        'date':   pd.Timestamp(row['Date']),
+                        'Open':   float(row['Open'])   if pd.notna(row['Open'])   else None,
+                        'High':   float(row['High'])   if pd.notna(row['High'])   else None,
+                        'Low':    float(row['Low'])    if pd.notna(row['Low'])    else None,
+                        'Close':  float(row['Close']),
+                        'Volume': float(row['Volume']) if pd.notna(row['Volume']) else 0.0,
+                    })
+                snapshots_loaded += 1
+            except Exception as e:
+                logger.warning(f"Could not load snapshot {f.name}: {e}")
+
+        for sym in self._data:
+            self._data[sym].sort(key=lambda r: r['date'])
+
+        self._loaded = True
+        total_syms = len(self._data)
+        if snapshots_loaded:
+            logger.info(
+                f"TwSupplementer: {snapshots_loaded} snapshot(s) loaded, {total_syms} symbols"
+            )
+        return total_syms
+
+    def get_rows(self, ticker: str, after_ts: pd.Timestamp) -> Optional[pd.DataFrame]:
+        """Return OHLCV DataFrame for rows with date > after_ts, or None if none."""
+        if not self._loaded or not self._data:
+            return None
+        rows = self._data.get(ticker.upper())
+        if rows is None:
+            rows = self._data.get(ticker.replace('-', '.').upper(), [])
+        filtered = [r for r in rows if r['date'] > after_ts]
+        if not filtered:
+            return None
+        df = pd.DataFrame(filtered).set_index('date')
+        df.index.name = 'Date'
+        return df
+
+
 class DataReader:
     """
     Reads and processes market data from local CSV files.
@@ -38,16 +203,86 @@ class DataReader:
         self.config = config
         self.timeframe = timeframe
         self.batch_size = batch_size
-        
+
         # Get market data directory for specified timeframe
         self.market_data_dir = config.get_market_data_dir(timeframe)
         self.tickers_dir = config.directories['TICKERS_DIR']
-        
+
         # Initialize tickers list
         self.tickers = []
         self.ticker_info = None
-        
+
+        # YF batch supplement (daily / weekly / monthly)
+        self.batch_supplementer: Optional[BatchDataSupplementer] = None
+        self._init_batch_supplementer()
+
+        # TW supplementation (daily only — tw snapshots are daily by nature)
+        self.tw_supplementer: Optional[TwSupplementer] = None
+        if timeframe == 'daily':
+            self._init_tw_supplementer()
+
         logger.info(f"DataReader initialized for {timeframe} data from {self.market_data_dir}")
+
+    def _init_tw_supplementer(self):
+        """Initialize TwSupplementer if enabled in config."""
+        try:
+            from src.user_defined_data import read_user_data
+            user_config = read_user_data()
+            if not getattr(user_config, 'tw_supplement_enable', False):
+                return
+            snapshot_dir = self.config.directories.get('TW_SNAPSHOT_DIR')
+            if not snapshot_dir:
+                return
+            cutoff = self._find_market_data_cutoff()
+            if cutoff is None:
+                logger.warning("TW supplement: could not determine market_data cutoff date")
+                return
+            self.tw_supplementer = TwSupplementer(snapshot_dir)
+            n = self.tw_supplementer.load(cutoff)
+            if n:
+                logger.info(f"TW supplement active: {n} symbols available beyond {cutoff.date()}")
+        except Exception as e:
+            logger.warning(f"TW supplement init failed (non-fatal): {e}")
+
+    def _init_batch_supplementer(self):
+        """Initialize BatchDataSupplementer if enabled in config."""
+        try:
+            from src.user_defined_data import read_user_data
+            user_config = read_user_data()
+            if not getattr(user_config, 'yf_batch_supplement_enable', False):
+                return
+            batch_dir = self.config.get_batch_data_dir(self.timeframe)
+            if not batch_dir or not batch_dir.exists():
+                logger.warning(f"YF batch dir not found: {batch_dir}")
+                return
+            cutoff = self._find_market_data_cutoff()
+            if cutoff is None:
+                logger.warning("YF batch supplement: could not determine market_data cutoff date")
+                return
+            self.batch_supplementer = BatchDataSupplementer(batch_dir)
+            n = self.batch_supplementer.load(cutoff)
+            if n:
+                logger.info(f"YF batch supplement active: {n} symbols available beyond {cutoff.date()}")
+        except Exception as e:
+            logger.warning(f"YF batch supplement init failed (non-fatal): {e}")
+
+    def _find_market_data_cutoff(self) -> Optional[pd.Timestamp]:
+        """Find the last date present in market_data by reading a reference ticker."""
+        for ticker in ['SPY', 'AAPL', 'QQQ', 'MSFT']:
+            f = self.market_data_dir / f'{ticker}.csv'
+            if not f.exists():
+                continue
+            try:
+                df = pd.read_csv(f, usecols=[0], header=0)
+                df.columns = ['date_raw']
+                dates = pd.to_datetime(
+                    df['date_raw'].astype(str).str.split(' ').str[0], errors='coerce'
+                ).dropna()
+                if not dates.empty:
+                    return dates.max().tz_localize(None) if dates.max().tzinfo else dates.max()
+            except Exception as e:
+                logger.debug(f"Could not read cutoff from {ticker}: {e}")
+        return None
     
     def load_tickers_from_file(self, combined_ticker_file: str) -> List[str]:
         """
@@ -168,12 +403,28 @@ class DataReader:
             # Return standard OHLCV columns
             standard_columns = ['Open', 'High', 'Low', 'Close', 'Volume']
             available_columns = [col for col in standard_columns if col in df.columns]
-            
+
             if not available_columns:
                 logger.warning(f"No standard OHLCV columns found for {ticker}")
                 return df  # Return as-is
-            
-            return df[available_columns]
+
+            df = df[available_columns]
+
+            # Append YF batch rows newer than the last historical date
+            if self.batch_supplementer is not None and not df.empty:
+                batch_rows = self.batch_supplementer.get_rows(ticker, df.index[-1])
+                if batch_rows is not None:
+                    batch_cols = [c for c in available_columns if c in batch_rows.columns]
+                    df = pd.concat([df, batch_rows[batch_cols]])
+
+            # Append TW snapshot rows newer than the last historical date (or batch date)
+            if self.tw_supplementer is not None and not df.empty:
+                tw_rows = self.tw_supplementer.get_rows(ticker, df.index[-1])
+                if tw_rows is not None:
+                    tw_cols = [c for c in available_columns if c in tw_rows.columns]
+                    df = pd.concat([df, tw_rows[tw_cols]])
+
+            return df
             
         except Exception as e:
             logger.error(f"Error reading data for {ticker}: {e}")

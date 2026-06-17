@@ -44,6 +44,9 @@ class UserConfiguration:
     ticker_info_TW_file: str = "tradingview_universe_info.csv"
     ticker_info_YF: bool = True
     ticker_choice: str = "2"
+    scooter_universe: str = ""   # universe for SCOOTER percentile ranking; "" = same as ticker_choice
+                                 # format: single id "1" or dash-combined "1-2" (same as ticker_choice)
+                                 # 0=TV  1=SP500  2=NASDAQ100  3=NASDAQall  4=IWM1000
     batch_size: int = 100
     
     # Ticker group filenames
@@ -71,6 +74,22 @@ class UserConfiguration:
     yf_weekly_data_files_colab: Optional[str] = None
     yf_monthly_data_files_colab: Optional[str] = None
     tw_intraday_folder_colab: Optional[str] = None
+
+    # TW daily snapshot supplement
+    tw_supplement_enable: bool = False
+    tw_native_folder_local: Optional[str] = None
+    tw_snapshot_folder_local: Optional[str] = None
+    tw_native_folder_colab: Optional[str] = None
+    tw_snapshot_folder_colab: Optional[str] = None
+
+    # YF batch data supplement
+    yf_batch_supplement_enable: bool = False
+    yf_batch_folder_daily_local: Optional[str] = None
+    yf_batch_folder_weekly_local: Optional[str] = None
+    yf_batch_folder_monthly_local: Optional[str] = None
+    yf_batch_folder_daily_colab: Optional[str] = None
+    yf_batch_folder_weekly_colab: Optional[str] = None
+    yf_batch_folder_monthly_colab: Optional[str] = None
 
     # Overview files
     indexes_overview_file: str = "indexes_overview.csv"
@@ -586,6 +605,8 @@ class UserConfiguration:
     stockbee_suite_industry_top_pct: float = 20.0  # Top 20% (stored as percentage)
     stockbee_suite_industry_top_stocks: int = 4  # Top 4 per industry
     stockbee_suite_industry_min_size: int = 3  # Minimum stocks per industry
+    stockbee_suite_industry_rs_universe: str = "SP500;NASDAQ100"  # RS percentile universe priority (semicolon-separated)
+    stockbee_suite_industry_rs_weights: str = "1;2;4"  # Weights for rs_score(1d);rs_1w(7d);rs_1m(22d)
     stockbee_suite_save_individual_files: bool = True  # Save individual screener files
 
     # Qullamaggie Suite Configuration
@@ -675,6 +696,8 @@ class UserConfiguration:
     guppy_screener_min_volume_avg: int = 100000  # Minimum average volume requirement
     guppy_screener_min_data_length: int = 65  # Minimum data length for analysis
     guppy_screener_save_individual_files: bool = True  # Save individual component files
+    guppy_screener_convergence_threshold: float = 0.02  # Max band width (all EMAs) to count as converged
+    guppy_screener_convergence_lookback: int = 30  # Days to look back for convergence event
 
     # SCOOTER CALCULATION CONFIGURATION (Layer 2 — added to every basic_calc row)
     # stSCOOTER (Stock Chart Scooter — slow, trend leaders, standard SCTR weights)
@@ -1047,6 +1070,7 @@ def read_user_data(file_path: str = 'user_data.csv') -> UserConfiguration:
             'ticker_info_TW_file': ('ticker_info_TW_file', str),
             'ticker_info_YF': ('ticker_info_YF', parse_boolean),
             'ticker_choice': ('ticker_choice', str),
+            'scooter_universe': ('scooter_universe', str),
             'batch_size': ('batch_size', int),
 
             # Global execution phase flags
@@ -1080,7 +1104,23 @@ def read_user_data(file_path: str = 'user_data.csv') -> UserConfiguration:
             'YF_weekly_data_files_colab': ('yf_weekly_data_files_colab', str),
             'YF_monthly_data_files_colab': ('yf_monthly_data_files_colab', str),
             'TW_intraday_folder_colab': ('tw_intraday_folder_colab', str),
-            
+
+            # TW daily snapshot supplement
+            'TW_supplement_enable': ('tw_supplement_enable', parse_boolean),
+            'TW_native_folder_local': ('tw_native_folder_local', str),
+            'TW_snapshot_folder_local': ('tw_snapshot_folder_local', str),
+            'TW_native_folder_colab': ('tw_native_folder_colab', str),
+            'TW_snapshot_folder_colab': ('tw_snapshot_folder_colab', str),
+
+            # YF batch data supplement
+            'YF_batch_supplement_enable': ('yf_batch_supplement_enable', parse_boolean),
+            'YF_batch_folder_daily_local': ('yf_batch_folder_daily_local', str),
+            'YF_batch_folder_weekly_local': ('yf_batch_folder_weekly_local', str),
+            'YF_batch_folder_monthly_local': ('yf_batch_folder_monthly_local', str),
+            'YF_batch_folder_daily_colab': ('yf_batch_folder_daily_colab', str),
+            'YF_batch_folder_weekly_colab': ('yf_batch_folder_weekly_colab', str),
+            'YF_batch_folder_monthly_colab': ('yf_batch_folder_monthly_colab', str),
+
             # Overview files
             'indexes_overview_file': ('indexes_overview_file', str),
             
@@ -1547,6 +1587,8 @@ def read_user_data(file_path: str = 'user_data.csv') -> UserConfiguration:
             'STOCKBEE_SUITE_industry_top_pct': ('stockbee_suite_industry_top_pct', float),
             'STOCKBEE_SUITE_industry_top_stocks': ('stockbee_suite_industry_top_stocks', int),
             'STOCKBEE_SUITE_industry_min_size': ('stockbee_suite_industry_min_size', int),
+            'STOCKBEE_SUITE_industry_rs_universe': ('stockbee_suite_industry_rs_universe', str),
+            'STOCKBEE_SUITE_industry_rs_weights': ('stockbee_suite_industry_rs_weights', str),
             'STOCKBEE_SUITE_9m_relative_volume': ('stockbee_suite_9m_relative_volume', float),
             'STOCKBEE_SUITE_weekly_min_volume': ('stockbee_suite_weekly_min_volume', int),
             'STOCKBEE_SUITE_save_individual_files': ('stockbee_suite_save_individual_files', parse_boolean),
@@ -1637,6 +1679,8 @@ def read_user_data(file_path: str = 'user_data.csv') -> UserConfiguration:
             'GUPPY_SCREENER_min_volume_avg': ('guppy_screener_min_volume_avg', int),
             'GUPPY_SCREENER_min_data_length': ('guppy_screener_min_data_length', int),
             'GUPPY_SCREENER_save_individual_files': ('guppy_screener_save_individual_files', parse_boolean),
+            'GUPPY_SCREENER_convergence_threshold': ('guppy_screener_convergence_threshold', float),
+            'GUPPY_SCREENER_convergence_lookback': ('guppy_screener_convergence_lookback', int),
 
             # SCOOTER calculation CSV mappings (Layer 2)
             'STSCOOTER_enable': ('stscooter_enable', parse_boolean),
@@ -2526,9 +2570,13 @@ def get_guppy_screener_params_for_timeframe(config: UserConfiguration, timeframe
             'min_data_length': config.guppy_screener_min_data_length,
             
             # Output settings
-            'save_individual_files': config.guppy_screener_save_individual_files
+            'save_individual_files': config.guppy_screener_save_individual_files,
+
+            # Convergence detection
+            'convergence_threshold': config.guppy_screener_convergence_threshold,
+            'convergence_lookback': config.guppy_screener_convergence_lookback,
         },
-        'guppy_output_dir': f'results/screeners/guppy',
+        'guppy_output_dir': getattr(config, 'guppy_screener_output_dir', 'results/layer3_screeners/guppy'),
         'timeframe': timeframe
     }
 

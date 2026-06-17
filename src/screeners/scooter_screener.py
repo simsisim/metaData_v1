@@ -13,9 +13,17 @@ Combined    — Intersection: tickers passing both (high-conviction signal)
 import logging
 from pathlib import Path
 from datetime import datetime
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Set
 
 import pandas as pd
+
+# Maps ticker_choice ID → boolean membership column in combined_info files
+_UNIVERSE_ID_TO_COLUMN = {
+    1: 'SP500',
+    2: 'NASDAQ100',
+    3: 'NASDAQComposite',
+    4: 'Russell1000',
+}
 
 logger = logging.getLogger(__name__)
 
@@ -92,7 +100,107 @@ class ScooterScreener:
         combined['combined_avg_score'] = (
             combined['stscooter_score'] + combined['fastscooter_score']
         ) / 2
+        if 'stscooter_pct_rank' in combined.columns and 'fastscooter_pct_rank' in fast_result.columns:
+            fast_pct = fast_result[[ticker_col, 'fastscooter_pct_rank']].set_index(ticker_col)
+            combined = combined.join(fast_pct, on=ticker_col, how='left')
+            combined['combined_avg_pct_rank'] = (
+                combined['stscooter_pct_rank'] + combined['fastscooter_pct_rank']
+            ) / 2
         return combined.sort_values('combined_avg_score', ascending=False).reset_index(drop=True)
+
+
+def _load_universe_tickers(config, scooter_universe: str) -> Optional[Set[str]]:
+    """
+    Return the set of tickers for the given scooter_universe choice string.
+    Returns None if scooter_universe is empty (rank across all tickers in basic_calc).
+
+    Format: single id "2" or dash-combined "1-2" (same convention as ticker_choice).
+    Resolution order:
+      1. combined_tickers_{choice}.csv  — direct file match
+      2. combined_info_tickers_*.csv   — filter by boolean membership columns
+    """
+    if not scooter_universe or not scooter_universe.strip():
+        return None
+
+    choice = scooter_universe.strip().replace(' ', '')
+    tickers_dir = Path(config.directories['TICKERS_DIR'])
+
+    # 1 — try exact combined_tickers file
+    combined_file = tickers_dir / f"combined_tickers_{choice}.csv"
+    if combined_file.exists():
+        tickers = set(pd.read_csv(combined_file)['ticker'].dropna().astype(str))
+        logger.info(f"SCOOTER universe '{choice}': {len(tickers)} tickers from {combined_file.name}")
+        return tickers
+
+    # 2 — fallback: load a combined_info file and filter by membership columns
+    try:
+        ids = [int(x.strip()) for x in choice.split('-')]
+    except ValueError:
+        logger.warning(f"Invalid scooter_universe format '{choice}' — using all tickers in basic_calc")
+        return None
+
+    # Find the most suitable combined_info file (prefer one that covers the requested ids)
+    info_file = tickers_dir / f"combined_info_tickers_{choice}.csv"
+    if not info_file.exists():
+        # Pick the largest combined_info file available as best-effort
+        candidates = sorted(tickers_dir.glob("combined_info_tickers_[0-9]*.csv"),
+                            key=lambda p: p.stat().st_size, reverse=True)
+        if not candidates:
+            logger.warning(f"No combined_info file found for scooter_universe='{choice}' — using all tickers")
+            return None
+        info_file = candidates[0]
+        logger.info(f"SCOOTER universe '{choice}': using {info_file.name} for membership filter")
+
+    needed_cols = ['ticker'] + [c for c in _UNIVERSE_ID_TO_COLUMN.values()]
+    usecols = lambda c: c in needed_cols
+    info_df = pd.read_csv(info_file, usecols=usecols)
+
+    mask = pd.Series(False, index=info_df.index)
+    for uid in ids:
+        col = _UNIVERSE_ID_TO_COLUMN.get(uid)
+        if col and col in info_df.columns:
+            mask |= info_df[col].astype(bool)
+        else:
+            logger.warning(f"SCOOTER universe: no membership column for id {uid} — skipped")
+
+    tickers = set(info_df.loc[mask, 'ticker'].dropna().astype(str))
+    logger.info(f"SCOOTER universe '{choice}': {len(tickers)} tickers via membership columns")
+    return tickers
+
+
+def _add_percentile_ranks(df: pd.DataFrame,
+                          universe_tickers: Optional[Set[str]] = None) -> pd.DataFrame:
+    """
+    Add stscooter_pct_rank / fastscooter_pct_rank columns (0–99.9).
+
+    Rank is computed within universe_tickers if provided, otherwise across all rows.
+    Non-universe tickers are retained in df but get NaN for pct_rank columns.
+    """
+    df = df.copy()
+    ticker_col = 'ticker' if 'ticker' in df.columns else None
+
+    if universe_tickers and ticker_col:
+        rank_mask = df[ticker_col].isin(universe_tickers)
+        n_universe = rank_mask.sum()
+        n_total = len(df)
+        if n_universe == 0:
+            logger.warning("SCOOTER universe filter matched 0 tickers in basic_calc — check scooter_universe setting")
+        else:
+            logger.info(f"SCOOTER percentile rank: {n_universe} universe tickers out of {n_total} in basic_calc")
+    else:
+        rank_mask = pd.Series(True, index=df.index)
+
+    for col, rank_col in [
+        ('stscooter_score',   'stscooter_pct_rank'),
+        ('fastscooter_score', 'fastscooter_pct_rank'),
+    ]:
+        if col in df.columns:
+            df[rank_col] = float('nan')
+            subset = df.loc[rank_mask, col]
+            df.loc[rank_mask, rank_col] = (
+                subset.rank(pct=True).mul(100).clip(upper=99.9).round(1)
+            )
+    return df
 
 
 def _save_scooter_result(df: pd.DataFrame, output_dir: Path, filename: str) -> Optional[Path]:
@@ -126,6 +234,12 @@ def run_scooter_screeners(config, user_config) -> Dict[str, Any]:
 
     logger.info(f"SCOOTER screeners reading: {basic_calc_file}")
     basic_calc_df = pd.read_csv(basic_calc_file)
+
+    scooter_universe = getattr(user_config, 'scooter_universe', '').strip()
+    if not scooter_universe:
+        scooter_universe = str(getattr(user_config, 'ticker_choice', '')).strip()
+    universe_tickers = _load_universe_tickers(config, scooter_universe)
+    basic_calc_df = _add_percentile_ranks(basic_calc_df, universe_tickers)
 
     screener = ScooterScreener(user_config)
     st_result   = pd.DataFrame()

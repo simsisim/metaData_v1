@@ -267,8 +267,8 @@ class MACyclesAnalyzer(BaseIndicator):
             # Calculate moving average
             df[f'MA_{self.ma_period}'] = df['Close'].rolling(window=self.ma_period).mean()
             
-            # Drop rows where MA is NaN
-            df = df.dropna()
+            # Drop rows where MA is NaN (subset avoids dropping rows with missing extra columns like marketCap)
+            df = df.dropna(subset=[f'MA_{self.ma_period}'])
             
             if len(df) < self.ma_period + 10:  # Need sufficient data
                 return {

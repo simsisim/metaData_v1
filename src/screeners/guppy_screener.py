@@ -55,6 +55,10 @@ class GuppyScreener:
         self.crossover_confirmation_days = self.guppy_config.get('crossover_confirmation_days', 3)
         self.volume_confirmation_threshold = self.guppy_config.get('volume_confirmation_threshold', 1.2)
         
+        # Convergence detection parameters
+        self.convergence_threshold = self.guppy_config.get('convergence_threshold', 0.02)
+        self.convergence_lookback = self.guppy_config.get('convergence_lookback', 30)
+
         # Base filtering parameters
         self.min_price = self.guppy_config.get('min_price', 5.0)
         self.min_volume_avg = self.guppy_config.get('min_volume_avg', 100_000)
@@ -99,7 +103,8 @@ class GuppyScreener:
             'compression_breakout': [],
             'expansion_signal': [],
             'bullish_crossover': [],
-            'bearish_crossover': []
+            'bearish_crossover': [],
+            'ema_convergence': []
         }
         
         try:
@@ -267,7 +272,12 @@ class GuppyScreener:
             crossover_signal = self._check_crossover(ticker, data, rs_data)
             if crossover_signal:
                 signals.append(crossover_signal)
-            
+
+            # 4. Check for EMA convergence (all EMAs squeezing to one point)
+            convergence_signal = self._check_ema_convergence(ticker, data)
+            if convergence_signal:
+                signals.append(convergence_signal)
+
             return signals
             
         except Exception as e:
@@ -564,6 +574,66 @@ class GuppyScreener:
             
         except Exception as e:
             logger.warning(f"Error checking crossover for {ticker}: {e}")
+            return None
+
+    def _check_ema_convergence(self, ticker: str, data: pd.DataFrame) -> Optional[Dict]:
+        """
+        Find the most recent date within the lookback window when all EMAs
+        (short-term + long-term combined) squeezed into the tightest band.
+        Signals only when that minimum band width is <= convergence_threshold.
+
+        Band width = (max_ema - min_ema) / min_ema across all EMAs on that day.
+        """
+        try:
+            short_cols, long_cols = self._get_ma_column_names()
+            all_cols = short_cols + long_cols
+
+            lookback_data = data.tail(self.convergence_lookback)
+            if len(lookback_data) < 2:
+                return None
+
+            # Calculate band width for each day in the lookback window
+            dates = []
+            band_widths = []
+            for i in range(len(lookback_data)):
+                row = lookback_data.iloc[i]
+                ema_values = [row[col] for col in all_cols]
+                min_ema = min(ema_values)
+                if min_ema == 0:
+                    continue
+                band_width = (max(ema_values) - min_ema) / min_ema
+                dates.append(lookback_data.index[i])
+                band_widths.append(band_width)
+
+            if not band_widths:
+                return None
+
+            # Find the tightest squeeze within the lookback window
+            min_idx = int(np.argmin(band_widths))
+            min_band_width = band_widths[min_idx]
+            convergence_date = dates[min_idx]
+
+            if min_band_width > self.convergence_threshold:
+                return None
+
+            days_ago = len(band_widths) - 1 - min_idx
+            price_at_convergence = lookback_data.iloc[min_idx]['Close']
+
+            return {
+                'ticker': ticker,
+                'signal_type': 'ema_convergence',
+                'screen_type': 'guppy_convergence',
+                'convergence_date': convergence_date,
+                'signal_date': data.index[-1],
+                'days_ago': days_ago,
+                'band_width_pct': round(min_band_width * 100, 4),
+                'price_at_convergence': price_at_convergence,
+                'price': data['Close'].iloc[-1],
+                'volume': data['Volume'].iloc[-1],
+            }
+
+        except Exception as e:
+            logger.warning(f"Error checking EMA convergence for {ticker}: {e}")
             return None
 
     def _check_volume_confirmation(self, data: pd.DataFrame) -> bool:

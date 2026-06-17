@@ -278,8 +278,18 @@ class GMICalculator:
             
             # Determine target date for analysis
             if breadth_date is not None:
-                # Use breadth data date as the target date
+                # Use breadth data date as the target date, but clamp to what
+                # index data actually covers (breadth may be built from batch-
+                # supplemented data while index CSVs are read directly).
                 latest_date = breadth_date
+                if date_ranges:
+                    index_max = min(dr.max() for dr in date_ranges if len(dr) > 0)
+                    if latest_date > index_max:
+                        logger.debug(
+                            f"Breadth date {latest_date.date()} beyond index data "
+                            f"({index_max.date()}), clamping to index max date"
+                        )
+                        latest_date = index_max
                 logger.info(f"Using breadth data date as target: {latest_date}")
             elif date_ranges:
                 # Fallback: use latest common date from market data
@@ -287,10 +297,10 @@ class GMICalculator:
                 for date_range in date_ranges[1:]:
                     if date_range is not None:
                         common_dates = common_dates.intersection(date_range)
-                        
+
                 if len(common_dates) == 0:
                     raise ValueError("No common dates found across market data")
-                    
+
                 latest_date = common_dates.max()
                 logger.info(f"Using market data common date: {latest_date}")
             else:

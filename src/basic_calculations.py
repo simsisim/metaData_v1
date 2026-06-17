@@ -823,17 +823,20 @@ def calculate_scooter(df: pd.DataFrame, user_config, variant: str = 'st') -> dic
         var4 = 0.0
 
     # --- var5: 3-bar slope of PPO histogram (PPO fixed: 12/26/9) ---
+    # Slope = (today - 3 bars ago) / 3  per ChartSchool "3-day slope" definition.
+    # iloc[-4] = 3 bars ago; clamped ±50 to match StockCharts angular normalization.
     ppo_fast = close.ewm(span=12, adjust=False).mean()
     ppo_slow = close.ewm(span=26, adjust=False).mean()
     ppo_line = (ppo_fast - ppo_slow) / ppo_slow * 100
     ppo_signal = ppo_line.ewm(span=9, adjust=False).mean()
     ppo_hist = ppo_line - ppo_signal
-    var5 = (ppo_hist.iloc[-1] - ppo_hist.iloc[-3]) / 3 if len(ppo_hist) >= 3 else 0.0
+    _ppo_slope = (ppo_hist.iloc[-1] - ppo_hist.iloc[-4]) / 3 if len(ppo_hist) >= 4 else 0.0
+    var5 = float(np.clip(_ppo_slope, -50.0, 50.0))
 
-    # --- var6: RSI centered ---
+    # --- var6: RSI centered (Wilder's smoothing, matching StockCharts / Pine ta.rsi) ---
     delta = close.diff()
-    gain = delta.clip(lower=0).rolling(p_rsi).mean()
-    loss = (-delta.clip(upper=0)).rolling(p_rsi).mean()
+    gain = delta.clip(lower=0).ewm(alpha=1 / p_rsi, adjust=False).mean()
+    loss = (-delta.clip(upper=0)).ewm(alpha=1 / p_rsi, adjust=False).mean()
     rs = gain / loss.replace(0, np.nan)
     rsi = 100 - (100 / (1 + rs))
     var6 = float(rsi.iloc[-1]) - 50 if not np.isnan(rsi.iloc[-1]) else 0.0

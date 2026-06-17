@@ -105,7 +105,10 @@ class StockbeeScreener:
                 all_results.extend(daily_gainers_results)
             
             # 4. Top 20% Industries & Top 4 Performers
-            if self.enable_industry_leaders:
+            # In streaming mode the caller sets skip_industry_leaders=True and runs
+            # finalize_industry_leaders() once after all batches for a universe-wide ranking.
+            skip_industry_leaders = (batch_info or {}).get('skip_industry_leaders', False)
+            if self.enable_industry_leaders and not skip_industry_leaders:
                 if ticker_info is not None:
                     logger.info("Running Industry Leaders screener...")
                     industry_leaders_results = self._run_industry_leaders(filtered_tickers, ticker_info, rs_data)
@@ -721,6 +724,195 @@ class StockbeeScreener:
             logger.warning(f"Error getting RS score for {ticker}: {e}")
             return None
 
+    def calculate_all_stock_metrics(self, batch_data: Dict[str, pd.DataFrame],
+                                    rs_data: Optional[Dict] = None) -> Dict[str, Dict]:
+        """Compute per-ticker metrics for every ticker in batch_data (no selection)."""
+        all_metrics = {}
+        for ticker, data in batch_data.items():
+            try:
+                metrics = self._calculate_stock_metrics(ticker, data, rs_data)
+                if metrics:
+                    all_metrics[ticker] = metrics
+            except Exception as e:
+                logger.warning(f"Error computing metrics for {ticker}: {e}")
+        return all_metrics
+
+    def run_industry_leaders_from_metrics(self, all_stock_metrics: Dict[str, Dict],
+                                          ticker_info: pd.DataFrame,
+                                          rs_data: Optional[Dict] = None,
+                                          debug_dir=None) -> List[Dict]:
+        """
+        Full cross-universe industry leaders selection from pre-accumulated stock metrics.
+
+        Call this ONCE after all streaming batches — never per-batch, or only the
+        industries represented in that batch will be ranked.
+
+        Writes 4 debug CSVs to debug_dir if provided:
+          step1_groups, step2_all_ranked, step3_top_selected, step4_stock_metrics
+        """
+        results = []
+        try:
+            industry_top_pct = self.stockbee_config.get('industry_top_pct', 20.0) / 100.0
+            industry_top_stocks = self.stockbee_config.get('industry_top_stocks', 4)
+            industry_min_size = self.stockbee_config.get('industry_min_size', 3)
+
+            _raw_weights = self.stockbee_config.get('industry_rs_weights', '1;2;4')
+            try:
+                rs_weights = [float(w) for w in str(_raw_weights).split(';')]
+                if len(rs_weights) != 3:
+                    raise ValueError
+            except (ValueError, AttributeError):
+                rs_weights = [1.0, 1.0, 4.0]
+                logger.warning(f"Invalid industry_rs_weights '{_raw_weights}', using default 1;2;4")
+
+            # ── STEP 1: group tickers by industry ─────────────────────────────
+            industry_groups: Dict[str, List[str]] = {}
+            for ticker in all_stock_metrics:
+                row = ticker_info[ticker_info['ticker'] == ticker]
+                if not row.empty and 'industry' in row.columns:
+                    ind = row['industry'].iloc[0]
+                    if pd.notna(ind):
+                        industry_groups.setdefault(str(ind), []).append(ticker)
+
+            if debug_dir:
+                rows = [{'industry': ind, 'member_count': len(tickers),
+                         'tickers': ','.join(sorted(tickers))}
+                        for ind, tickers in sorted(industry_groups.items())]
+                pd.DataFrame(rows).sort_values('member_count', ascending=False).to_csv(
+                    Path(debug_dir) / 'industry_step1_groups.csv', index=False)
+
+            # ── STEP 1b: per-ticker RS breakdown (all stocks, all industries) ─
+            if debug_dir:
+                step1b_rows = []
+                total_w = sum(rs_weights)
+                for industry, tickers in sorted(industry_groups.items()):
+                    for t in sorted(tickers):
+                        m = all_stock_metrics.get(t)
+                        rs1d = m.get('rs_score') if m else None
+                        rs1w = m.get('rs_1w')    if m else None
+                        rs1m = m.get('rs_1m')    if m else None
+                        vw = [(v, w) for v, w in zip([rs1d, rs1w, rs1m], rs_weights)
+                              if v is not None and not (isinstance(v, float) and np.isnan(v))]
+                        avg_ticker = round(sum(v*w for v,w in vw) / sum(w for _,w in vw), 2) if vw else None
+                        step1b_rows.append({
+                            'industry':     industry,
+                            'ticker':       t,
+                            'rs_1d':        round(rs1d, 1) if rs1d is not None else None,
+                            'rs_1w':        round(rs1w, 1) if rs1w is not None else None,
+                            'rs_1m':        round(rs1m, 1) if rs1m is not None else None,
+                            'avg_rs_ticker': avg_ticker,
+                            'weights_used': f"{rs_weights[0]};{rs_weights[1]};{rs_weights[2]}",
+                            'scored':       len(vw) > 0,
+                        })
+                pd.DataFrame(step1b_rows).to_csv(
+                    Path(debug_dir) / 'industry_step1b_stock_rs.csv', index=False)
+
+            # ── STEP 2: avg RS per industry; require >= min_size members ──────
+            industry_rs_rows = []
+            for industry, tickers in industry_groups.items():
+                if len(tickers) < industry_min_size:
+                    continue
+                scores = []
+                for t in tickers:
+                    m = all_stock_metrics.get(t)
+                    if not m:
+                        continue
+                    raw = [m.get('rs_score'), m.get('rs_1w'), m.get('rs_1m')]
+                    vw = [(v, w) for v, w in zip(raw, rs_weights)
+                          if v is not None and not (isinstance(v, float) and np.isnan(v))]
+                    if vw:
+                        total_w = sum(w for _, w in vw)
+                        scores.append(sum(v * w for v, w in vw) / total_w)
+                avg_rs = sum(scores) / len(scores) if scores else 0.0
+                industry_rs_rows.append({
+                    'industry': industry,
+                    'avg_rs': avg_rs,
+                    'member_count': len(tickers),
+                    'scored_tickers': len(scores),
+                })
+
+            industry_rs_rows.sort(key=lambda x: x['avg_rs'], reverse=True)
+            for i, r in enumerate(industry_rs_rows):
+                r['rs_rank'] = i + 1
+
+            if debug_dir:
+                pd.DataFrame(industry_rs_rows).to_csv(
+                    Path(debug_dir) / 'industry_step2_all_ranked.csv', index=False)
+
+            # ── STEP 3: top N% ─────────────────────────────────────────────────
+            num_top = max(1, int(len(industry_rs_rows) * industry_top_pct))
+            top_industries = industry_rs_rows[:num_top]
+
+            if debug_dir:
+                pd.DataFrame(top_industries).to_csv(
+                    Path(debug_dir) / 'industry_step3_top_selected.csv', index=False)
+
+            logger.info(f"Industry Leaders: {len(top_industries)}/{len(industry_rs_rows)} "
+                        f"industries selected (top {industry_top_pct*100:.0f}%)")
+
+            # ── STEP 4: top N stocks per industry ─────────────────────────────
+            step4_rows = []
+            leadership_labels = ['leader', 'strong', 'moderate', 'emerging']
+
+            for ind_row in top_industries:
+                industry = ind_row['industry']
+                industry_tickers = industry_groups[industry]
+                stock_metrics = []
+
+                for ticker in industry_tickers:
+                    m = all_stock_metrics.get(ticker)
+                    if not m:
+                        continue
+                    cs = m.get('composite_score')
+                    if cs is None or (isinstance(cs, float) and np.isnan(cs)):
+                        continue  # can't rank without a score
+                    m = dict(m)
+                    m['industry'] = industry
+                    m['industry_rs_rank'] = ind_row['rs_rank']
+                    stock_metrics.append(m)
+
+                stock_metrics.sort(key=lambda x: x['composite_score'], reverse=True)
+
+                if debug_dir:
+                    for i, m in enumerate(stock_metrics):
+                        step4_rows.append({**m, 'selected': i < industry_top_stocks})
+
+                for i, stock in enumerate(stock_metrics[:industry_top_stocks]):
+                    label = leadership_labels[i] if i < len(leadership_labels) else 'additional'
+                    results.append({
+                        'ticker': stock['ticker'],
+                        'signal_date': stock['signal_date'],
+                        'signal_type': 'industry_leader',
+                        'screen_type': 'stockbee_industry_leaders',
+                        'price': stock['price'],
+                        'volume': stock['volume'],
+                        'industry': industry,
+                        'industry_rank': ind_row['rs_rank'],
+                        'stock_rank_in_industry': i + 1,
+                        'leadership_level': label,
+                        'rs_score': stock.get('rs_score'),
+                        'rs_1w': stock.get('rs_1w'),
+                        'rs_1m': stock.get('rs_1m'),
+                        'momentum_score': stock.get('momentum_score'),
+                        'composite_score': stock.get('composite_score'),
+                        'above_sma50': stock.get('above_sma50'),
+                        'above_sma200': stock.get('above_sma200'),
+                        'price_change_1d': stock.get('price_change_1d'),
+                        'price_change_5d': stock.get('price_change_5d'),
+                        'price_change_20d': stock.get('price_change_20d'),
+                    })
+
+            if debug_dir and step4_rows:
+                pd.DataFrame(step4_rows).sort_values(
+                    ['industry', 'composite_score'], ascending=[True, False]
+                ).to_csv(Path(debug_dir) / 'industry_step4_stock_metrics.csv', index=False)
+
+        except Exception as e:
+            logger.error(f"Error in run_industry_leaders_from_metrics: {e}", exc_info=True)
+
+        logger.info(f"INDUSTRY LEADERS (final): {len(results)} signals from {len(all_stock_metrics)} tickers")
+        return results
+
     def _calculate_signal_strength(self, relative_volume: float, price_change_pct: float) -> str:
         """
         Calculate signal strength based on volume and price metrics
@@ -769,12 +961,12 @@ class StockbeeScreener:
             output_dir = Path(self.output_dir)
             output_dir.mkdir(parents=True, exist_ok=True)
             
-            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-            
+            date_str = datetime.now().strftime('%Y%m%d')
+
             # Save each component's results
             for component_name, results in component_results.items():
                 if results:
-                    filename = f"stockbee_{component_name}_{self.timeframe}_{timestamp}.csv"
+                    filename = f"stockbee_{component_name}_{self.timeframe}_{date_str}.csv"
                     filepath = output_dir / filename
                     
                     # Convert to DataFrame and save
