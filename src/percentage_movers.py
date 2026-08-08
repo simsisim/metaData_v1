@@ -17,6 +17,8 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import logging
 from pathlib import Path
 
+from src.data_reader import read_ticker_ohlcv_raw
+
 
 class PercentageMoversAnalyzer:
     """
@@ -102,16 +104,16 @@ class PercentageMoversAnalyzer:
         """
         try:
             if timeframe == 'daily':
-                file_path = os.path.join(self.daily_data_dir, f"{ticker}.csv")
+                data_dir = self.daily_data_dir
             elif timeframe == 'weekly':
-                file_path = os.path.join(self.weekly_data_dir, f"{ticker}.csv")
+                data_dir = self.weekly_data_dir
             else:
                 raise ValueError(f"Invalid timeframe: {timeframe}")
-            
-            if not os.path.exists(file_path):
+
+            df = read_ticker_ohlcv_raw(Path(data_dir), ticker, index_col=None)
+
+            if df is None:
                 return None
-            
-            df = pd.read_csv(file_path)
             
             # Standardize column names
             if 'Date' in df.columns:
@@ -121,7 +123,7 @@ class PercentageMoversAnalyzer:
             # Validate required columns
             required_cols = ['Date', 'Close', 'Volume']
             if not all(col in df.columns for col in required_cols):
-                self.logger.warning(f"Missing required columns in {file_path}")
+                self.logger.warning(f"Missing required columns for {ticker} in {data_dir}")
                 return None
                 
             return df

@@ -33,6 +33,8 @@ import os
 from datetime import datetime
 import logging
 
+from src.data_reader import read_ticker_ohlcv_raw
+
 logger = logging.getLogger(__name__)
 
 class GMI2Calculator:
@@ -166,22 +168,22 @@ class GMI2Calculator:
         try:
             # Get base market data directory and construct path for specific timeframe
             base_market_data_dir = self.paths.get('source_market_data', 'data/market_data')
-            
+
             # Handle timeframe-specific paths: replace any existing timeframe with the requested one
             # This handles cases where base_market_data_dir might be /data/market_data/daily
             if '/daily' in base_market_data_dir or '/weekly' in base_market_data_dir or '/monthly' in base_market_data_dir:
                 # Replace existing timeframe with requested timeframe
                 parent_dir = base_market_data_dir.rsplit('/', 1)[0]  # Remove last directory
-                data_path = os.path.join(parent_dir, timeframe.lower(), f"{index_symbol}.csv")
+                market_data_dir = os.path.join(parent_dir, timeframe.lower())
             else:
                 # Add timeframe directory to base path
-                data_path = os.path.join(base_market_data_dir, timeframe.lower(), f"{index_symbol}.csv")
-            
-            if not os.path.exists(data_path):
-                logger.warning(f"GMI2 data file not found: {data_path}")
+                market_data_dir = os.path.join(base_market_data_dir, timeframe.lower())
+
+            df = read_ticker_ohlcv_raw(Path(market_data_dir), index_symbol, index_col=None)
+
+            if df is None:
+                logger.warning(f"GMI2 data file not found for {index_symbol} in {market_data_dir}")
                 return None
-                
-            df = pd.read_csv(data_path)
             
             # Ensure Date column and set as index
             if 'Date' in df.columns:

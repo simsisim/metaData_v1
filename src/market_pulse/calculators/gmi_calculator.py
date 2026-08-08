@@ -26,6 +26,8 @@ from pathlib import Path
 from datetime import datetime
 import logging
 
+from src.data_reader import read_ticker_ohlcv_raw
+
 logger = logging.getLogger(__name__)
 
 class GMICalculator:
@@ -101,15 +103,10 @@ class GMICalculator:
     def _load_single_index_data(self, index_symbol: str) -> pd.DataFrame:
         """Load data for a single market index with moving averages"""
         try:
-            file_path = os.path.join(
-                self.paths.get('source_market_data', ''),
-                f"{index_symbol}.csv"
-            )
-            
-            if not os.path.exists(file_path):
-                raise FileNotFoundError(f"Market data file not found: {file_path}")
-                
-            df = pd.read_csv(file_path, index_col='Date', parse_dates=False)
+            df = read_ticker_ohlcv_raw(Path(self.paths.get('source_market_data', '')), index_symbol)
+
+            if df is None:
+                raise FileNotFoundError(f"Market data file not found for {index_symbol} in {self.paths.get('source_market_data', '')}")
             
             # Clean and standardize date index
             df.index = df.index.str.split(' ').str[0]

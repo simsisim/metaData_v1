@@ -14,6 +14,8 @@ from pathlib import Path
 from datetime import datetime, timedelta
 import logging
 
+from src.data_reader import read_ticker_ohlcv_raw
+
 logger = logging.getLogger(__name__)
 
 class RealDataConnector:
@@ -91,10 +93,9 @@ class RealDataConnector:
     def _get_portfolio_ticker_data(self, ticker):
         """Get current data for portfolio ticker"""
         try:
-            ticker_file = self.config.directories['DAILY_DATA_DIR'] / f"{ticker}.csv"
-            
-            if ticker_file.exists():
-                df = pd.read_csv(ticker_file, parse_dates=['Date'], index_col='Date')
+            df = read_ticker_ohlcv_raw(self.config.directories['DAILY_DATA_DIR'], ticker, index_col='Date', parse_dates=['Date'])
+
+            if df is not None:
                 df = df.sort_index()
                 
                 if len(df) >= 1:
@@ -275,10 +276,9 @@ class RealDataConnector:
             
             for etf, sector_name in self.sector_etfs.items():
                 # Load ETF data from your market data
-                etf_file = self.config.directories['DAILY_DATA_DIR'] / f"{etf}.csv"
-                
-                if etf_file.exists():
-                    df = pd.read_csv(etf_file, parse_dates=['Date'], index_col='Date')
+                df = read_ticker_ohlcv_raw(self.config.directories['DAILY_DATA_DIR'], etf, index_col='Date', parse_dates=['Date'])
+
+                if df is not None:
                     df = df.sort_index()
                     
                     if len(df) >= 2:
@@ -579,10 +579,9 @@ class RealDataConnector:
             
             for index in self.market_indexes:
                 # Load index data
-                index_file = self.config.directories['DAILY_DATA_DIR'] / f"{index}.csv"
-                
-                if index_file.exists():
-                    df = pd.read_csv(index_file, parse_dates=['Date'], index_col='Date')
+                df = read_ticker_ohlcv_raw(self.config.directories['DAILY_DATA_DIR'], index, index_col='Date', parse_dates=['Date'])
+
+                if df is not None:
                     df = df.sort_index()
                     
                     if len(df) >= 20:

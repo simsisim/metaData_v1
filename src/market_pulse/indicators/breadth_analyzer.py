@@ -22,6 +22,7 @@ import logging
 
 from .base_indicator import BaseIndicator
 from .market_breadth_visualizer import MarketBreadthVisualizer
+from src.data_reader import read_ticker_ohlcv_raw
 
 logger = logging.getLogger(__name__)
 
@@ -1283,28 +1284,15 @@ class BreadthAnalyzer(BaseIndicator):
             
             index_symbol = index_mapping.get(universe_name.upper(), 'SPY')
             
-            # Try to load daily price data
+            # Load daily price data - read_ticker_ohlcv_raw already tries
+            # archive/+current/ then falls back to the flat file itself, so
+            # the two-attempt structure that used to live here is now
+            # entirely inside the helper.
             daily_data_dir = self.config.get_market_data_dir('daily')
-            index_file = daily_data_dir / f"{index_symbol}.csv"
-
-            if index_file.exists():
-                index_data = pd.read_csv(index_file)
+            index_data = read_ticker_ohlcv_raw(daily_data_dir, index_symbol, index_col=None)
+            if index_data is not None:
                 logger.debug(f"Loaded price data for {index_symbol}: {len(index_data)} records")
                 return index_data
-            else:
-                logger.debug(f"Index file not found: {index_file}")
-            
-            # Fallback: try to load from market_data directory using environment-aware path
-            try:
-                market_data_dir = self.config.get_market_data_dir('daily')
-                index_file = Path(market_data_dir) / f"{index_symbol}.csv"
-
-                if index_file.exists():
-                    index_data = pd.read_csv(index_file)
-                    logger.debug(f"Loaded price data from market_data for {index_symbol}: {len(index_data)} records")
-                    return index_data
-            except Exception as e:
-                logger.debug(f"Error accessing market data directory: {e}")
 
             logger.debug(f"No price data found for universe {universe_name} (tried {index_symbol})")
             return None

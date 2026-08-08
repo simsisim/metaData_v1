@@ -14,6 +14,7 @@ import numpy as np
 from pathlib import Path
 import logging
 from .rs_base import RSCalculatorBase, RSResults
+from src.data_reader import read_ticker_ohlcv_raw
 
 logger = logging.getLogger(__name__)
 
@@ -262,12 +263,10 @@ class IBDRelativeStrengthCalculator(RSCalculatorBase):
         loaded_count = 0
         for ticker in ticker_list:
             try:
-                ticker_file = data_dir / f"{ticker}.csv"
-                if ticker_file.exists():
-                    df = pd.read_csv(ticker_file, index_col=0, parse_dates=True)
-                    if 'Close' in df.columns and len(df) > 0:
-                        price_data[ticker] = df['Close']
-                        loaded_count += 1
+                df = read_ticker_ohlcv_raw(data_dir, ticker, index_col='Date', parse_dates=True)
+                if df is not None and 'Close' in df.columns and len(df) > 0:
+                    price_data[ticker] = df['Close']
+                    loaded_count += 1
             except Exception as e:
                 logger.debug(f"Could not load data for {ticker}: {e}")
                 continue

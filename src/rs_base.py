@@ -16,6 +16,8 @@ from pathlib import Path
 from datetime import datetime
 import logging
 
+from src.data_reader import read_ticker_ohlcv_raw
+
 logger = logging.getLogger(__name__)
 
 
@@ -165,13 +167,12 @@ class RSCalculatorBase(ABC):
         try:
             # Use environment-aware path resolution
             data_dir = self.config.get_market_data_dir(timeframe)
-            benchmark_file = data_dir / f"{benchmark_ticker}.csv"
+            df = read_ticker_ohlcv_raw(data_dir, benchmark_ticker, index_col='Date', parse_dates=True)
 
-            if benchmark_file.exists():
-                df = pd.read_csv(benchmark_file, index_col=0, parse_dates=True)
+            if df is not None:
                 return df['Close'].copy()
             else:
-                logger.warning(f"Benchmark file not found: {benchmark_file}")
+                logger.warning(f"Benchmark file not found for {benchmark_ticker} in {data_dir}")
                 return None
 
         except Exception as e:
@@ -383,12 +384,10 @@ class RSCalculatorBase(ABC):
         loaded_count = 0
         for ticker in ticker_list:
             try:
-                ticker_file = data_dir / f"{ticker}.csv"
-                if ticker_file.exists():
-                    df = pd.read_csv(ticker_file, index_col=0, parse_dates=True)
-                    if 'Close' in df.columns and len(df) > 0:
-                        price_data[ticker] = df['Close']
-                        loaded_count += 1
+                df = read_ticker_ohlcv_raw(data_dir, ticker, index_col='Date', parse_dates=True)
+                if df is not None and 'Close' in df.columns and len(df) > 0:
+                    price_data[ticker] = df['Close']
+                    loaded_count += 1
             except Exception as e:
                 logger.debug(f"Could not load data for {ticker}: {e}")
                 continue

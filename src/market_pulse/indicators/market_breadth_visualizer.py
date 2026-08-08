@@ -23,6 +23,8 @@ import logging
 from typing import Dict, List, Tuple, Optional, Any
 import warnings
 
+from src.data_reader import read_ticker_ohlcv_raw
+
 # Suppress matplotlib warnings
 warnings.filterwarnings('ignore', category=UserWarning, module='matplotlib')
 
@@ -876,26 +878,23 @@ def generate_breadth_chart_from_csv(csv_path: str, config=None, index_symbol: st
         index_data = None
         if config and index_symbol:
             try:
-                # Try primary data directory first
+                # Try primary data directory first (already tries archive/+current/
+                # then the flat file within that directory)
                 daily_data_dir = config.directories.get('DAILY_DATA_DIR')
-                index_file = None
-
                 if daily_data_dir:
-                    index_file = Path(daily_data_dir) / f"{index_symbol}.csv"
-                    if index_file.exists():
-                        index_data = pd.read_csv(index_file)
-                        logger.debug(f"Loaded index data for {universe_name} -> {index_symbol} from {index_file}")
+                    index_data = read_ticker_ohlcv_raw(Path(daily_data_dir), index_symbol, index_col=None)
+                    if index_data is not None:
+                        logger.debug(f"Loaded index data for {universe_name} -> {index_symbol} from {daily_data_dir}")
 
-                # Fallback: try downloadData_v1 directory
+                # Fallback: try downloadData_v1 directory directly (same archive/current-aware read)
                 if index_data is None:
                     fallback_dir = Path(config.base_dir).parent / "downloadData_v1" / "data" / "market_data" / "daily"
                     if fallback_dir.exists():
-                        fallback_file = fallback_dir / f"{index_symbol}.csv"
-                        if fallback_file.exists():
-                            index_data = pd.read_csv(fallback_file)
-                            logger.debug(f"Loaded index data for {universe_name} -> {index_symbol} from fallback: {fallback_file}")
+                        index_data = read_ticker_ohlcv_raw(fallback_dir, index_symbol, index_col=None)
+                        if index_data is not None:
+                            logger.debug(f"Loaded index data for {universe_name} -> {index_symbol} from fallback: {fallback_dir}")
                         else:
-                            logger.debug(f"Index file not found in fallback: {fallback_file}")
+                            logger.debug(f"Index file not found in fallback: {fallback_dir}")
                     else:
                         logger.debug(f"Fallback directory not found: {fallback_dir}")
 

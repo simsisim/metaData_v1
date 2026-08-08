@@ -16,6 +16,8 @@ from typing import Dict, List, Optional, Union, Tuple
 from pathlib import Path
 import os
 
+from src.data_reader import read_ticker_ohlcv_raw
+
 logger = logging.getLogger(__name__)
 
 
@@ -204,12 +206,10 @@ class MmmGapsProcessor:
         """
         try:
             # Load ticker data
-            input_file = input_dir / f"{ticker}.csv"
-            if not input_file.exists():
-                return {'error': f'Input file not found: {input_file}'}
-
-            logger.debug(f"Loading data from: {input_file}")
-            df = pd.read_csv(input_file, index_col=0, parse_dates=True)
+            logger.debug(f"Loading data for {ticker} from: {input_dir}")
+            df = read_ticker_ohlcv_raw(input_dir, ticker, index_col='Date', parse_dates=True)
+            if df is None:
+                return {'error': f'Input file not found for {ticker} in {input_dir}'}
 
             # Validate required columns
             required_columns = ['Open', 'High', 'Low', 'Close', 'Volume']

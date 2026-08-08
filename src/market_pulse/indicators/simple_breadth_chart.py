@@ -13,6 +13,8 @@ from pathlib import Path
 from datetime import datetime
 import logging
 
+from src.data_reader import read_ticker_ohlcv_raw
+
 logger = logging.getLogger(__name__)
 
 
@@ -42,14 +44,13 @@ class SimpleBreadthChart:
         """Load SPY price data."""
         try:
             daily_data_dir = self.config.get_market_data_dir('daily')
-            spy_file = daily_data_dir / "SPY.csv"
+            spy_data = read_ticker_ohlcv_raw(daily_data_dir, 'SPY', index_col=None)
 
-            if spy_file.exists():
-                spy_data = pd.read_csv(spy_file)
+            if spy_data is not None:
                 logger.info(f"Loaded SPY data: {len(spy_data)} records")
                 return spy_data
             else:
-                logger.error(f"SPY file not found: {spy_file}")
+                logger.error(f"SPY file not found in {daily_data_dir}")
                 return pd.DataFrame()
 
         except Exception as e:

@@ -19,7 +19,7 @@ from typing import Dict, List, Tuple, Optional, Union
 from datetime import datetime, timedelta
 import os
 
-from src.data_reader import DataReader
+from src.data_reader import DataReader, read_ticker_ohlcv_raw
 from src.models import MarketBreadthConfig
 
 logger = logging.getLogger(__name__)
@@ -304,10 +304,9 @@ class MarketBreadthCalculator:
             daily_dir = self.config.get_market_data_dir('daily')
             
             for ticker in tickers:
-                ticker_file = daily_dir / f"{ticker}.csv"
-                if ticker_file.exists():
+                ticker_data = read_ticker_ohlcv_raw(daily_dir, ticker, index_col=None)
+                if ticker_data is not None:
                     try:
-                        ticker_data = pd.read_csv(ticker_file)
                         ticker_data['ticker'] = ticker
                         
                         # Handle date column naming (could be 'Date' or 'date')

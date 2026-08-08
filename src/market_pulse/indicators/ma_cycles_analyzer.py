@@ -44,6 +44,7 @@ except ImportError:
     logging.warning("Chart libraries not available. Install matplotlib and mplfinance for chart generation.")
 
 from .base_indicator import BaseIndicator
+from src.data_reader import read_ticker_ohlcv_raw
 
 logger = logging.getLogger(__name__)
 
@@ -216,13 +217,12 @@ class MACyclesAnalyzer(BaseIndicator):
         for index in self.ma_cycles_indexes:
             try:
                 # Load index data using environment-aware path resolution
-                file_path = self.config.get_market_data_dir('daily') / f"{index}.csv"
-                
-                if not file_path.exists():
-                    logger.warning(f"Market data file not found: {file_path}")
+                df = read_ticker_ohlcv_raw(self.config.get_market_data_dir('daily'), index)
+
+                if df is None:
+                    logger.warning(f"Market data file not found for {index}")
                     continue
-                    
-                df = pd.read_csv(file_path, index_col='Date', parse_dates=False)
+
                 
                 # Clean and standardize date index
                 df.index = df.index.str.split(' ').str[0]

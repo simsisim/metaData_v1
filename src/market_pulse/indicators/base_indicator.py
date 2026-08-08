@@ -12,6 +12,8 @@ from typing import Dict, List, Optional, Any
 from datetime import datetime
 import logging
 
+from src.data_reader import read_ticker_ohlcv_raw
+
 logger = logging.getLogger(__name__)
 
 
@@ -55,20 +57,18 @@ class BaseIndicator:
         """
         try:
             data_dir = self.config.get_market_data_dir(timeframe)
-                
+
             # Handle special case for ^DJI (might have different file naming)
             symbol_file = self.symbol.replace('^', '')
-            data_file = data_dir / f"{symbol_file}.csv"
-            
-            if not data_file.exists():
+            df = read_ticker_ohlcv_raw(data_dir, symbol_file, index_col=None)
+
+            if df is None:
                 # Try with original symbol name
-                data_file = data_dir / f"{self.symbol}.csv"
-                
-            if not data_file.exists():
+                df = read_ticker_ohlcv_raw(data_dir, self.symbol, index_col=None)
+
+            if df is None:
                 self.logger.warning(f"Data file not found for {self.symbol} in {timeframe}")
                 return None
-                
-            df = pd.read_csv(data_file)
             
             # Ensure Date column is datetime
             if 'Date' in df.columns:

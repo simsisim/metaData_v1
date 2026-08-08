@@ -183,10 +183,92 @@ class TwSupplementer:
         return df
 
 
+def read_ticker_ohlcv_raw(market_data_dir: Path, ticker: str, index_col='Date', parse_dates=False) -> Optional[pd.DataFrame]:
+    """
+    Raw per-ticker OHLCV rows, unparsed (caller does all date/column
+    processing) - matches downloadData_v1's own archive/current storage.
+
+    downloadData_v1 splits each ticker's history into archive/{ticker}.csv
+    (frozen, through last year-end) and current/{ticker}.csv (this year -
+    the only file that changes day to day). It also maintains a flat
+    {ticker}.csv as a locally-materialized archive+current cache, but that
+    cache only refreshes when downloadData_v1's own pipeline runs on this
+    machine - if archive/+current/ were synced from elsewhere (e.g. Colab)
+    without a local downloadData_v1 run afterward, the flat file can be
+    stale or missing. Reading archive/+current/ directly removes that
+    dependency; the flat file is only a fallback for a downloadData_v1
+    checkout that hasn't adopted the split yet.
+
+    Args:
+        market_data_dir: timeframe directory (e.g. .../market_data/daily)
+        ticker: ticker symbol
+        index_col: passed straight through to pd.read_csv - use 'Date' to
+            match read_stock_data()'s index-based contract, or None to match
+            a column-based contract. Must match whatever the caller's own
+            downstream code expects to operate on.
+        parse_dates: passed straight through to pd.read_csv. Defaults to
+            False (the safe convention every other caller in this codebase
+            uses, since the source CSVs carry mixed EST/EDT-offset date
+            strings that pandas' auto-parse can mishandle) - only override
+            for a caller that already relied on True and does its own
+            downstream handling of that contract.
+
+    Returns:
+        Concatenated, deduped (current/ wins on any date overlap with
+        archive/) raw DataFrame, or None if no data found anywhere.
+    """
+    frames = []
+    for sub in ('archive', 'current'):
+        p = market_data_dir / sub / f"{ticker}.csv"
+        if p.exists():
+            frames.append(pd.read_csv(p, index_col=index_col, parse_dates=parse_dates))
+    if frames:
+        # ignore_index=True when index_col is None: each frame otherwise carries its
+        # own 0-based RangeIndex, so concatenating archive+current produces duplicate
+        # integer index values that break downstream .reindex()/.loc[] calls.
+        df = pd.concat(frames, ignore_index=not index_col) if len(frames) > 1 else frames[0]
+        if index_col:
+            return df[~df.index.duplicated(keep='last')]
+        return df.drop_duplicates(subset='Date', keep='last').reset_index(drop=True)  # source CSV's raw column name
+
+    flat_path = market_data_dir / f"{ticker}.csv"
+    if flat_path.exists():
+        return pd.read_csv(flat_path, index_col=index_col, parse_dates=parse_dates)
+    return None
+
+
+def get_ticker_latest_date(market_data_dir: Path, ticker: str) -> Optional[pd.Timestamp]:
+    """
+    Max date for a ticker without reading the (potentially large) archive/
+    tier unless current/ has nothing - current/ is checked first since it's
+    the freshest, smallest file. Falls back to the flat file if neither
+    tier exists. None if no data found anywhere.
+    """
+    for sub in ('current', 'archive'):
+        p = market_data_dir / sub / f"{ticker}.csv"
+        if p.exists():
+            df = pd.read_csv(p, usecols=[0], header=0)
+            if not df.empty:
+                dates = pd.to_datetime(df.iloc[:, 0].astype(str).str.split(' ').str[0], errors='coerce').dropna()
+                if not dates.empty:
+                    d = dates.max()
+                    return d.tz_localize(None) if d.tzinfo else d
+
+    flat_path = market_data_dir / f"{ticker}.csv"
+    if flat_path.exists():
+        df = pd.read_csv(flat_path, usecols=[0], header=0)
+        if not df.empty:
+            dates = pd.to_datetime(df.iloc[:, 0].astype(str).str.split(' ').str[0], errors='coerce').dropna()
+            if not dates.empty:
+                d = dates.max()
+                return d.tz_localize(None) if d.tzinfo else d
+    return None
+
+
 class DataReader:
     """
     Reads and processes market data from local CSV files.
-    
+
     Supports multiple timeframes (daily, weekly, monthly) and provides
     batch processing capabilities for large datasets.
     """
@@ -269,17 +351,10 @@ class DataReader:
     def _find_market_data_cutoff(self) -> Optional[pd.Timestamp]:
         """Find the last date present in market_data by reading a reference ticker."""
         for ticker in ['SPY', 'AAPL', 'QQQ', 'MSFT']:
-            f = self.market_data_dir / f'{ticker}.csv'
-            if not f.exists():
-                continue
             try:
-                df = pd.read_csv(f, usecols=[0], header=0)
-                df.columns = ['date_raw']
-                dates = pd.to_datetime(
-                    df['date_raw'].astype(str).str.split(' ').str[0], errors='coerce'
-                ).dropna()
-                if not dates.empty:
-                    return dates.max().tz_localize(None) if dates.max().tzinfo else dates.max()
+                cutoff = get_ticker_latest_date(self.market_data_dir, ticker)
+                if cutoff is not None:
+                    return cutoff
             except Exception as e:
                 logger.debug(f"Could not read cutoff from {ticker}: {e}")
         return None
@@ -374,15 +449,13 @@ class DataReader:
         Returns:
             DataFrame with OHLCV data or None if file not found
         """
-        file_path = self.market_data_dir / f"{ticker}.csv"
-        
-        if not file_path.exists():
-            logger.debug(f"Data file not found for {ticker}: {file_path}")
+        df = read_ticker_ohlcv_raw(self.market_data_dir, ticker)
+
+        if df is None:
+            logger.debug(f"Data file not found for {ticker}: {self.market_data_dir}")
             return None
-        
+
         try:
-            # Use the exact same approach as the working marketScanners_v1 version
-            df = pd.read_csv(file_path, index_col='Date', parse_dates=False)
             df.index = df.index.str.split(' ').str[0]
             df.index = pd.to_datetime(df.index)
             
